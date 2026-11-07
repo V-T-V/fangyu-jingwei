@@ -239,6 +239,8 @@ function openTable(level){
       <button class="tb ${!isFu?"on":""}" data-l="xian">县 ${!isFu?rows.length:""}</button>
       <button class="readfull" id="csvdl" style="margin-left:auto">⤓ CSV</button>
     </div>
+    <input id="tfilter" type="text" placeholder="表内筛选：县名 / 省名 / 隶属…" autocomplete="off">
+    <div class="tfcount" id="tfcount">${rows.length} 行</div>
     <div class="fywrap"><table class="fytable">
       <thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead>
       <tbody>${body}</tbody></table></div>
@@ -246,6 +248,17 @@ function openTable(level){
       ? "属州灰字；点击行入该府。今地为明治所当今位置，土州从近似。"
       : "州属县灰字、隶属列注其府与州；点击行入其府。〔今废〕〔新改〕等注为原书自注。"}</div>`;
   pbody.querySelectorAll(".tb").forEach(b=>b.onclick=()=>openTable(b.dataset.l));
+  const fi = pbody.querySelector("#tfilter");
+  if (fi) fi.oninput = ()=>{
+    const q = fi.value.trim();
+    let shown = 0;
+    pbody.querySelectorAll(".fytable tbody tr").forEach(tr=>{
+      const hit = !q || tr.innerText.includes(q);
+      tr.style.display = hit ? "" : "none";
+      if (hit) shown++;
+    });
+    pbody.querySelector("#tfcount").textContent = q ? shown + " / " + rows.length + " 行" : rows.length + " 行";
+  };
   pbody.querySelectorAll("tr[data-i]").forEach(tr=>tr.onclick=()=>{
     const r = rows[+tr.dataset.i];
     const p = FY.provinces.find(x=>x.id===r.pid);

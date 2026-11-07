@@ -558,6 +558,13 @@ body.m-形势 #tl{display:flex}
 .fytable .tv{color:var(--ink-faint);font-size:10px}
 .fytable tr.sub td{color:var(--ink-faint);font-size:11px}
 .fytable tr.sub .tn{font-size:12px}
+#tfilter{
+  width:100%;margin-bottom:4px;padding:7px 12px;outline:none;
+  font-family:inherit;font-size:12.5px;letter-spacing:2px;color:var(--ink);
+  background:rgba(245,238,218,.9);border:1px solid var(--line);
+}
+#tfilter::placeholder{color:var(--ink-faint)}
+.tfcount{font-size:10px;letter-spacing:2px;color:var(--ink-faint);margin:0 0 4px 2px;text-align:right}
 
 /* 键盘焦点可见性 */
 :focus-visible{outline:2px solid var(--cinnabar);outline-offset:2px}
