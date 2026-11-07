@@ -10,6 +10,7 @@ function setMode(m){
   document.getElementById("modelabel").textContent=m;
   document.getElementById("modenote").textContent=NOTE[m];
   fuLayer.remove();eraLayer.remove();riverLayer.remove();
+  if (typeof hideProvHull === "function") hideProvHull();
   selPid=null;document.body.classList.remove("selprov");
   if(m==="舆图") setFuLabels(null);
   hidePanel();

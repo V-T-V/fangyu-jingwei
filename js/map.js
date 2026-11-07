@@ -107,13 +107,30 @@ function convexHull(points){
   lower.pop(); upper.pop();
   return lower.concat(upper);
 }
-function eraHull(e){
-  const all = [...e.caps, ...e.plcs].map(c=>[c[1], c[2]]);
-  const hull = convexHull(all);
+function hullLatLngs(points, pad){
+  const hull = convexHull(points);
   if(hull.length < 3) return null;
   const n = hull.length;
   const cLat = hull.reduce((s,p)=>s+p[0],0)/n, cLng = hull.reduce((s,p)=>s+p[1],0)/n;
-  return hull.map(p=>[cLat+(p[0]-cLat)*1.3, cLng+(p[1]-cLng)*1.3]);   // 由重心外扩三成
+  return hull.map(p=>[cLat+(p[0]-cLat)*pad, cLng+(p[1]-cLng)*pad]);
+}
+function eraHull(e){
+  return hullLatLngs([...e.caps, ...e.plcs].map(c=>[c[1], c[2]]), 1.3);
+}
+/* 省选疆域晕：选中省治所凸包（府+州），省色描边淡晕，取消即隐 */
+let provHull = null;
+function showProvHull(p){
+  hideProvHull();
+  const pts = [];
+  p.fu.forEach(u=>{ if(u.c) pts.push(u.c); (u.zx||[]).forEach(z=>{ if(z.c) pts.push(z.c); }); });
+  const hull = hullLatLngs(pts, 1.18);
+  if(!hull) return;
+  const col = PCOLORS[p.id] || "#2f5d70";
+  provHull = L.polygon(hull, {color:col, weight:2.4, dashArray:"7 6", opacity:.85,
+    fillColor:col, fillOpacity:.13, lineCap:"round", interactive:false}).addTo(map);
+}
+function hideProvHull(){
+  if(provHull){ map.removeLayer(provHull); provHull = null; }
 }
 function buildEra(ei){
   eraLayer.clearLayers();
@@ -152,10 +169,24 @@ function eraBounds(e){
 }
 
 /* ── 川渎模式 ── */
+/* Chaikin 切角平滑：控制点数据不变，渲染成自然曲线 */
+function chaikin(pts, iter){
+  for(let k=0;k<iter;k++){
+    const out=[pts[0]];
+    for(let i=0;i<pts.length-1;i++){
+      const a=pts[i], b=pts[i+1];
+      out.push([a[0]*0.75+b[0]*0.25, a[1]*0.75+b[1]*0.25]);
+      out.push([a[0]*0.25+b[0]*0.75, a[1]*0.25+b[1]*0.75]);
+    }
+    out.push(pts[pts.length-1]);
+    pts=out;
+  }
+  return pts;
+}
 function buildRivers(sel){
   riverLayer.clearLayers();
   RIVERS.forEach(r=>{
-    const line = L.polyline(r.pts.map(p=>[p[0],p[1]]),{color:r.color,weight:r.weight,
+    const line = L.polyline(chaikin(r.pts.map(p=>[p[0],p[1]]), 2),{color:r.color,weight:r.weight,
       opacity:.88,dashArray:r.dash,lineCap:"round"}).addTo(riverLayer);
     line.bindTooltip(`<b style="font-family:KaiTi,serif;font-size:14px;letter-spacing:3px">${r.key}</b>`,
       {sticky:true,className:"ftip"});

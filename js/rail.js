@@ -69,12 +69,14 @@ function selectProv(pid){
   setFuLabels(pid);
   if(pid){
     const p=FY.provinces.find(x=>x.id===pid);
+    if (typeof showProvHull === "function") showProvHull(p);
     highlightRail("舆图",pid);
     const b=L.latLngBounds(p.fu.filter(u=>u.c).map(u=>u.c)).pad(.22);
     safeFly(b,{duration:1.1});
     syncHash("舆图", "p=" + pid);
     openProv(p);
   }else{
+    if (typeof hideProvHull === "function") hideProvHull();
     highlightRail("舆图",null);
     syncHash("舆图", null);
   }
