@@ -400,7 +400,14 @@ def main():
     nz = inject_zhou_coords(data)
     print(f"属州坐标注入 {nz}")
     np_, nc_ = derive_county_coords(data)
-    print(f"县治推算 {nc_} 条（{np_} 省扫描）")
+    # 名录附郭字段兜底：fg 县 ＝ 府治
+    n_fg = 0
+    for p_ in data["provinces"]:
+        for u_ in p_["fu"]:
+            if u_.get("fg") and u_.get("c") and u_["fg"] not in (u_.get("xianc") or {}):
+                u_.setdefault("xianc", {})[u_["fg"]] = list(u_["c"])
+                n_fg += 1
+    print(f"县治推算 {nc_} 条 + 附郭兜底 {n_fg} 条（{np_} 省扫描）")
     total_fu = sum(p["stats"]["fu"] for p in provinces)
     total_co = sum(p["stats"]["co"] for p in provinces)
     print(f"\n十五省府条目共 {total_fu}，配坐标 {total_co} ({total_co*100//total_fu}%)")
@@ -561,14 +568,20 @@ def derive_county_coords(data):
             if mz and mz.group(1) in zhou_c:
                 anchor = zhou_c[mz.group(1)]; anchor_name = mz.group(1)
                 continue
-            m = re.match(r"^([一-鿿]{1,4}县)(?:〔[^〕]*〕)?(府|州)(东|南|西|北|东南|东北|西南|西北)([一二三四五六七八九十百]+)里", para)
+            m = re.match(r"^([一-鿿]{1,4}县)(?:〔[^〕]*〕)?(?:在)?(府|州|郭)(东|南|西|北|东南|东北|西南|西北)([一二三四五六七八九十百]+)里", para)
             if not m:
                 continue
             nm, base, dr, li = m.group(1), m.group(2), m.group(3), m.group(4)
-            if base == "府":
+            if base in ("府", "郭"):
                 anchor = None; anchor_name = ""      # 县段以府为锚
             u_ref = next((u for u in p["fu"] if nm in u["xian"] or
                           any(nm in z.get("x", []) for z in u.get("zx", []))), None)
+            # 附郭县（段首"附郭"）＝ 府治本身
+            if not m and para.startswith(nm) and para[len(nm):len(nm)+2] == "附郭":
+                if u_ref and u_ref.get("c"):
+                    u_ref.setdefault("xianc", {})[nm] = list(u_ref["c"])
+                    n_hit += 1
+                continue
             a = anchor if (base == "州" and anchor) else (u_ref["c"] if u_ref and u_ref.get("c") else None)
             if not a:
                 continue
