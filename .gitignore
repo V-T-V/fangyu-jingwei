@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+
+# 快照与归档
+archive/
+*.zip
+
+# 系统杂项
+Thumbs.db
+.DS_Store
+
+# 旧版评审残图
+.screenshots/

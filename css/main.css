@@ -1,0 +1,575 @@
+/* ═══════════════════════════════════════════════════════════════
+   方舆经纬 —— 读史方舆纪要 · 全书舆图 · 主样式
+   绢本青绿 · 地图为主角 · 三卷模式（形势 / 舆图 / 川渎）
+   结构：底图滤镜 → 顶栏 → 左列纲目 → 右幅面板 → 底栏
+        → 地图要素 → 指北 → 序幕 → 响应式
+   ═══════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --silk:#efe6cf; --silk-2:#e7dcbc; --silk-3:#f5eeda;
+  --ink:#2e2921; --ink-mid:#57503f; --ink-faint:#8b8069;
+  --azur:#2f5d70; --azur-d:#24495a;          /* 石青 */
+  --jade:#5a8368; --jade-d:#46664f;          /* 石绿 */
+  --ochre:#9a6b3f; --ochre-d:#7d5530;        /* 赭石 */
+  --cinnabar:#b23a2e; --cinnabar-d:#8e2b22;  /* 朱砂 */
+  --gold:#b08d4f;
+  --line:rgba(90,72,44,.38);
+}
+html,body{height:100%}
+body{
+  font-family:"FangSong","STFangsong","仿宋","FangSong_GB2312","Songti SC","SimSun",serif;
+  color:var(--ink); overflow:hidden;
+  background:radial-gradient(ellipse 130% 100% at 50% 0%,#f1e8d2 0%,#e9dfc4 55%,#e2d6b6 100%);
+}
+
+/* ── 底图：青绿绢面滤镜 ─────────────────────────────── */
+#map{position:fixed;inset:0;z-index:0;background:#e9dfc4}
+#map .leaflet-tile-pane{filter:sepia(.14) brightness(1.05) contrast(.9) saturate(.8)}
+#map .leaflet-control-attribution{display:none!important}
+#map .leaflet-control-zoom a{
+  background:var(--silk-3)!important;color:var(--ink)!important;
+  border-color:var(--line)!important;font-weight:400!important;
+}
+#map .leaflet-control-zoom{border:1px solid var(--line)!important;box-shadow:0 2px 8px rgba(60,45,20,.18)}
+.paper-wash{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 140% 110% at 50% 40%,transparent 52%,rgba(120,96,54,.14) 100%),
+    repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,250,235,.05) 3px 4px);
+}
+/* 绢纹 */
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.5;
+  background-image:repeating-linear-gradient(93deg,transparent 0 46px,rgba(139,110,66,.045) 46px 47px);
+}
+
+/* ── 顶栏 ───────────────────────────────────────────── */
+header{
+  position:fixed;top:0;left:0;right:0;z-index:30;
+  display:flex;align-items:stretch;gap:14px;
+  padding:10px 18px 0;
+  pointer-events:none;
+}
+header>*{pointer-events:auto}
+.brand{
+  display:flex;align-items:center;gap:12px;
+  background:linear-gradient(160deg,var(--silk-3),var(--silk-2));
+  border:1px solid var(--line);border-top:none;
+  padding:8px 16px 9px 10px;
+  box-shadow:0 6px 18px -8px rgba(60,45,20,.35);
+  position:relative;
+}
+.brand::after{content:"";position:absolute;left:8px;right:8px;bottom:3px;height:1px;background:var(--line);opacity:.6}
+.brand .seal{
+  width:44px;height:44px;flex:none;background:var(--cinnabar);color:#f6efdc;
+  display:flex;align-items:center;justify-content:center;
+  font-family:"KaiTi","STKaitai","楷体",serif;font-size:17px;line-height:1.05;
+  letter-spacing:1px;text-align:center;
+  box-shadow:inset 0 0 0 2px #f6efdc,inset 0 0 0 3.5px var(--cinnabar),0 1px 4px rgba(90,30,20,.3);
+  writing-mode:vertical-rl;padding:2px;
+}
+.brand h1{
+  font-family:"KaiTi","STKaitai","楷体",serif;font-size:25px;letter-spacing:7px;
+  color:var(--ink);font-weight:700;white-space:nowrap;
+}
+.brand p{font-size:10.5px;letter-spacing:2.6px;color:var(--ink-mid);margin-top:2px;white-space:nowrap}
+/* 三卷模式 */
+nav{
+  display:flex;gap:0;margin-left:auto;margin-right:8px;align-self:flex-start;
+  background:linear-gradient(180deg,var(--silk-3),var(--silk-2));
+  border:1px solid var(--line);border-top:none;
+  box-shadow:0 6px 18px -8px rgba(60,45,20,.35);
+}
+nav button{
+  appearance:none;border:none;background:none;cursor:pointer;
+  padding:9px 20px 8px;font-family:inherit;color:var(--ink-mid);
+  border-right:1px solid var(--line);position:relative;min-width:104px;
+  transition:color .25s;
+}
+nav button:last-child{border-right:none}
+nav button b{display:block;font-family:"KaiTi","STKaitai",serif;font-size:16.5px;letter-spacing:5px;font-weight:700}
+nav button i{display:block;font-style:normal;font-size:9.5px;letter-spacing:1.8px;margin-top:2px;opacity:.75}
+nav button::after{content:"";position:absolute;left:22%;right:22%;bottom:0;height:3px;background:var(--cinnabar);
+  transform:scaleX(0);transition:transform .3s ease}
+nav button.on{color:var(--ink)}
+nav button.on::after{transform:scaleX(1)}
+nav button:hover{color:var(--cinnabar-d)}
+/* 检索 */
+#searchwrap{position:relative;align-self:flex-start;flex:0 1 300px}
+#search{
+  width:100%;padding:9px 34px 9px 13px;
+  background:linear-gradient(180deg,var(--silk-3),var(--silk-2));
+  border:1px solid var(--line);border-top:none;color:var(--ink);
+  font-family:inherit;font-size:13px;letter-spacing:2px;outline:none;
+  box-shadow:0 6px 18px -8px rgba(60,45,20,.35);
+}
+#search::placeholder{color:var(--ink-faint);letter-spacing:2px}
+#searchwrap .sicon{position:absolute;right:11px;top:8px;color:var(--ink-faint);font-size:13px;pointer-events:none}
+#sresults{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:340px;overflow:auto;
+  background:var(--silk-3);border:1px solid var(--line);
+  box-shadow:0 14px 30px -10px rgba(60,45,20,.45);display:none;z-index:5;
+}
+#sresults.open{display:block}
+#sresults .sr{
+  padding:7px 13px;cursor:pointer;display:flex;align-items:baseline;gap:8px;
+  border-bottom:1px dashed rgba(120,96,54,.22);font-size:13px;
+}
+#sresults .sr:hover{background:rgba(178,58,46,.07)}
+#sresults .sr .tag{font-size:10px;color:#f6efdc;background:var(--ink-faint);padding:1px 5px;letter-spacing:2px;flex:none}
+#sresults .sr .tag.t府{background:var(--azur)} .sr .tag.t省{background:var(--jade)}
+.sr .tag.t县{background:#98866a} .sr .tag.t州{background:var(--ochre)}
+.sr .tag.t朝{background:var(--cinnabar)} .sr .tag.t河{background:var(--azur-d)}
+#sresults .sr .ctx{color:var(--ink-faint);font-size:11px;margin-left:auto;letter-spacing:1px}
+#sresults .none{padding:10px 13px;color:var(--ink-faint);font-size:12px;letter-spacing:2px}
+
+/* ── 左列 · 纲目 ─────────────────────────────────────── */
+#rail{
+  position:fixed;left:18px;top:96px;bottom:64px;z-index:20;width:178px;
+  background:linear-gradient(180deg,var(--silk-3),var(--silk-2));
+  border:1px solid var(--line);
+  box-shadow:0 10px 26px -10px rgba(60,45,20,.4);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+#rail .rt{
+  font-family:"KaiTi","STKaitai",serif;text-align:center;letter-spacing:6px;
+  padding:10px 0 8px;font-size:14px;color:var(--cinnabar-d);
+  border-bottom:1px solid var(--line);flex:none;
+  background:rgba(178,58,46,.045);
+}
+#rail .rt small{display:block;font-size:9px;letter-spacing:2px;color:var(--ink-faint);margin-top:2px}
+#raillist{overflow-y:auto;flex:1;padding:4px 0}
+#raillist::-webkit-scrollbar{width:5px}
+#raillist::-webkit-scrollbar-thumb{background:rgba(120,96,54,.3)}
+.ri{
+  display:flex;align-items:center;gap:9px;padding:7px 13px;cursor:pointer;
+  border-bottom:1px dashed rgba(120,96,54,.16);color:var(--ink-mid);
+  transition:background .2s,color .2s;position:relative;
+}
+.ri:hover{background:rgba(47,93,112,.07);color:var(--ink)}
+.ri.on{background:rgba(178,58,46,.09);color:var(--cinnabar-d)}
+.ri.on::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cinnabar)}
+.ri .dot{width:9px;height:9px;flex:none;box-shadow:inset 0 0 0 1.5px currentColor;opacity:.85}
+.ri .nm{font-size:14px;letter-spacing:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ri .ct{margin-left:auto;font-size:10px;color:var(--ink-faint);letter-spacing:1px;flex:none}
+.ri .ju{font-size:9.5px;color:var(--ink-faint);letter-spacing:1px;display:block;margin-top:1px}
+
+/* ── 右幅 · 卷宗面板 ─────────────────────────────────── */
+#panel{
+  position:fixed;right:18px;top:96px;bottom:64px;z-index:25;width:432px;
+  background:linear-gradient(180deg,var(--silk-3),#efe5cb);
+  border:1px solid var(--line);
+  box-shadow:0 14px 34px -12px rgba(60,45,20,.5);
+  display:flex;transform:translateX(calc(100% + 26px));transition:transform .45s cubic-bezier(.2,.75,.25,1);
+}
+#panel.open{transform:none}
+/* 左缘竖排题签 */
+#panel .vtitle{
+  writing-mode:vertical-rl;flex:none;width:64px;
+  border-right:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 0 14px;position:relative;
+  background:linear-gradient(90deg,rgba(178,58,46,.05),transparent 70%);
+}
+#panel .vtitle .vname{
+  font-family:"KaiTi","STKaitai",serif;font-size:30px;letter-spacing:10px;font-weight:700;
+  color:var(--ink);max-height:340px;overflow:hidden;
+}
+#panel .vtitle .vseal{
+  writing-mode:vertical-rl;align-self:flex-end;
+  background:var(--cinnabar);color:#f6efdc;font-family:"KaiTi",serif;
+  font-size:11px;letter-spacing:3px;padding:6px 3px;
+  box-shadow:inset 0 0 0 1.5px #f6efdc,inset 0 0 0 3px var(--cinnabar);
+}
+#pbody{flex:1;overflow-y:auto;padding:18px 20px 26px}
+#pbody::-webkit-scrollbar{width:5px}
+#pbody::-webkit-scrollbar-thumb{background:rgba(120,96,54,.3)}
+#pclose{
+  position:absolute;top:8px;right:9px;z-index:3;cursor:pointer;color:var(--ink-faint);
+  font-size:15px;line-height:1;padding:4px;transition:color .2s;font-family:inherit;
+}
+#pclose:hover{color:var(--cinnabar)}
+
+/* 面板内容排版 */
+.p-kicker{font-size:10px;letter-spacing:4px;color:var(--ink-faint);margin-bottom:6px}
+.p-ju{display:inline-block;font-size:11px;letter-spacing:2px;color:var(--azur-d);
+  border:1px solid rgba(47,93,112,.4);padding:2px 9px;margin-bottom:12px;background:rgba(47,93,112,.05)}
+.p-now{display:inline-block;font-size:11px;letter-spacing:2px;color:var(--ochre-d);
+  border:1px solid rgba(154,107,63,.4);padding:2px 9px;margin:0 0 12px 8px;background:rgba(154,107,63,.06)}
+.quote{
+  font-family:"KaiTi","STKaitai",serif;font-size:15px;line-height:2.05;letter-spacing:1.2px;
+  color:var(--ink);padding:12px 15px;margin:10px 0 4px;position:relative;
+  background:rgba(90,131,104,.055);border-left:3px solid var(--jade);
+}
+.quote::before{content:"「";position:absolute;left:4px;top:-9px;color:var(--jade-d);font-size:15px}
+.quote::after{content:"」";position:absolute;right:4px;bottom:-11px;color:var(--jade-d);font-size:15px}
+.quote.qxu{border-left-color:var(--cinnabar);background:rgba(178,58,46,.045)}
+.quote.qxu::before,.quote.qxu::after{color:var(--cinnabar-d)}
+.p-cap{font-size:10.5px;letter-spacing:3px;color:var(--ink-faint);margin:14px 0 7px;
+  display:flex;align-items:center;gap:8px}
+.p-cap::after{content:"";flex:1;height:1px;background:var(--line);opacity:.55}
+/* 四至八到 */
+.zhi{display:grid;grid-template-columns:auto 1fr auto;gap:5px 10px;font-size:12.5px;margin:4px 0}
+.zhi .d{color:#f6efdc;background:var(--azur);font-size:10px;letter-spacing:2px;padding:1.5px 6px;text-align:center;align-self:center}
+.zhi .p{color:var(--ink);letter-spacing:.5px;align-self:center}
+.zhi .l{color:var(--ink-faint);font-size:11.5px;letter-spacing:0;align-self:center;white-space:nowrap}
+/* 州县印章串 */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  font-size:12px;letter-spacing:1.5px;color:var(--ink-mid);
+  border:1px solid rgba(90,72,44,.4);padding:2.5px 8px;background:rgba(245,238,218,.8);
+}
+.chip.fg{color:var(--cinnabar-d);border-color:rgba(178,58,46,.45);background:rgba(178,58,46,.05)}
+.chip.zhou{color:var(--azur-d);border-color:rgba(47,93,112,.4)}
+.chip.small{font-size:11px;padding:2px 6px;color:var(--ink-faint)}
+/* 府列表 */
+.ful{list-style:none}
+.ful li{
+  display:flex;align-items:baseline;gap:9px;padding:8px 4px;cursor:pointer;
+  border-bottom:1px dashed rgba(120,96,54,.2);transition:background .18s,padding-left .18s;
+}
+.ful li:hover{background:rgba(47,93,112,.06);padding-left:10px}
+.ful .fn{font-family:"KaiTi",serif;font-size:16px;letter-spacing:2.5px;color:var(--ink)}
+.ful .fnow{font-size:11px;color:var(--ochre-d);letter-spacing:1px}
+.ful .fct{margin-left:auto;font-size:10.5px;color:var(--ink-faint);letter-spacing:1px;white-space:nowrap}
+.ful .arrow{color:var(--ink-faint);font-size:11px}
+/* 形势事件 */
+.ev{display:flex;gap:12px;padding:6px 2px;font-size:13px;border-bottom:1px dashed rgba(120,96,54,.18)}
+.ev .y{flex:none;width:76px;color:var(--cinnabar-d);letter-spacing:1px;font-size:12.5px}
+.ev .t{color:var(--ink-mid);line-height:1.75;letter-spacing:.8px}
+/* 川渎 */
+.rv-meta{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px}
+.stat-strip{display:flex;gap:0;margin-top:14px;border:1px solid var(--line)}
+.stat-strip .st{flex:1;text-align:center;padding:9px 4px;border-right:1px solid var(--line)}
+.stat-strip .st:last-child{border-right:none}
+.stat-strip .st b{display:block;font-family:"KaiTi",serif;font-size:21px;color:var(--azur-d);letter-spacing:1px}
+.stat-strip .st span{font-size:10px;letter-spacing:3px;color:var(--ink-faint)}
+.hint{font-size:11.5px;line-height:1.9;letter-spacing:1.5px;color:var(--ink-mid);
+  padding:10px 12px;border:1px dashed rgba(120,96,54,.35);background:rgba(245,238,218,.55)}
+
+/* ── 底栏 ───────────────────────────────────────────── */
+footer{
+  position:fixed;left:18px;right:18px;bottom:14px;z-index:20;
+  display:flex;align-items:center;gap:18px;
+  background:linear-gradient(180deg,var(--silk-3),var(--silk-2));
+  border:1px solid var(--line);
+  box-shadow:0 8px 20px -10px rgba(60,45,20,.4);
+  padding:7px 18px;font-size:11px;letter-spacing:2.2px;color:var(--ink-mid);
+}
+footer .fb{color:var(--ink-faint)}
+footer .sep{width:1px;height:14px;background:var(--line)}
+footer .right{margin-left:auto;display:flex;gap:16px;color:var(--ink-faint);letter-spacing:1.5px;font-size:10px}
+#modelabel{color:var(--cinnabar-d);font-family:"KaiTi",serif;letter-spacing:4px}
+
+/* ── 地图要素 ───────────────────────────────────────── */
+.fuseal{
+  width:13px;height:13px;background:rgba(245,238,218,.92);
+  box-shadow:inset 0 0 0 1.6px var(--pc,#2f5d70),0 0 0 1px rgba(60,45,20,.25);
+  transform:rotate(45deg);transition:box-shadow .2s,transform .2s;
+}
+.fuseal:hover,.fuseal.hot{transform:rotate(45deg) scale(1.35);box-shadow:inset 0 0 0 2px var(--pc,#2f5d70),0 0 0 1.5px rgba(60,45,20,.4)}
+body.m-舆图 .leaflet-marker-icon{cursor:pointer}
+/* 省选中淡出他省 */
+body.selprov .fuseal{opacity:.94}
+body.selprov .fuseal.dim{opacity:.13}
+/* 标签 */
+.fulab{
+  font-family:"KaiTi","STKaitai",serif;font-size:12px;letter-spacing:2px;color:var(--ink);
+  background:rgba(245,238,218,.92);border:1px solid rgba(90,72,44,.4);
+  border-radius:0;padding:0 5px;white-space:nowrap;box-shadow:0 1px 3px rgba(60,45,20,.18);
+}
+.fulab::before{content:"";display:none}
+.leaflet-tooltip.ftip{
+  background:rgba(245,238,218,.97);border:1px solid var(--line);border-radius:0;
+  color:var(--ink);box-shadow:0 3px 10px rgba(60,45,20,.25);padding:5px 9px;
+}
+.leaflet-tooltip.ftip::before{border-top-color:var(--line)}
+/* 属州小方章：zoom≥6 显现 */
+.zseal{
+  width:8px;height:8px;background:rgba(245,238,218,.85);
+  box-shadow:inset 0 0 0 1.2px var(--pc,#2f5d70),0 0 0 1px rgba(60,45,20,.15);
+  transform:rotate(45deg);
+  opacity:0;pointer-events:none;transition:opacity .35s;
+}
+body.z6 .zseal{opacity:.95;pointer-events:auto}
+body.z6.selprov .zseal.dim{opacity:.1}
+body.z6 .leaflet-marker-icon .zseal:hover{box-shadow:inset 0 0 0 2px var(--pc,#2f5d70),0 0 0 1.5px rgba(60,45,20,.35)}
+
+/* 都城朱印 */
+.cap{
+  width:26px;height:26px;border-radius:50%;background:var(--cinnabar);
+  box-shadow:inset 0 0 0 2px #f6efdc,inset 0 0 0 3.5px var(--cinnabar),0 2px 6px rgba(90,30,20,.35);
+  display:flex;align-items:center;justify-content:center;color:#f6efdc;
+  font-family:"KaiTi",serif;font-size:13px;letter-spacing:0;
+}
+.plc{
+  width:8px;height:8px;background:#3a332a;transform:rotate(45deg);
+  box-shadow:0 0 0 1.5px rgba(245,238,218,.9);
+}
+.caplab,.plclab{font-family:"KaiTi",serif;font-size:12.5px;letter-spacing:2px;color:var(--ink);
+  background:rgba(245,238,218,.85);border:1px solid rgba(90,72,44,.35);border-radius:0;
+  padding:0 5px;white-space:nowrap;box-shadow:none}
+.caplab{color:var(--cinnabar-d);font-size:13.5px;border-color:rgba(178,58,46,.4)}
+.caplab::before,.plclab::before{content:"";display:none}
+.rvlab{font-family:"KaiTi",serif;font-size:13px;letter-spacing:3px;border-radius:0;
+  background:rgba(245,238,218,.9);border:1px solid var(--line);padding:1px 7px;white-space:nowrap}
+
+/* 指北 */
+.north{
+  position:fixed;right:470px;top:104px;z-index:15;width:34px;height:34px;transition:right .45s cubic-bezier(.2,.75,.25,1);
+  pointer-events:none;
+}
+body.nopanel .north{right:24px}
+.north svg{width:100%;height:100%;filter:drop-shadow(0 1px 3px rgba(60,45,20,.3))}
+.north text{font-family:"KaiTi",serif;font-size:11px;fill:var(--ink-mid)}
+.north .nn{fill:var(--cinnabar)}
+
+/* 载入序幕 */
+#boot{
+  position:fixed;inset:0;z-index:99;background:radial-gradient(ellipse at 50% 42%,#f2e9d3,#e5dab9);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  transition:opacity .8s ease;cursor:pointer;
+}
+#boot.gone{opacity:0;pointer-events:none}
+#boot .bseal{
+  width:74px;height:74px;background:var(--cinnabar);color:#f6efdc;
+  display:flex;align-items:center;justify-content:center;
+  font-family:"KaiTi",serif;font-size:26px;letter-spacing:2px;writing-mode:vertical-rl;
+  box-shadow:inset 0 0 0 3px #f6efdc,inset 0 0 0 5.5px var(--cinnabar),0 4px 14px rgba(90,30,20,.3);
+  animation:sealin 1s cubic-bezier(.2,.8,.3,1.2);
+}
+@keyframes sealin{from{transform:scale(1.7) rotate(-14deg);opacity:0}to{transform:none;opacity:1}}
+#boot h2{font-family:"KaiTi",serif;font-size:34px;letter-spacing:16px;color:var(--ink);text-indent:16px}
+#boot p{font-size:12.5px;letter-spacing:5px;color:var(--ink-mid)}
+#boot .go{margin-top:10px;font-size:12px;letter-spacing:4px;color:var(--cinnabar-d);
+  border:1px solid rgba(178,58,46,.4);padding:7px 22px;background:rgba(178,58,46,.05);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+
+/* ── 全文检索 ───────────────────────────────────────── */
+.ftall{color:var(--azur-d);letter-spacing:1.5px;justify-content:center;background:rgba(47,93,112,.05)}
+.ftall:hover{background:rgba(47,93,112,.12)}
+.fthead{
+  padding:8px 13px 7px;font-family:"KaiTi",serif;font-size:13px;letter-spacing:2px;
+  color:var(--cinnabar-d);border-bottom:1px solid var(--line);
+  background:rgba(178,58,46,.045);position:sticky;top:0;z-index:1;
+}
+.ftprog{padding:12px 13px;font-size:12.5px;letter-spacing:2px;color:var(--ink-mid)}
+.ftr{align-items:flex-start!important;flex-wrap:wrap}
+.ftr .tag.t全{background:var(--cinnabar-d)}
+.ftsnip{
+  width:100%;font-size:12px;color:var(--ink-mid);letter-spacing:.5px;
+  line-height:1.8;margin-top:3px;font-family:"FangSong",serif;
+}
+.hitmark{
+  background:rgba(178,58,46,.2);
+  box-shadow:0 0 0 3px rgba(178,58,46,.14);
+  color:var(--cinnabar-d);font-weight:700;
+}
+.qchar,.qq{opacity:.5;font-size:.9em}
+.ftall{
+  position:sticky;bottom:0;z-index:1;
+  background:var(--silk-3);border-top:1px solid var(--line);
+}
+.fthead{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px;letter-spacing:1.5px}
+.fttail{padding:7px 13px;text-align:center;font-size:10.5px;letter-spacing:2px;color:var(--ink-faint);border-top:1px dashed rgba(120,96,54,.3)}
+.ftsnip b{color:var(--cinnabar);font-weight:700}
+
+/* ── 原卷全文阅读 ───────────────────────────────────── */
+.readrow{margin:12px 0 2px}
+.readfull{
+  appearance:none;cursor:pointer;font-family:"KaiTi","STKaitai",serif;
+  font-size:13.5px;letter-spacing:4px;color:var(--azur-d);
+  border:1px solid rgba(47,93,112,.45);background:rgba(47,93,112,.06);
+  padding:6px 18px;transition:background .2s,color .2s;
+}
+.readfull:hover{background:var(--azur-d);color:#f6efdc}
+.tback{
+  appearance:none;cursor:pointer;font-family:inherit;font-size:12px;letter-spacing:3px;
+  color:var(--ink-faint);background:none;border:1px dashed rgba(120,96,54,.4);
+  padding:4px 12px;margin:2px 0 10px;
+}
+.tback:hover{color:var(--cinnabar-d);border-color:rgba(178,58,46,.5)}
+.tmeta{
+  font-family:"KaiTi",serif;font-size:13px;letter-spacing:3px;color:var(--ochre-d);
+  padding:8px 0 10px;border-bottom:1px solid var(--line);margin-bottom:12px;
+}
+.twrap{max-width:34em}
+.tp{
+  font-family:"KaiTi","STKaitai",serif;font-size:14.5px;line-height:2.15;
+  letter-spacing:1px;color:var(--ink);text-align:justify;
+  margin-bottom:10px;text-indent:0;
+}
+.tk{color:var(--cinnabar-d);font-size:12.5px;letter-spacing:2px;margin-right:2px}
+.tlegend{float:right;font-size:10px;letter-spacing:2px;color:var(--ink-faint);font-family:"FangSong",serif}
+.rpt{
+  width:11px;height:11px;border-radius:50%;
+  background:rgba(245,238,218,.95);
+  box-shadow:inset 0 0 0 2px var(--rc,#2f5d70),0 0 0 1px rgba(60,45,20,.2);
+  transition:transform .18s;
+}
+.rpt:hover{transform:scale(1.45)}
+.tocrow{
+  display:flex;flex-wrap:wrap;gap:5px;align-items:center;
+  padding:8px 0 10px;border-bottom:1px dashed rgba(120,96,54,.3);margin-bottom:12px;
+}
+.tocap{font-size:10px;letter-spacing:3px;color:var(--ink-faint);margin-right:4px}
+.tocz{cursor:pointer;transition:background .18s,color .18s}
+.jschip{cursor:pointer;transition:background .18s,color .18s}
+.jschip:hover{background:rgba(178,58,46,.08);color:var(--cinnabar-d)}
+.star{
+  appearance:none;cursor:pointer;font-family:"KaiTi","STKaitai",serif;
+  font-size:13.5px;letter-spacing:3px;color:var(--ink-faint);margin-left:9px;
+  border:1px solid var(--line);background:rgba(245,238,218,.6);
+  padding:6px 14px;transition:color .2s,border-color .2s;
+}
+.star:hover{color:var(--ochre-d)}
+.star.on{color:var(--ochre-d);border-color:rgba(154,107,63,.55);background:rgba(154,107,63,.08)}
+.bmitem .bmdel{font-style:normal;margin-left:6px;font-size:10px;color:var(--ink-faint);cursor:pointer}
+.bmitem .bmdel:hover{color:var(--cinnabar)}
+.tocz:hover{background:rgba(178,58,46,.08);color:var(--cinnabar-d)}
+.tp.flash{background:rgba(178,58,46,.09);transition:background 1.4s}
+.xl{
+  color:inherit;text-decoration:none;cursor:pointer;
+  border-bottom:1px dotted rgba(178,58,46,.45);
+}
+.xl:hover{color:var(--cinnabar-d)}
+.tbtns{float:right;margin-left:8px}
+.tfsb{
+  appearance:none;cursor:pointer;font-family:inherit;font-size:10.5px;letter-spacing:1px;
+  color:var(--ink-mid);background:rgba(245,238,218,.7);
+  border:1px solid var(--line);padding:1px 7px;margin-left:4px;
+}
+.tfsb:hover{color:var(--cinnabar-d);border-color:rgba(178,58,46,.5)}
+.tp .bad{
+  color:var(--ink-faint);opacity:.55;
+  border-bottom:1px dotted rgba(178,58,46,.4);
+}
+
+/* ── 形势 · 九卷时间轴卷轴 ───────────────────────────── */
+#tl{
+  display:none;position:fixed;left:210px;right:470px;bottom:52px;z-index:22;
+  height:54px;align-items:stretch;
+  transition:right .45s cubic-bezier(.2,.75,.25,1);
+}
+body.nopanel #tl{right:40px}
+body.m-形势 #tl{display:flex}
+#tl .axis{
+  position:absolute;left:8px;right:8px;top:26px;height:1px;
+  background:var(--line);
+}
+#tl .seg{
+  flex:1;position:relative;cursor:pointer;text-align:center;
+  font-family:"KaiTi","STKaitai",serif;
+  color:var(--ink-faint);transition:color .2s;
+}
+/* 标签在轴上方，菱形压轴心，年代在轴下方 —— 三层互不叠压 */
+#tl .seg .nm{position:absolute;left:0;right:0;top:0;font-size:12.5px;letter-spacing:1.5px;line-height:1;white-space:nowrap}
+#tl .seg .tm{position:absolute;left:0;right:0;top:32px;font-size:8.5px;letter-spacing:0;opacity:.8}
+#tl .seg::before{
+  content:"";position:absolute;left:50%;top:22.6px;width:7px;height:7px;
+  transform:translateX(-50%) rotate(45deg);
+  background:var(--silk-3);box-shadow:inset 0 0 0 1.2px var(--ink-faint);
+  transition:background .2s,box-shadow .2s;
+}
+#tl .seg:hover{color:var(--ink)}
+#tl .seg.on{color:var(--cinnabar-d)}
+#tl .seg.on::before{background:var(--cinnabar);box-shadow:inset 0 0 0 1.5px #f6efdc,inset 0 0 0 2.6px var(--cinnabar)}
+
+/* 响应式 */
+@media (max-width:1080px){
+  #tl{left:166px;right:30px;bottom:52px}
+  #tl .axis{top:22px}
+  #tl .seg .tm{display:none}
+  #tl .seg .nm{top:4px;font-size:11px}
+  #tl .seg::before{top:18.6px}
+
+  header{flex-wrap:wrap;gap:8px}
+  nav{order:3;margin-left:0;width:100%;display:flex}
+  nav button{flex:1;min-width:0;padding:7px 6px 6px}
+  nav button b{font-size:14px;letter-spacing:3px}
+  #searchwrap{flex:1 1 160px}
+  .brand p{display:none}
+  #rail{top:158px;width:146px;left:10px;bottom:56px}
+  #panel{width:min(432px,calc(100vw - 20px));right:10px;top:158px;bottom:56px}
+  .north{display:none}
+  footer{left:10px;right:10px;flex-wrap:wrap;gap:8px;padding:6px 10px}
+  footer .right{display:none}
+}
+@media (max-width:640px){
+  #tl{left:132px;bottom:96px;height:34px}
+  #tl .axis{top:18px}
+  #tl .seg::before{top:14.6px;width:6px;height:6px}
+  #tl .seg .nm{top:2px;font-size:10px;letter-spacing:0}
+
+  .brand h1{font-size:19px;letter-spacing:4px}
+  .brand .seal{width:34px;height:34px;font-size:13px}
+  #rail{width:118px}
+  #panel{
+    left:10px;right:10px;top:auto;bottom:58px;width:auto;height:52vh;
+    transform:translateY(130%);transition:transform .4s cubic-bezier(.2,.75,.25,1);
+  }
+  #panel.open{transform:none}
+  #panel .vtitle{width:44px}
+  #panel .vtitle .vname{font-size:24px;letter-spacing:6px}
+  #pbody{padding-bottom:34px}
+  .brand p,#searchwrap .sicon{display:block}
+  nav button i{display:none}
+}
+
+/* ── 打印版式（阅读视图 Ctrl+P）────────────────────── */
+@media print{
+  body{overflow:visible;background:#fff;color:#111}
+  #map,.paper-wash,.grain,#rail,header,footer,.north,#tl,#boot,#sresults,
+  #pclose,.tbtns,.tback,.readrow,.tk::before{display:none!important}
+  #panel{position:static;transform:none;width:100%;max-width:none;
+    border:none;box-shadow:none;background:#fff;display:block}
+  #panel .vtitle{display:none}
+  #pbody{overflow:visible;padding:0;font-size:12pt}
+  .twrap{max-width:none;font-size:12pt!important}
+  .tp{font-size:12pt;line-height:2;color:#111;break-inside:avoid}
+  .tp .bad{color:#666;opacity:1;border-bottom:none}
+  .tmeta{border-bottom:1px solid #999;color:#444}
+  .quote,.hint{border-color:#bbb;background:#fafafa}
+  .zhi{color:#111}
+  .zhi .d{background:#444;color:#fff}
+  a.xl{color:#111;text-decoration:none;border-bottom:none}
+  .hitmark{background:#eee;box-shadow:none;color:#111}
+}
+
+/* 无障碍：减少动效 */
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+
+/* ── 古今对照表 ─────────────────────────────────────── */
+.fywrap{max-height:calc(100vh - 300px);overflow:auto;border:1px solid var(--line)}
+.fytable{width:100%;border-collapse:collapse;font-size:11.5px;letter-spacing:1px}
+.fytable th{
+  position:sticky;top:0;z-index:1;background:var(--silk-2);color:var(--ink-mid);
+  font-family:"KaiTi",serif;font-size:11px;letter-spacing:2px;
+  padding:6px 8px;text-align:left;border-bottom:1px solid var(--line);
+}
+.fytable td{padding:4.5px 8px;border-bottom:1px dashed rgba(120,96,54,.18);color:var(--ink-mid)}
+.fytable tr:not(.sub){cursor:pointer}
+.fytable tbody tr:hover td{background:rgba(47,93,112,.07)}
+.fytable .tn{font-family:"KaiTi",serif;font-size:13px;color:var(--ink)}
+.fytable .tp2{color:var(--ink-faint);white-space:nowrap}
+.fytable td.tf{white-space:nowrap}
+.fytable .tw{color:var(--ochre-d)}
+.fytable .tv{color:var(--ink-faint);font-size:10px}
+.fytable tr.sub td{color:var(--ink-faint);font-size:11px}
+.fytable tr.sub .tn{font-size:12px}
+
+/* 键盘焦点可见性 */
+:focus-visible{outline:2px solid var(--cinnabar);outline-offset:2px}
+button:focus:not(:focus-visible){outline:none}
+
+/* 对照表页签 */
+.tabbar{display:flex;gap:6px;align-items:center;margin:0 0 8px}
+.tabbar .tb{
+  appearance:none;cursor:pointer;font-family:"KaiTi","STKaitai",serif;
+  font-size:13px;letter-spacing:3px;color:var(--ink-mid);
+  border:1px solid var(--line);background:rgba(245,238,218,.7);
+  padding:5px 14px;transition:background .2s,color .2s;
+}
+.tabbar .tb.on{color:#f6efdc;background:var(--azur-d);border-color:var(--azur-d)}
+.tabbar .readfull{padding:5px 14px}

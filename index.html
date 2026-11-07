@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方舆经纬 · 读史方舆纪要</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23b23a2e'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23f6efdc' font-family='KaiTi,serif'%3E方%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
+<link rel="dns-prefetch" href="https://unpkg.com">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=34">
+</head>
+<body class="m-舆图 nopanel">
+
+<div id="map"></div>
+<div class="paper-wash"></div>
+<div class="grain"></div>
+
+<div class="north" id="north">
+  <svg viewBox="0 0 40 40">
+    <circle cx="20" cy="20" r="17" fill="rgba(245,238,218,.75)" stroke="rgba(90,72,44,.45)" stroke-width="1"/>
+    <path d="M20 5 L24 22 L20 19 L16 22 Z" fill="#b23a2e"/>
+    <path d="M20 35 L23 22 L20 24.5 L17 22 Z" fill="#8b8069"/>
+    <text x="20" y="14" text-anchor="middle" class="nn">北</text>
+  </svg>
+</div>
+
+<header>
+  <div class="brand">
+    <div class="seal">方舆</div>
+    <div><h1>方舆经纬</h1><p>读史方舆纪要 · 顾祖禹 · 全书舆图</p></div>
+  </div>
+  <nav id="modes">
+    <button data-m="舆图" class="on"><b>舆　图</b><i>十五省方舆 · 卷十至一二三</i></button>
+    <button data-m="形势"><b>形　势</b><i>历代州域 · 卷一至九</i></button>
+    <button data-m="川渎"><b>川　渎</b><i>山河漕运 · 卷一二四至一三〇</i></button>
+  </nav>
+  <div id="searchwrap">
+    <input id="search" type="text" placeholder="检府·州·县名，如 顺德府 / 山阳县" autocomplete="off">
+    <span class="sicon">⌕</span>
+    <div id="sresults"></div>
+  </div>
+</header>
+
+<aside id="rail">
+  <div class="rt" id="railtitle">十五省纲目<small>府一百九十三</small></div>
+  <div id="raillist"></div>
+</aside>
+
+<section id="panel">
+  <button id="pclose" title="收起">✕</button>
+  <div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div>
+  <div id="pbody"></div>
+</section>
+
+<footer>
+  <span id="modelabel">舆图</span><span class="sep"></span>
+  <span id="modenote">十五布政使司 · 府州县治所见于图</span>
+  <span class="sep"></span><span class="fb" id="bookstat"></span>
+  <div class="right"><span id="tablelink" style="cursor:pointer">古今对照</span><span id="aboutlink" style="cursor:pointer">关于 · 校勘记</span><span>文本 · 国学导航</span><span>底图 · Esri World Physical</span></div>
+</footer>
+
+<div id="tl"></div>
+
+<div id="boot">
+  <div class="bseal">方舆</div>
+  <h2>方舆经纬</h2>
+  <p>读史方舆纪要 · 一百三十卷 · 顾祖禹</p>
+  <p style="letter-spacing:2px;font-size:11px">十五省 · 一百九十三府 · 州县逾千一百 · 皆自原书析出</p>
+  <div class="go">展 卷</div>
+</div>
+
+<!-- 加载链：解析数据 → 配置 → 地图 → 面板/纲目/检索 → 启动 → 模式与深链 -->
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=34" defer></script>
+<script src="js/map.js?v=34" defer></script>
+<script src="js/panels.js?v=34" defer></script>
+<script src="js/rail.js?v=34" defer></script>
+<script src="js/search.js?v=34" defer></script>
+<script src="js/reader.js?v=34" defer></script>
+<script src="js/bookmarks.js?v=34" defer></script>
+<script src="js/fulltext.js?v=34" defer></script>
+<script src="js/app.js?v=34" defer></script>
+<script src="js/modes.js?v=34" defer></script>
+</body>
+</html>
