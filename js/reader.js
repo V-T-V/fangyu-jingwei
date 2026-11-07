@@ -74,6 +74,54 @@ function paraHtml(p, ctxPid){
 }
 /* 阅读字号（会话级记忆） */
 let tfs = 14.5;
+/* ── 朗读（TTS）：自当前视口段落起读，逐段高亮跟随 ── */
+let ttsOn = false, ttsVoice = null;
+function pickVoice(){
+  const vs = speechSynthesis.getVoices();
+  ttsVoice = vs.find(v=>/zh[-_]CN/i.test(v.lang) && /female|Huihui|Yaoyao/i.test(v.name))
+          || vs.find(v=>/^zh/i.test(v.lang)) || null;
+}
+if ("speechSynthesis" in window){
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+}
+function stopTTS(){
+  if(!ttsOn) return;
+  ttsOn = false;
+  try{ speechSynthesis.cancel(); }catch(e){}
+  pbody.querySelectorAll(".speaking").forEach(el=>el.classList.remove("speaking"));
+  const b = document.getElementById("ttsb");
+  if(b) b.textContent = "🔊";
+}
+function startTTS(){
+  if(!("speechSynthesis" in window)) return;
+  stopTTS();
+  const tps = Array.from(pbody.querySelectorAll(".tp"));
+  if(!tps.length) return;
+  const top = pbody.getBoundingClientRect().top;
+  let i0 = tps.findIndex(tp=>{
+    const r = tp.getBoundingClientRect();
+    return r.bottom > top + 40;                      // 首个可见段
+  });
+  if(i0 < 0) i0 = 0;
+  ttsOn = true;
+  document.getElementById("ttsb").textContent = "⏹";
+  const queue = tps.slice(i0);
+  const speak = k=>{
+    if(!ttsOn || k >= queue.length){ stopTTS(); return; }
+    queue.forEach(tp=>tp.classList.remove("speaking"));
+    queue[k].classList.add("speaking");
+    queue[k].scrollIntoView({behavior:"smooth", block:"center"});
+    const u = new SpeechSynthesisUtterance(queue[k].textContent.replace(/□/g, "缺"));
+    if(ttsVoice) u.voice = ttsVoice;
+    u.lang = "zh-CN"; u.rate = 0.95;
+    u.onend = ()=>speak(k+1);
+    u.onerror = ()=>stopTTS();
+    speechSynthesis.speak(u);
+  };
+  speak(0);
+}
+
 /* 定位词：命中处常驻标记并居中滚动（跨标签时退化为段落定位） */
 function jumpInText(q){
   if (!q) return;
@@ -91,6 +139,7 @@ function jumpInText(q){
   }
 }
 function renderText(title, kicker, raw, backFn, ctxPid, toc){
+  stopTTS();
   const short = title.length > 5 ? title.slice(0, 5) : title;
   vset(short, "原卷");
   const paras = raw.split(/\n+/).map(p=>p.trim()).filter(Boolean);
@@ -102,7 +151,7 @@ function renderText(title, kicker, raw, backFn, ctxPid, toc){
     <div class="p-kicker">${kicker}</div>
     <button class="tback" id="tback">⟨ 返回详情</button>
     <div class="tmeta">《${title}》全篇 · ${raw.length.toLocaleString()} 字
-      <span class="tbtns"><button class="tfsb" data-d="-1" title="缩小">A−</button><button class="tfsb" data-d="1" title="放大">A+</button><button class="tfsb" id="tdl" title="存为文本">⤓ 文本</button><button class="tfsb" id="tnight" title="夜读">☾</button></span>
+      <span class="tbtns"><button class="tfsb" data-d="-1" title="缩小">A−</button><button class="tfsb" data-d="1" title="放大">A+</button><button class="tfsb" id="tdl" title="存为文本">⤓ 文本</button><button class="tfsb" id="tnight" title="夜读">☾</button><button class="tfsb" id="ttsb" title="朗读">🔊</button></span>
       <span class="tlegend">淡显句为源本编码损坏 · 地名可点</span></div>
     ${tocHtml}
     <div class="twrap" style="font-size:${tfs}px">${body}</div>`;
@@ -117,6 +166,8 @@ function renderText(title, kicker, raw, backFn, ctxPid, toc){
   try{ nightOn = localStorage.getItem("fynight") === "1"; }catch(e){}
   applyNight(nightOn);
   nb.onclick = ()=>applyNight(!panel.classList.contains("panel-night"));
+  const tb = document.getElementById("ttsb");
+  if (tb) tb.onclick = ()=>{ ttsOn ? stopTTS() : startTTS(); };
   document.getElementById("tdl").onclick = ()=>{
     const blob = new Blob([raw], {type:"text/plain;charset=utf-8"});
     const a = document.createElement("a");

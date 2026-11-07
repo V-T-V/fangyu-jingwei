@@ -620,3 +620,7 @@ button:focus:not(:focus-visible){outline:none}
 #panel.panel-night .p-kicker,#panel.panel-night .p-cap{color:#8d8163}
 #panel.panel-night .p-cap::after{background:rgba(180,160,120,.25)}
 #panel.panel-night .hint{color:#a99d81;border-color:rgba(140,125,95,.4);background:rgba(38,32,24,.55)}
+
+/* 朗读当前段 */
+.tp.speaking{background:rgba(154,107,63,.12);box-shadow:-3px 0 0 var(--ochre);transition:background .3s}
+#panel.panel-night .tp.speaking{background:rgba(217,138,106,.14);box-shadow:-3px 0 0 #d98a6a}

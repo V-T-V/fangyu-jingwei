@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>自动验证 · 朗读</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=42">
+</head>
+<body class="m-舆图 nopanel">
+<div id="map"></div>
+<div class="paper-wash"></div><div class="grain"></div>
+<header><div class="brand"><div class="seal">方舆</div><div><h1>方舆经纬</h1><p>读史方舆纪要 · 顾祖禹 · 全书舆图</p></div></div>
+<nav id="modes">
+  <button data-m="舆图" class="on"><b>舆　图</b></button>
+  <button data-m="形势"><b>形　势</b></button>
+  <button data-m="川渎"><b>川　渎</b></button>
+</nav>
+<div id="searchwrap"><input id="search"><div id="sresults"></div></div></header>
+<aside id="rail"><div class="rt" id="railtitle"></div><div id="raillist"></div></aside>
+<section id="panel"><button id="pclose">✕</button>
+  <div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div>
+  <div id="pbody"></div></section>
+<footer><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<div id="tl"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:460px;white-space:pre-wrap"></pre>
+
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=42" defer></script>
+<script src="js/map.js?v=42" defer></script>
+<script src="js/panels.js?v=42" defer></script>
+<script src="js/rail.js?v=42" defer></script>
+<script src="js/search.js?v=42" defer></script>
+<script src="js/reader.js?v=42" defer></script>
+<script src="js/bookmarks.js?v=42" defer></script>
+<script src="js/fulltext.js?v=42" defer></script>
+<script src="js/app.js?v=42" defer></script>
+<script src="js/modes.js?v=42" defer></script>
+<script defer>
+window.addEventListener("load", () => {
+  const NL = String.fromCharCode(10);
+  const log = [];
+  const done = () => {
+    document.getElementById("testlog").textContent = "TESTLOG" + NL + log.join("; ") + " ENDLOG";
+    document.title = log.every(l => l.includes("PASS")) ? "ALL-PASS" : "HAS-FAIL";
+  };
+  setTimeout(() => {
+    try {
+      const p = FY.provinces.find(x => x.id === "huguang");
+      const u = p.fu.find(x => x.n === "武昌府");
+      openFuText(p, u);
+      setTimeout(() => {
+        // 拦截 speak（无头无真实语音）：断言首句来自武昌府首段
+        const spoken = [];
+        speechSynthesis.speak = function(u2){ spoken.push(u2.text.slice(0, 14)); };  // 桩：不触真引擎（无头无声）
+        document.getElementById("ttsb").click();
+        const early = document.querySelectorAll(".tp.speaking").length;
+        log.push("TTS-HILITE-EARLY n=" + early + (early === 1 ? " PASS" : " FAIL"));
+        setTimeout(() => {
+          const speaking = document.querySelectorAll(".tp.speaking").length;
+          const okCall = spoken.length >= 1 && spoken[0].indexOf("荆州") >= 0;
+          log.push("TTS-CALL first=" + (spoken[0] || "none") + (okCall ? " PASS" : " FAIL"));
+          log.push("TTS-HILITE n=" + speaking + (speaking === 1 ? " PASS" : " FAIL"));
+          log.push("TTS-BTN " + document.getElementById("ttsb").textContent.replace("🔊","SPK").replace("⏹","STOP"));
+          // 停止
+          document.getElementById("ttsb").click();
+          setTimeout(() => {
+            const after = document.querySelectorAll(".tp.speaking").length;
+            log.push("TTS-STOP resid=" + after + " btn=" + document.getElementById("ttsb").textContent + (after === 0 && document.getElementById("ttsb").textContent === "🔊" ? " PASS" : " FAIL"));
+            document.getElementById("pbody").scrollTop = 0;
+            document.getElementById("testlog").style.display = "none";
+            done();
+          }, 300);
+        }, 800);
+      }, 1800);
+    } catch (e) { log.push("ERR " + e); done(); }
+  }, 2200);
+});
+</script>
+</body>
+</html>
