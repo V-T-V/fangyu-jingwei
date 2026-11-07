@@ -46,6 +46,7 @@ window.addEventListener("load", () => {
   };
   setTimeout(() => {
     try {
+      try{ localStorage.removeItem("fynight"); }catch(e){}
       const p = FY.provinces.find(x => x.id === "huguang");
       const u = p.fu.find(x => x.n === "武昌府");
       openFuText(p, u);

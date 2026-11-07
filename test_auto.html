@@ -65,6 +65,8 @@ window.addEventListener("load", () => {
           const paths = Array.from(document.querySelectorAll("#map path"));
           const canal = document.querySelector(".rvlab");
           log.push(`CANAL pts=${r.pts.length} smoothed=${smooth.length} ${r.pts.length === 24 && smooth.length > 90 ? "PASS" : "FAIL"}`);
+          const rc = RIVERS.find(x=>x.key==="漕河");
+          buildRivers("漕河"); openRiver(rc);
           log.push(`RIVER-PANEL vname=${document.getElementById("vname").textContent} ${document.getElementById("vname").textContent === "漕河" ? "PASS" : "FAIL"}`);
           // ③ 终态切回对照表过滤视图（供截图）
           openTable("xian");
