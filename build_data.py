@@ -400,11 +400,20 @@ def main():
     nz = inject_zhou_coords(data)
     print(f"属州坐标注入 {nz}")
     np_, nc_ = derive_county_coords(data)
-    # 名录附郭字段兜底：fg 县 ＝ 府治
+    # 名录附郭兜底：扫描首卷名录行中所有「XX县附郭」（双附郭府如顺天之大兴/宛平）
     n_fg = 0
     for p_ in data["provinces"]:
+        lo = next(l for pid, _n, _x, l, _h in PROVINCES if pid == p_["id"])
+        first_txt = "".join(read(f) for f in vol_files(lo, lo))
+        seats = re.findall(r"([一-鿿]{1,4}县)附郭", first_txt)
         for u_ in p_["fu"]:
-            if u_.get("fg") and u_.get("c") and u_["fg"] not in (u_.get("xianc") or {}):
+            if not u_.get("c"):
+                continue
+            for st in seats:
+                if st in u_["xian"] and st not in (u_.get("xianc") or {}):
+                    u_.setdefault("xianc", {})[st] = list(u_["c"])
+                    n_fg += 1
+            if u_.get("fg") and u_["fg"] not in (u_.get("xianc") or {}):
                 u_.setdefault("xianc", {})[u_["fg"]] = list(u_["c"])
                 n_fg += 1
     print(f"县治推算 {nc_} 条 + 附郭兜底 {n_fg} 条（{np_} 省扫描）")
@@ -558,8 +567,11 @@ def derive_county_coords(data):
         if not rng:
             continue
         paras = []
+        full = ""
         for fn in vol_files(rng.start, rng.stop - 1):
             paras += [l.strip() for l in read(fn).split(chr(10)) if l.strip()]
+            full += read(fn)
+        full = full.replace(chr(10), "").replace("@@@", "")
         anchor = None; anchor_name = ""
         zhou_c = {z["n"]: z["c"] for u in p["fu"] for z in u.get("zx", []) if z.get("c")}
         xianc = {}
@@ -592,6 +604,24 @@ def derive_county_coords(data):
             if 18 < pos[0] < 54 and 73 < pos[1] < 136:
                 if u_ref:
                     u_ref.setdefault("xianc", {})[nm] = pos
+                    n_hit += 1
+        # 兜底二：全文任意位置 县名(在)?(府|州)方位N里（段落锚定漏网者）
+        for u in p["fu"]:
+            for nm in list(u["xian"]):
+                nm_c = nm.split("〔")[0]
+                if not nm_c or nm_c in (u.get("xianc") or {}):
+                    continue
+                m = re.search(re.escape(nm_c) + r"(?:在)?(府|州)" +
+                              r"(东南|东北|西南|西北|东|南|西|北)([一二三四五六七八九十百]+)里",
+                              full.replace("@@@", ""))
+                if not m or not u.get("c"):
+                    continue
+                km = _cn_li(m.group(3)) * KM_PER_LI
+                if not (2 < km < 260):
+                    continue
+                pos = offset_point(u["c"], DIR_DEG[m.group(2)], km)
+                if 18 < pos[0] < 54 and 73 < pos[1] < 136:
+                    u.setdefault("xianc", {})[nm_c] = pos
                     n_hit += 1
         n_prov += 1
     return n_prov, n_hit
