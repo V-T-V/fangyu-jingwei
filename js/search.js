@@ -39,7 +39,9 @@ function goHit(h){
     setTimeout(()=>highlightRail("形势",h.era),0);}
   else if(h.river){setMode("川渎");const r=buildRivers(h.river);openRiver(r);
     setTimeout(()=>highlightRail("川渎",h.river),0);}
-  else{setMode("舆图");const p=FY.provinces.find(x=>x.id===h.pid);
+  else{setMode("舆图");
+    if(h.k==="县" && typeof revealCounty==="function" && revealCounty(h.pid, h.fu, h.t)) return;
+    const p=FY.provinces.find(x=>x.id===h.pid);
     const u=p.fu.find(x=>x.n===h.fu);
     selectProv(h.pid);openFu(p,u);}
 }

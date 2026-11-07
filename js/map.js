@@ -233,3 +233,22 @@ function buildRivers(sel){
 map.on("click",()=>{
   if(mode==="舆图" && selPid) selectProv(null);
 });
+
+/* 检索定位到县治推算点：飞至 + 脉冲环 */
+function revealCounty(pid, fuName, xianName){
+  const p = FY.provinces.find(x=>x.id===pid);
+  if(!p) return false;
+  const u = p.fu.find(x=>x.n===fuName);
+  if(!u || !u.xianc || !u.xianc[xianName]) return false;
+  if(mode!=="舆图") setMode("舆图");
+  selectProv(pid);
+  openFu(p,u);
+  const pos = u.xianc[xianName];
+  setTimeout(()=>{
+    safeFlyTo(pos, 8, {duration:1});
+    const ring = L.circleMarker(pos, {radius:14, weight:2.2, color:"#b23a2e",
+      opacity:.9, fill:false, className:"evring"}).addTo(map);
+    setTimeout(()=>map.removeLayer(ring), 3200);
+  }, 420);
+  return true;
+}

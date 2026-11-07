@@ -57,6 +57,9 @@ window.addEventListener("load", () => {
         const lx = st.xianc && st.xianc["良乡县"];
         const near = lx && Math.abs(lx[0] - 39.74) < 0.05 && Math.abs(lx[1] - 116.19) < 0.05;
         log.push("LIANGXIANG pos=" + (lx ? lx.join(",") : "none") + (near ? " PASS" : " FAIL"));
+        // revealCounty：飞至良乡县点
+        const ok = revealCounty("beizhi", "顺天府", "良乡县");
+        log.push("REVEAL called=" + ok + (ok ? " PASS" : " FAIL"));
         // 定格：飞顺天府一带
         map.setView([39.9, 116.6], 8);
         setTimeout(() => {
