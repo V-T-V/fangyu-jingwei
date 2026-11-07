@@ -81,7 +81,7 @@ def vol_files(lo, hi):
             out.append(os.path.basename(g[0]))
     return out
 
-NAME_RE = re.compile(r"[\u4e00-\u9fff]{1,5}?(?:府|州|县|卫)")
+NAME_RE = re.compile(r"[一-鿿]{1,5}?(?:府|州|县|卫)")
 
 def parse_county_block(block):
     """解析 ◇府 后的州县名录块 → 附郭县, 州[{名,县[]}], 县[名]
@@ -107,7 +107,7 @@ def parse_county_block(block):
                 cur_zhou = None
                 break
             # 州行: "通州属县四" / "遵化州新改" / "保安州今改属山西"
-            mz = re.match(r"^([\u4e00-\u9fff]{1,4}州)(.*)$", cell)
+            mz = re.match(r"^([一-鿿]{1,4}州)(.*)$", cell)
             if mz and (not mz.group(2) or re.match(r"^(属县[一二三四五六七八九十]+|新改|今废|今领县[一二三四五六七八九十]+|今)", mz.group(2))):
                 names = [mz.group(1)]
                 if mz.group(1) == "开州广顺州":     # 源文粘连：开州 + 广顺州
@@ -121,7 +121,7 @@ def parse_county_block(block):
                 cur_zhou = zhou[-1] if zhou else None
                 continue
             # 县词条: "XX县(附郭|今废|...)?"（含"永清县东安县"粘连）
-            for m in re.finditer(r"([\u4e00-\u9fff]{1,4})县(附郭|今废|新改|今省|改属)?", cell):
+            for m in re.finditer(r"([一-鿿]{1,4})县(附郭|今废|新改|今省|改属)?", cell):
                 raw, tag = m.group(1), m.group(2) or ""
                 raw = re.sub(r"^(亦见|俱在|即|亦|见|在|及|与|又|其|俱|自)", "", raw)
                 if not raw or len(raw) > 3 or re.search(r"[府州卫司]", raw):
@@ -399,6 +399,8 @@ def main():
     }
     nz = inject_zhou_coords(data)
     print(f"属州坐标注入 {nz}")
+    np_, nc_ = derive_county_coords(data)
+    print(f"县治推算 {nc_} 条（{np_} 省扫描）")
     total_fu = sum(p["stats"]["fu"] for p in provinces)
     total_co = sum(p["stats"]["co"] for p in provinces)
     print(f"\n十五省府条目共 {total_fu}，配坐标 {total_co} ({total_co*100//total_fu}%)")
@@ -502,6 +504,84 @@ def inject_zhou_coords(data):
                 if c:
                     z["c"] = [c[0], c[1]]; z["now"] = c[2]; n += 1
     return n
+
+
+
+
+# ── 县治推算：正文段首"县名府方位N里" → 以府/州治为锚三角化 ──────────────
+DIR_DEG = {"东": 90, "南": 180, "西": 270, "北": 0,
+           "东南": 135, "西南": 225, "东北": 45, "西北": 315}
+KM_PER_LI = 0.576 * 0.62          # 明里→公里 × 驿路/直线标定（audit.py 中位 0.62）
+
+def _cn_li(s_):
+    tok = {"一":1,"二":2,"三":3,"四":4,"五":5,"六":6,"七":7,"八":8,"九":9}
+    total, num = 0, 0
+    i = 0
+    while i < len(s_):
+        ch = s_[i]
+        if ch in tok:
+            num = tok[ch]
+            if i+1 < len(s_) and s_[i+1] == "百":
+                total += num*100; num = 0; i += 2; continue
+            i += 1
+        elif ch == "百":
+            total += 100; i += 1
+        elif ch == "十":
+            total += (num or 1)*10; num = 0; i += 1
+        else:
+            i += 1
+    return total + num
+
+def offset_point(anchor, bearing_deg, km):
+    import math
+    lat0, lng0 = anchor
+    br = math.radians(bearing_deg)
+    dlat = km * math.cos(br) / 111.0
+    dlng = km * math.sin(br) / (111.0 * math.cos(math.radians(lat0)))
+    return [round(lat0 + dlat, 3), round(lng0 + dlng, 3)]
+
+def derive_county_coords(data):
+    """逐省扫描卷全文段落：段首"县名(府|州)方位N里" → 推算坐标存 fu['xianc']"""
+    n_prov, n_hit = 0, 0
+    for p in data["provinces"]:
+        rng = None
+        for pid, _pn, _x, lo, hi in PROVINCES:
+            if pid == p["id"]:
+                rng = range(lo, hi+1); break
+        if not rng:
+            continue
+        paras = []
+        for fn in vol_files(rng.start, rng.stop - 1):
+            paras += [l.strip() for l in read(fn).split(chr(10)) if l.strip()]
+        anchor = None; anchor_name = ""
+        zhou_c = {z["n"]: z["c"] for u in p["fu"] for z in u.get("zx", []) if z.get("c")}
+        xianc = {}
+        for para in paras:
+            mz = re.match(r"^([一-鿿]{1,4}州)", para)
+            if mz and mz.group(1) in zhou_c:
+                anchor = zhou_c[mz.group(1)]; anchor_name = mz.group(1)
+                continue
+            m = re.match(r"^([一-鿿]{1,4}县)(?:〔[^〕]*〕)?(府|州)(东|南|西|北|东南|东北|西南|西北)([一二三四五六七八九十百]+)里", para)
+            if not m:
+                continue
+            nm, base, dr, li = m.group(1), m.group(2), m.group(3), m.group(4)
+            if base == "府":
+                anchor = None; anchor_name = ""      # 县段以府为锚
+            u_ref = next((u for u in p["fu"] if nm in u["xian"] or
+                          any(nm in z.get("x", []) for z in u.get("zx", []))), None)
+            a = anchor if (base == "州" and anchor) else (u_ref["c"] if u_ref and u_ref.get("c") else None)
+            if not a:
+                continue
+            km = _cn_li(li) * KM_PER_LI
+            if not (2 < km < 260):
+                continue
+            pos = offset_point(a, DIR_DEG[dr], km)
+            if 18 < pos[0] < 54 and 73 < pos[1] < 136:
+                if u_ref:
+                    u_ref.setdefault("xianc", {})[nm] = pos
+                    n_hit += 1
+        n_prov += 1
+    return n_prov, n_hit
 
 
 if __name__ == "__main__":

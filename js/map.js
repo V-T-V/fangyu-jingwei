@@ -81,12 +81,26 @@ function buildFu(){
         zm.on("click",()=>openFu(p,u));
         fuMarkers[p.id].push(zm);
       });
+      // 县治推算点（zoom≥7 显现，点击入其府）
+      const xc = u.xianc || {};
+      Object.keys(xc).forEach(nm=>{
+        const xi = L.divIcon({className:"", iconSize:[5,5],
+          html:`<div class="xseal" style="--pc:${PCOLORS[p.id]||"#2f5d70"}" title="${nm}"></div>`});
+        const xm = L.marker(xc[nm],{icon:xi, zIndexOffset:-400}).addTo(fuLayer);
+        xm._pid=p.id;
+        xm.bindTooltip(`<b style="font-family:KaiTi,serif;font-size:12px;letter-spacing:2px">${nm}</b><br>
+          <span style="font-size:9.5px;letter-spacing:1px;color:#8b8069">隶 ${u.n} · 推算位置</span>`,
+          {direction:"top",offset:[0,-3],opacity:.9,className:"ftip"});
+        xm.on("click",()=>openFu(p,u));
+        fuMarkers[p.id].push(xm);
+      });
     });
   });
 }
 /* 属州层 zoom 门控 */
 map.on("zoomend",()=>{
   document.body.classList.toggle("z6", map.getZoom()>=6);
+  document.body.classList.toggle("z7", map.getZoom()>=7);
 });
 
 /* ── 形势模式 ── */

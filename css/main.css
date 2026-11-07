@@ -624,3 +624,14 @@ button:focus:not(:focus-visible){outline:none}
 /* 朗读当前段 */
 .tp.speaking{background:rgba(154,107,63,.12);box-shadow:-3px 0 0 var(--ochre);transition:background .3s}
 #panel.panel-night .tp.speaking{background:rgba(217,138,106,.14);box-shadow:-3px 0 0 #d98a6a}
+
+/* 县治推算点：zoom≥7 显现（小实心点） */
+.xseal{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--pc,#2f5d70);opacity:.55;
+  box-shadow:0 0 0 1px rgba(245,238,218,.8);
+  opacity:0;pointer-events:none;transition:opacity .35s;
+}
+body.z7 .xseal{opacity:.62;pointer-events:auto}
+body.z7.selprov .xseal.dim{opacity:.08}
+body.z7 .leaflet-marker-icon .xseal:hover{opacity:1;transform:scale(1.6)}

@@ -77,12 +77,20 @@ for p in data["provinces"]:
             missing.append(f'{p["name"]}.{f["n"]}')
 check(not missing, f"各府均有全文（缺 {len(missing)}：{missing[:6]}）", warn=True)
 
-print("── 5. 卷首七篇")
+print("── 5. 县治推算")
+n_xc = sum(len(u.get("xianc", {})) for p_ in data["provinces"] for u in p_["fu"])
+bad_xc = [nm for p_ in data["provinces"] for u in p_["fu"]
+          for nm, pos in (u.get("xianc") or {}).items()
+          if not (18 < pos[0] < 54 and 73 < pos[1] < 136)]
+check(n_xc >= 700, f"县治推算 ≥700（实得 {n_xc}）")
+check(not bad_xc, f"县点全落域（越界 {len(bad_xc)}）")
+
+print("── 6. 卷首七篇")
 js = open("data/text/juanshou.js", encoding="utf-8").read()
 J = json.loads(js[js.find("=") + 1: js.rfind(";")])
 check(len(J) == 7 and all(len(it["x"]) > 300 for it in J), f"卷首 7 篇齐备（实得 {len(J)}）")
 
-print("── 6. JS 语法")
+print("── 7. JS 语法")
 bad_js = []
 for f in sorted(glob.glob("js/*.js")):
     r = subprocess.run(["node", "--check", f], capture_output=True)

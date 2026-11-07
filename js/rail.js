@@ -63,6 +63,7 @@ function selectProv(pid){
       if(el){
         const f=el.querySelector(".fuseal"); if(f)f.classList.toggle("dim",!!pid&&id!==pid);
         const z=el.querySelector(".zseal"); if(z)z.classList.toggle("dim",!!pid&&id!==pid);
+        const x=el.querySelector(".xseal"); if(x)x.classList.toggle("dim",!!pid&&id!==pid);
       }
     });
   }
