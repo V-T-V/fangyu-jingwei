@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>自动验证 · 事件定位</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=39">
+</head>
+<body class="m-舆图 nopanel">
+<div id="map"></div>
+<div class="paper-wash"></div><div class="grain"></div>
+<header><div class="brand"><div class="seal">方舆</div><div><h1>方舆经纬</h1><p>自动验证页</p></div></div>
+<nav id="modes">
+  <button data-m="舆图" class="on"><b>舆　图</b></button>
+  <button data-m="形势"><b>形　势</b></button>
+  <button data-m="川渎"><b>川　渎</b></button>
+</nav>
+<div id="searchwrap"><input id="search"><div id="sresults"></div></div></header>
+<aside id="rail"><div class="rt" id="railtitle"></div><div id="raillist"></div></aside>
+<section id="panel"><button id="pclose">✕</button>
+  <div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div>
+  <div id="pbody"></div></section>
+<footer><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<div id="tl"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:460px;white-space:pre-wrap"></pre>
+
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=39" defer></script>
+<script src="js/map.js?v=39" defer></script>
+<script src="js/panels.js?v=39" defer></script>
+<script src="js/rail.js?v=39" defer></script>
+<script src="js/search.js?v=39" defer></script>
+<script src="js/reader.js?v=39" defer></script>
+<script src="js/bookmarks.js?v=39" defer></script>
+<script src="js/fulltext.js?v=39" defer></script>
+<script src="js/app.js?v=39" defer></script>
+<script src="js/modes.js?v=39" defer></script>
+<script defer>
+window.addEventListener("error", (e) => {
+  const el = document.getElementById("testlog");
+  if (el && !el.textContent.startsWith("TESTLOG"))
+    el.textContent = "PAGE-ERR " + (e.message || e.error);
+});
+window.addEventListener("load", () => {
+  const NL = String.fromCharCode(10);
+  const log = [];
+  const done = () => {
+    document.getElementById("testlog").textContent = "TESTLOG" + NL + log.join("; ") + " ENDLOG";
+    document.title = log.every(l => l.includes("PASS")) ? "ALL-PASS" : "HAS-FAIL";
+  };
+  document.getElementById("testlog").textContent = "LOADED";
+  setTimeout(() => {
+    try {
+      // 深链两汉（era=1），点"赤壁鏖兵"事件 → 应飞往 ~29.7,113.6
+      buildEra(1); openEra(1); highlightRail("形势", 1);
+      document.body.className = "m-形势 nopanel";
+      const evs = Array.from(document.querySelectorAll(".evg"));
+      const chibi = evs.find(e => e.innerText.includes("赤壁"));
+      const origFly = map.flyTo.bind(map);
+      let flyTarget = null;
+      map.flyTo = function(c, z, o){ flyTarget = c; return origFly(c, z, o); };
+      chibi.click();
+      setTimeout(() => {
+        const ft = flyTarget ? [flyTarget.lat !== undefined ? flyTarget.lat : flyTarget[0],
+                                flyTarget.lng !== undefined ? flyTarget.lng : flyTarget[1]] : null;
+        const near = ft && Math.abs(ft[0] - 29.72) < 0.01 && Math.abs(ft[1] - 113.62) < 0.01;
+        log.push("EVENT-FLY chibi target=" + (ft ? ft[0].toFixed(2) + "," + ft[1].toFixed(2) : "none") + (near ? " PASS" : " FAIL"));
+        const located = ERAS.reduce((s, e) => s + e.evs.filter(v => v[2]).length, 0);
+        log.push("EVENT-COUNT located=" + located + (located >= 25 ? " PASS" : " FAIL"));
+        done();
+        // 定格姿态：滚到大事区、隐去测试浮层（截图用）
+        const evEl = document.querySelector(".evg");
+        evEl.scrollIntoView({block:"center"});
+        document.getElementById("testlog").style.display = "none";
+        document.querySelector(".brand p").textContent = "读史方舆纪要 · 顾祖禹 · 全书舆图";
+        // 静态涟漪环（虚拟时间快进会蒸发动画环，此处补定格环）
+        L.circleMarker([29.72,113.62], {radius:18, weight:2.4, color:"#b23a2e", opacity:.9, fill:false}).addTo(eraLayer);
+        L.circleMarker([29.72,113.62], {radius:9, weight:1.6, color:"#b23a2e", opacity:.6, fill:false}).addTo(eraLayer);
+      }, 2600);
+    } catch (e) { log.push("ERR " + e); done(); }
+  }, 2500);
+});
+</script>
+</body>
+</html>

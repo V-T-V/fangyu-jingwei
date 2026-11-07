@@ -580,3 +580,10 @@ button:focus:not(:focus-visible){outline:none}
 }
 .tabbar .tb.on{color:#f6efdc;background:var(--azur-d);border-color:var(--azur-d)}
 .tabbar .readfull{padding:5px 14px}
+
+/* 形势事件定位行 */
+.evg{cursor:pointer}
+.evg:hover .t{color:var(--cinnabar-d)}
+.evgo{font-size:10px;color:var(--cinnabar);margin-left:2px}
+.evring{animation:evring 3s ease forwards}
+@keyframes evring{from{opacity:1}70%{opacity:.9}to{opacity:0}}

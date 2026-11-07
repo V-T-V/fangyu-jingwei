@@ -158,10 +158,19 @@ function openEra(ei){
     <div class="p-cap">纪要原文</div>
     <div class="quote">${xs.ex}……</div>
     <div class="p-cap">大事</div>
-    ${e.evs.map(v=>`<div class="ev"><span class="y">${v[0]}</span><span class="t">${v[1]}</span></div>`).join("")}
+    ${e.evs.map((v,i)=>`<div class="ev${v[2]?' evg':''}" data-i="${i}"><span class="y">${v[0]}</span><span class="t">${v[1]}${v[2]?' <span class="evgo">➤</span>':''}</span></div>`).join("")}
     <div class="readrow"><button class="readfull" data-et="1">读本卷全文 ➤</button></div>`;
   const eb = pbody.querySelector("[data-et]");
   if (eb) eb.onclick = ()=>openEraText(ei);
+  pbody.querySelectorAll(".evg").forEach(el=>{
+    el.onclick = ()=>{
+      const v = ERAS[ei].evs[+el.dataset.i];
+      safeFlyTo(v[2], 6, {duration:1.1});
+      const ring = L.circleMarker(v[2], {radius:16, weight:2.4, color:"#b23a2e",
+        opacity:.9, fill:false, className:"evring"}).addTo(eraLayer);
+      setTimeout(()=>eraLayer.removeLayer(ring), 3200);
+    };
+  });
   if (typeof tlSync === "function") tlSync(ei);
   syncHash("形势", "era=" + ei);
   showPanel();
