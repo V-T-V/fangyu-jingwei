@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>自动验证 · 方舆经纬</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=38">
+</head>
+<body class="m-舆图 nopanel">
+<div id="map"></div>
+<div class="paper-wash"></div><div class="grain"></div>
+<header><div class="brand"><div class="seal">方舆</div><div><h1>方舆经纬</h1><p>自动验证页</p></div></div>
+<nav id="modes">
+  <button data-m="舆图" class="on"><b>舆　图</b></button>
+  <button data-m="形势"><b>形　势</b></button>
+  <button data-m="川渎"><b>川　渎</b></button>
+</nav>
+<div id="searchwrap"><input id="search"><div id="sresults"></div></div></header>
+<aside id="rail"><div class="rt" id="railtitle"></div><div id="raillist"></div></aside>
+<section id="panel"><button id="pclose">✕</button>
+  <div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div>
+  <div id="pbody"></div></section>
+<footer><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<div id="tl"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:420px;white-space:pre-wrap"></pre>
+
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=38" defer></script>
+<script src="js/map.js?v=38" defer></script>
+<script src="js/panels.js?v=38" defer></script>
+<script src="js/rail.js?v=38" defer></script>
+<script src="js/search.js?v=38" defer></script>
+<script src="js/reader.js?v=38" defer></script>
+<script src="js/bookmarks.js?v=38" defer></script>
+<script src="js/fulltext.js?v=38" defer></script>
+<script src="js/app.js?v=38" defer></script>
+<script src="js/modes.js?v=38" defer></script>
+<script defer>
+window.addEventListener("load", () => {
+  const log = [];
+  const done = () => {
+    document.getElementById("testlog").textContent =
+      "TESTLOG\n" + log.join("\n") + "\nENDLOG";
+    document.title = log.every(l => l.includes("PASS")) ? "ALL-PASS" : "HAS-FAIL";
+  };
+  setTimeout(() => {
+    try {
+      // ① 表内筛选（县页签，过滤"桃源"）
+      openTable("xian");
+      const f = document.getElementById("tfilter");
+      f.value = "桃源";
+      f.dispatchEvent(new Event("input"));
+      const vis = Array.from(document.querySelectorAll(".fytable tbody tr"))
+        .filter(r => r.style.display !== "none");
+      const cnt = document.getElementById("tfcount").innerText;
+      log.push(`FILTER rows=${vis.length} count="${cnt}" ${vis.length >= 2 && vis.length <= 6 && cnt.includes("/") ? "PASS" : "FAIL"}`);
+      log.push(`FILTER-SAMPLE ${vis.slice(0, 3).map(r => r.innerText.split("\n")[0]).join(",")}`);
+      // ② 漕河 24 点 + Chaikin 平滑生效（曲线点数 > 控制点数）
+      setMode("川渎");
+      setTimeout(() => {
+        try {
+          const r = RIVERS.find(x => x.key === "漕河");
+          const smooth = chaikin(r.pts.map(p => [p[0], p[1]]), 2);
+          const paths = Array.from(document.querySelectorAll("#map path"));
+          const canal = document.querySelector(".rvlab");
+          log.push(`CANAL pts=${r.pts.length} smoothed=${smooth.length} ${r.pts.length === 24 && smooth.length > 90 ? "PASS" : "FAIL"}`);
+          log.push(`RIVER-PANEL vname=${document.getElementById("vname").textContent} ${document.getElementById("vname").textContent === "漕河" ? "PASS" : "FAIL"}`);
+          // ③ 终态切回对照表过滤视图（供截图）
+          openTable("xian");
+          const f2 = document.getElementById("tfilter");
+          f2.value = "桃源";
+          f2.dispatchEvent(new Event("input"));
+          log.push("FINAL-VIEW table-filter");
+          done();
+        } catch (e) { log.push("CANAL-ERR " + e); done(); }
+      }, 2500);
+    } catch (e) { log.push("FILTER-ERR " + e); done(); }
+  }, 2500);
+});
+</script>
+</body>
+</html>
