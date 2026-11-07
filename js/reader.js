@@ -102,11 +102,21 @@ function renderText(title, kicker, raw, backFn, ctxPid, toc){
     <div class="p-kicker">${kicker}</div>
     <button class="tback" id="tback">⟨ 返回详情</button>
     <div class="tmeta">《${title}》全篇 · ${raw.length.toLocaleString()} 字
-      <span class="tbtns"><button class="tfsb" data-d="-1" title="缩小">A−</button><button class="tfsb" data-d="1" title="放大">A+</button><button class="tfsb" id="tdl" title="存为文本">⤓ 文本</button></span>
+      <span class="tbtns"><button class="tfsb" data-d="-1" title="缩小">A−</button><button class="tfsb" data-d="1" title="放大">A+</button><button class="tfsb" id="tdl" title="存为文本">⤓ 文本</button><button class="tfsb" id="tnight" title="夜读">☾</button></span>
       <span class="tlegend">淡显句为源本编码损坏 · 地名可点</span></div>
     ${tocHtml}
     <div class="twrap" style="font-size:${tfs}px">${body}</div>`;
   document.getElementById("tback").onclick = backFn;
+  const nb = document.getElementById("tnight");
+  const applyNight = on => {
+    panel.classList.toggle("panel-night", on);
+    nb.textContent = on ? "☀" : "☾";
+    try{ localStorage.setItem("fynight", on ? "1" : "0"); }catch(e){}
+  };
+  let nightOn = false;
+  try{ nightOn = localStorage.getItem("fynight") === "1"; }catch(e){}
+  applyNight(nightOn);
+  nb.onclick = ()=>applyNight(!panel.classList.contains("panel-night"));
   document.getElementById("tdl").onclick = ()=>{
     const blob = new Blob([raw], {type:"text/plain;charset=utf-8"});
     const a = document.createElement("a");
