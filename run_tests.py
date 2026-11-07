@@ -6,15 +6,18 @@ FAIL 行逐条列出；退出码 0=全过 / 1=有失败。
 """
 import re, subprocess, sys, tempfile, os
 
-EDGE = None
-for p in [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-          r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-          r"C:\Program Files\Google\Chrome\Application\chrome.exe"]:
-    if os.path.exists(p):
-        EDGE = p
-        break
+CANDS = [
+    os.environ.get("FY_BROWSER", ""),                      # 显式指定优先
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    "/usr/bin/google-chrome", "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",                            # CI (ubuntu)
+]
+EDGE = next((c for c in CANDS if c and os.path.exists(c)), None)
 if not EDGE:
-    print("✗ 未找到 Edge/Chrome"); sys.exit(1)
+    print("✗ 未找到浏览器（可用环境变量 FY_BROWSER 指定）"); sys.exit(1)
+print("浏览器:", EDGE)
 
 PAGES = ["test_auto.html", "test_filter.html", "test_events.html",
          "test_night.html", "test_tts.html"]
@@ -28,7 +31,7 @@ for page in PAGES:
         [EDGE, "--headless=new", "--disable-gpu", "--no-first-run",
          "--user-data-dir=" + prof, "--virtual-time-budget=16000",
          "--dump-dom", BASE + page],
-        capture_output=True, timeout=90)
+        capture_output=True, timeout=120)
     html = r.stdout.decode("utf-8", errors="replace")
     m = re.search(r'id="testlog"[^>]*>([^<]*)<', html)
     if not m or "TESTLOG" not in (m.group(1) or ""):

@@ -1,0 +1,27 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 装依赖与浏览器
+        run: |
+          python -m pip install --quiet requests beautifulsoup4
+          sudo apt-get update -qq && sudo apt-get install -y -qq chromium-browser || true
+          which chromium-browser || which chromium || true
+      - name: 数据完整性 verify.py
+        run: python verify.py
+      - name: 起本地服务
+        run: |
+          python -m http.server 8613 --bind 127.0.0.1 &
+          sleep 2
+          curl -sf http://127.0.0.1:8613/index.html -o /dev/null && echo server-up
+      - name: 无头回归 run_tests.py
+        env:
+          FY_BROWSER: /usr/bin/chromium-browser
+        run: python run_tests.py
