@@ -229,6 +229,33 @@ function buildRivers(sel){
   return r;
 }
 
+/* 量距：shift+点击两点 → 直线(km) + 折合明里（0.62 驿路系数标定） */
+let measurePts = [];
+map.on("click", e=>{
+  if(!e.originalEvent.shiftKey) return;
+  measurePts.push([e.latlng.lat, e.latlng.lng]);
+  if (measurePts.length === 2){
+    const [a, b] = measurePts;
+    const R = 6371;
+    const la1 = a[0]*Math.PI/180, la2 = b[0]*Math.PI/180;
+    const dLa = (b[0]-a[0])*Math.PI/180, dLo = (b[1]-a[1])*Math.PI/180;
+    const h = Math.sin(dLa/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLo/2)**2;
+    const km = 2*R*Math.asin(Math.sqrt(h));
+    const mingLi = Math.round(km / 0.357);       // 明里（含驿路系数）
+    const line = L.polyline([a,b], {color:"#b23a2e", weight:2, dashArray:"4 6",
+      opacity:.8, interactive:false}).addTo(map);
+    const mid = [(a[0]+b[0])/2, (a[1]+b[1])/2];
+    const label = L.marker(mid, {icon: L.divIcon({className:"", iconSize:[120,36],
+      html: `<div style="background:rgba(245,238,218,.95);border:1px solid #b23a2e;
+             padding:4px 10px;font:12px/1.5 KaiTi,serif;letter-spacing:1px;color:#2e2921;
+             white-space:nowrap;text-align:center">
+        ${km.toFixed(0)} 公里<br>折合明里 <b style="color:#b23a2e">${mingLi}</b> 里</div>`}),
+      interactive:false, zIndexOffset:1000}).addTo(map);
+    setTimeout(()=>{ map.removeLayer(line); map.removeLayer(label); measurePts=[]; }, 6000);
+    measurePts = [];
+  }
+});
+
 /* 舆图模式：点地图空白处取消省选 */
 map.on("click",()=>{
   if(mode==="舆图" && selPid) selectProv(null);
