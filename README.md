@@ -7,8 +7,8 @@
 双击 `启动方舆经纬.bat`（起本地服务并自动开页），或直接双击 `index.html`（底图瓦片需联网）。或本地服务：
 
 ```
-python -m http.server 8612
-# http://127.0.0.1:8612/index.html
+python -m http.server 8613
+# http://127.0.0.1:8613/index.html
 ```
 
 深链 `#search=坚壁清野` 可直达一次检索（填入并展开结果）。
