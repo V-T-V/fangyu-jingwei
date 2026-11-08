@@ -596,11 +596,11 @@ def derive_county_coords(data):
             if mz and mz.group(1) in zhou_c:
                 anchor = zhou_c[mz.group(1)]; anchor_name = mz.group(1)
                 continue
-            m = re.match(r"^([一-鿿]{1,4}县)(?:〔[^〕]*〕)?(?:在)?(府|州|郭)(东|南|西|北|东南|东北|西南|西北)([一二三四五六七八九十百]+)里", para)
+            m = re.match(r"^([一-鿿]{1,4}县)(?:〔[^〕]*〕)?(?:在)?(府城?|州城?|郭)(东|南|西|北|东南|东北|西南|西北)([一二三四五六七八九十百]+)里", para)
             if not m:
                 continue
             nm, base, dr, li = m.group(1), m.group(2), m.group(3), m.group(4)
-            if base in ("府", "郭"):
+            if base.startswith("府") or base == "郭":
                 anchor = None; anchor_name = ""      # 县段以府为锚
             u_ref = next((u for u in p["fu"] if nm in u["xian"] or
                           any(nm in z.get("x", []) for z in u.get("zx", []))), None)
@@ -627,7 +627,7 @@ def derive_county_coords(data):
                 nm_c = nm.split("〔")[0]
                 if not nm_c or nm_c in (u.get("xianc") or {}):
                     continue
-                m = re.search(re.escape(nm_c) + r"(?:在)?(府|州)" +
+                m = re.search(re.escape(nm_c) + r"(?:在)?(府城?|州城?)" +
                               r"(东南|东北|西南|西北|东|南|西|北)([一二三四五六七八九十百]+)里",
                               full.replace("@@@", ""))
                 if not m or not u.get("c"):
