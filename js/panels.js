@@ -246,7 +246,8 @@ function openTable(level){
     <div class="tabbar">
       <button class="tb ${isFu?"on":""}" data-l="fu">府州 ${isFu?rows.length:""}</button>
       <button class="tb ${!isFu?"on":""}" data-l="xian">县 ${!isFu?rows.length:""}</button>
-      <button class="readfull" id="csvdl" style="margin-left:auto">⤓ CSV</button>
+      <button class="readfull" id="geojsondl" style="margin-left:auto" title="全部治所点位（府/州/县）">⤓ GeoJSON</button>
+      <button class="readfull" id="csvdl">⤓ CSV</button>
     </div>
     <input id="tfilter" type="text" placeholder="表内筛选：县名 / 省名 / 隶属…" autocomplete="off">
     <div class="tfcount" id="tfcount">${rows.length} 行</div>
@@ -275,6 +276,28 @@ function openTable(level){
     if(mode!=="舆图") setMode("舆图");
     selectProv(p.id); openFu(p,u);
   });
+  document.getElementById("geojsondl").onclick = ()=>{
+    const feats = [];
+    FY.provinces.forEach(p=>p.fu.forEach(u=>{
+      if (u.c) feats.push({type:"Feature",
+        geometry:{type:"Point",coordinates:[u.c[1], u.c[0]]},
+        properties:{名:u.n, 类:u.n.endsWith("卫")?"卫":(u.n.endsWith("州")?"直隶州":"府"),
+          省:p.name, 附郭:u.fg||"", 今地:u.now||"", 起始卷:p.vols[0], 依据:"整编"}});
+      (u.zx||[]).forEach(z=>{ if(z.c) feats.push({type:"Feature",
+        geometry:{type:"Point",coordinates:[z.c[1], z.c[0]]},
+        properties:{名:z.n, 类:"属州", 省:p.name, 隶:u.n, 今地:z.now||"", 起始卷:p.vols[0], 依据:"整编"}}); });
+      const xc = u.xianc || {};
+      Object.keys(xc).forEach(nm=>feats.push({type:"Feature",
+        geometry:{type:"Point",coordinates:[xc[nm][1], xc[nm][0]]},
+        properties:{名:nm, 类:"县", 省:p.name, 隶:u.n, 今地:"", 起始卷:p.vols[0], 依据:"推算"}}));
+    }));
+    const gj = JSON.stringify({type:"FeatureCollection", features:feats});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([gj], {type:"application/geo+json"}));
+    a.download = "方舆经纬-治所点位.geojson";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  };
   document.getElementById("csvdl").onclick = ()=>{
     const NL = String.fromCharCode(10);
     const BOM = String.fromCharCode(0xFEFF);

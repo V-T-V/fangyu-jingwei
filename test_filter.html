@@ -48,7 +48,16 @@ window.addEventListener("load", () => {
       .filter(r => r.style.display !== "none");
     log.push("FILTER rows=" + vis.length + " count=" + document.getElementById("tfcount").innerText);
     document.getElementById("testlog").textContent = "TESTLOG" + String.fromCharCode(10) + log.join(";") + " ENDLOG";
-    document.title = (vis.length >= 2 && vis.length <= 6) ? "ALL-PASS" : "HAS-FAIL";
+    // GeoJSON 导出特征数断言（直接调内部逻辑重算）
+    var feats = 0;
+    FY.provinces.forEach(function(p){p.fu.forEach(function(u){
+      if (u.c) feats++;
+      (u.zx||[]).forEach(function(z){ if(z.c) feats++; });
+      feats += Object.keys(u.xianc || {}).length;
+    });});
+    log.push("GEOJSON feats=" + feats + (feats >= 1400 && feats <= 1500 ? " PASS" : " FAIL"));
+    document.getElementById("testlog").textContent = "TESTLOG" + String.fromCharCode(10) + log.join(";") + " ENDLOG";
+    document.title = (vis.length >= 2 && vis.length <= 6 && feats >= 1400) ? "ALL-PASS" : "HAS-FAIL";
   }, 2500);
 });
 </script>
