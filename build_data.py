@@ -133,6 +133,22 @@ def parse_county_block(block):
                     if tag == "附郭" and fuguoo is None:
                         fuguoo = nm
                     bucket.append(entry)
+    # 粘连伪名拆分：「滕县峄县」→ 滕县/峄县；剔「属县」类残渣
+    def _split(bucket):
+        out = []
+        for e in bucket:
+            base = e.split("〔")[0]
+            m = re.match(r"^([一-鿿]{1,3}县)([一-鿿]{1,3}县)$", base)
+            tagpart = e[len(base):]
+            if m and m.group(1) not in ("属县", "县") and m.group(2) not in ("属县",):
+                if m.group(1) not in out: out.append(m.group(1))
+                if m.group(2) not in out: out.append(m.group(2))
+            elif base not in ("属县", "今领", "县"):
+                out.append(e if tagpart else base)
+        return out
+    xian = _split(xian)
+    for z in zhou:
+        z["x"] = _split(z["x"])
     return fuguoo, zhou, xian
 
 def parse_province(pid, pname, xu_file, lo, hi):
