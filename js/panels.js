@@ -205,9 +205,10 @@ function openAbout(){
       <div class="st"><b>${ST.f}</b><span>府级</span></div>
       <div class="st"><b>${ST.z}</b><span>属州</span></div>
       <div class="st"><b>${ST.x}</b><span>县</span></div>
+      <div class="st"><b>50</b><span>关隘</span></div>
     </div>
     <div class="p-cap">源流</div>
-    <div class="hint">文本取自国学导航分卷页面（GB2312 转 UTF-8），凡 130 卷并卷首；机器解析 193 府、187 属州、1104 县，整编 380 处治所今地坐标。底图 Esri World Physical。</div>
+    <div class="hint">文本取自国学导航分卷页面（GB2312 转 UTF-8），凡 130 卷并卷首；机器解析 193 府、187 属州、1104 县，整编 380 处治所今地坐标、50 处关隘；另有量距工具（Shift+两点）与 GeoJSON/KML 导出。底图 Esri World Physical，断网自动兜底。</div>
     <div class="p-cap">校勘约定</div>
     <div class="hint">损坏句淡显点线而不删原文；句内外来字符代以 □；县名〔今废〕〔新改〕等注皆原书自注；同地异写（军民府／州府）归一匹配。</div>
     <div class="p-cap">已知之阙</div>
