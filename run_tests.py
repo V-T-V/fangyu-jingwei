@@ -48,6 +48,16 @@ for page in PAGES:
         fails.append((page, [l]))
         print("    FAIL  " + l)
 
+# CLI 测试
+import importlib.util
+cli_test = os.path.join(os.path.dirname(__file__), "test_cli.py")
+if os.path.exists(cli_test):
+    r = subprocess.run([sys.executable, cli_test], capture_output=True, text=True, timeout=60)
+    cli_ok = "全过" in r.stdout
+    print(("✓" if cli_ok else "✗") + " test_cli.py       " + ("7 用例" if cli_ok else r.stdout.strip()[-60:]))
+    if not cli_ok:
+        fails.append(("test_cli.py", ["CLI 测试失败"]))
+
 print()
 if fails:
     print("回归未过：%d 个失败项" % sum(len(f[1]) for f in fails))
