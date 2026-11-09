@@ -267,7 +267,6 @@ function buildFrontier(){
       .addTo(fuLayer);
   }
 }
-buildFrontier();
 
 /* 关隘图层：40 处天下名关（人工整编），zoom≥5 显现 */
 let passMarkers = [];
@@ -286,7 +285,6 @@ function buildPasses(){
     });
   }
 }
-buildPasses();
 
 /* 量距：shift+点击两点 → 直线(km) + 折合明里（0.62 驿路系数标定） */
 let measurePts = [];

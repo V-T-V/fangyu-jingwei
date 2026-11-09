@@ -16,6 +16,8 @@ function syncHash(m, rest){
 
 /* 初始图层与纲目 */
 buildFu();
+if (typeof buildPasses === "function") buildPasses();
+if (typeof buildFrontier === "function") buildFrontier();
 railYutu();
 
 /* 形势 · 九卷时间轴（点击切换，openEra 同步高亮） */
