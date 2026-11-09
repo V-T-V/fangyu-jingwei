@@ -249,7 +249,8 @@ function buildRivers(sel){
 
 /* 九边防线：自辽东至甘肃，横亘北疆的明帝国边防体系 */
 function buildFrontier(){
-  fetch("data/passes.json").then(r=>r.json()).then(list=>{
+  {
+    const list = PASSES;
     const bianPasses = list.filter(q=>q.type.indexOf("九边")>=0 || q.type.indexOf("内三关")>=0);
     // 按经度排序（西→东），串成防线
     const sorted = bianPasses.sort((a,b)=>a.c[1]-b.c[1]);
@@ -264,14 +265,15 @@ function buildFrontier(){
     if (east) L.marker(east.c, {icon:L.divIcon({className:"",iconSize:[60,18],
       html:`<div class="fronlab">九边东端·${east.n}</div>`}), interactive:false})
       .addTo(fuLayer);
-  });
+  }
 }
 buildFrontier();
 
 /* 关隘图层：40 处天下名关（人工整编），zoom≥5 显现 */
 let passMarkers = [];
 function buildPasses(){
-  fetch("data/passes.json").then(r=>r.json()).then(list=>{
+  {
+    const list = PASSES;
     list.forEach(q=>{
       const m = L.marker(q.c, {icon: L.divIcon({className:"", iconSize:[14,14],
         html: `<div class="passmark ${q.type.indexOf("九边")>=0?"bian":""}" title="${q.n}"></div>`}),
@@ -282,7 +284,7 @@ function buildPasses(){
         {direction:"top",offset:[0,-5],opacity:.95,className:"ftip"});
       passMarkers.push(m);
     });
-  });
+  }
 }
 buildPasses();
 
