@@ -1,5 +1,7 @@
 # 方舆经纬 · 读史方舆纪要
 
+[![CI](https://github.com/V-T-V/fangyu-jingwei/actions/workflows/ci.yml/badge.svg)](https://github.com/V-T-V/fangyu-jingwei/actions/workflows/ci.yml)
+
 《读史方舆纪要》（顾祖禹，130 卷）全书舆图可视化。数据自国学导航分卷文本真实解析。
 
 ## 打开
