@@ -45,6 +45,7 @@
 | 无头无语音引擎 | speak 同步 error 清掉高亮，断言全灭 | 测试桩替换 speechSynthesis.speak |
 | split 锚点撞前文 | `s.find('if(m==="形势"')` 命中 setMode 处，切片为空 → replace("") 逐字符爆炸 1.1MB | 补丁脚本一律先 grep 锚点行号再动刀 |
 | 一行 CityBlock | `pip install` 全新环境被墙 | （若遇）`pip install -i https://pypi.tuna.tsinghua.edu.cn/simple` |
+| git 443 阻断 | `git push` 反复被 reset/timeout | `gh api -X PUT repos/.../contents/<file>` 走 api.github.com 绕道；内容即时上库，SHA 与本地不同（网络恢复后 `git pull --rebase` 对齐）|
 
 ## 四、测试体系
 
