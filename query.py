@@ -23,10 +23,12 @@ for p in data["provinces"]:
         for nm, pos in (u.get("xianc") or {}).items():
             IDX[nm] = (nm, "县（推算）", p["name"], u["n"], "", tuple(pos), p["vols"][0])
 
-# 关隘
-pf = os.path.join(ROOT, "data", "passes.json")
-if os.path.exists(pf):
-    for q in json.load(open(pf, encoding="utf-8")):
+# 关隘（从 config.js 中提取 PASSES）
+import re as _re
+cfg = open(os.path.join(ROOT, "js", "config.js"), encoding="utf-8").read()
+_pm = _re.search(r"const PASSES = (\[.*?\]);", cfg, _re.S)
+if _pm:
+    for q in json.loads(_pm.group(1)):
         IDX[q["n"]] = (q["n"], q.get("type", "关隘"), "", q.get("fu", ""), q.get("now", ""),
                         tuple(q["c"]), "")
 
