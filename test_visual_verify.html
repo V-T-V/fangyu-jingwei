@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><title>全要素可见性终检</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=55">
+</head>
+<body class="m-舆图 nopanel">
+<div id="map"></div>
+<div class="paper-wash"></div><div class="grain"></div>
+<header><div class="brand"><div class="seal">方舆</div><div><h1>方舆经纬</h1><p>终检</p></div></div>
+<nav id="modes"><button data-m="舆图" class="on"><b>舆　图</b></button><button data-m="形势"><b>形　势</b></button><button data-m="川渎"><b>川　渎</b></button></nav>
+<div id="searchwrap"><input id="search"><div id="sresults"></div></div></header>
+<aside id="rail"><div class="rt" id="railtitle"></div><div id="raillist"></div></aside>
+<section id="panel"><button id="pclose">✕</button><div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div><div id="pbody"></div></section>
+<footer><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<div id="tl"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:500px;white-space:pre-wrap"></pre>
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=55" defer></script>
+<script src="js/map.js?v=55" defer></script>
+<script src="js/panels.js?v=55" defer></script>
+<script src="js/rail.js?v=55" defer></script>
+<script src="js/search.js?v=55" defer></script>
+<script src="js/reader.js?v=55" defer></script>
+<script src="js/bookmarks.js?v=55" defer></script>
+<script src="js/fulltext.js?v=55" defer></script>
+<script src="js/app.js?v=55" defer></script>
+<script src="js/modes.js?v=55" defer></script>
+<script defer>
+window.addEventListener("load",()=>{
+  const NL=String.fromCharCode(10),log=[];
+  const P=(n,ok)=>log.push(n+" "+(ok?"PASS":"FAIL"));
+  const done=()=>{document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
+    document.title=log.every(l=>l.includes("PASS"))?"ALL-PASS":"HAS-FAIL";};
+  try{localStorage.clear();}catch(e){}
+  setTimeout(()=>{
+    try{
+      dismissBoot();
+      // 等初始化完成
+      setTimeout(()=>{
+        try{
+          // zoom 4：全国景 — 检查府印 + 防线 + 关隘
+          map.setZoom(4,{animate:false});
+          setTimeout(()=>{
+            const z4 = {
+              fu: document.querySelectorAll(".fuseal").length,
+              pm: document.querySelectorAll(".passmark").length,
+              fl: document.querySelectorAll(".fronlab").length
+            };
+            P("Z4-FU-"+z4.fu, z4.fu>=190);
+            P("Z4-PASS-"+z4.pm, z4.pm>=40);
+            P("Z4-FRONTIER-"+z4.fl, z4.fl>=1);
+            // zoom 6：省景 — 检查州章
+            map.setZoom(6,{animate:false});
+            map.panTo([34,113],{animate:false});
+            setTimeout(()=>{
+              const z6 = {
+                zs: document.querySelectorAll(".zseal").length,
+                zsVis: Array.from(document.querySelectorAll(".zseal")).filter(e=>getComputedStyle(e).opacity>0.3).length
+              };
+              P("Z6-ZHOU-"+z6.zs, z6.zs>=100);
+              P("Z6-ZHOU-VIS-"+z6.zsVis, z6.zsVis>=50);
+              // zoom 7：县景 — 检查县点
+              map.setZoom(7,{animate:false});
+              map.panTo([37,115],{animate:false});
+              setTimeout(()=>{
+                const z7 = {
+                  xs: document.querySelectorAll(".xseal").length,
+                  xsVis: Array.from(document.querySelectorAll(".xseal")).filter(e=>getComputedStyle(e).opacity>0.3).length
+                };
+                P("Z7-COUNTY-"+z7.xs, z7.xs>=500);
+                P("Z7-COUNTY-VIS-"+z7.xsVis, z7.xsVis>=200);
+                // 形势模式 — 疆域晕 + 都城
+                setMode("形势");
+                setTimeout(()=>{
+                  const era = {
+                    caps: document.querySelectorAll(".cap").length,
+                    hull: Array.from(document.querySelectorAll("#map path")).filter(p=>p.getAttribute("fill-opacity")==="0.09").length,
+                    tl: document.querySelectorAll("#tl .seg").length
+                  };
+                  P("ERA-CAPS-"+era.caps, era.caps>=1);
+                  P("ERA-HULL-"+era.hull, era.hull>=1);
+                  P("ERA-TIMELINE-"+era.tl, era.tl===9);
+                  // 川渎 — 河线
+                  setMode("川渎");
+                  setTimeout(()=>{
+                    const riv = {
+                      paths: document.querySelectorAll("#map path.leaflet-interactive").length,
+                      rpts: document.querySelectorAll(".rpt").length
+                    };
+                    P("RIVER-PATHS-"+riv.paths, riv.paths>=7);
+                    P("RIVER-WAYPOINTS-"+riv.rpts, riv.rpts>=40);
+                    document.getElementById("testlog").style.display="none";
+                    done();
+                  },2500);
+                },2500);
+              },1500);
+            },1500);
+          },1500);
+        }catch(e){log.push("Z4-ERR "+e);done();}
+      },2000);
+    }catch(e){log.push("INIT-ERR "+e);done();}
+  },2500);
+});
+</script>
+</body>
+</html>
