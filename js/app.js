@@ -60,3 +60,30 @@ document.addEventListener("keydown",e=>{
 var _al = document.getElementById("aboutlink"); if (_al) _al.onclick = openAbout;
 
 var _tl = document.getElementById("tablelink"); if (_tl) _tl.onclick = openTable;
+
+/* ── 漫步模式：随机穿越帝国 ── */
+function wander(){
+  const p = FY.provinces[Math.floor(Math.random() * FY.provinces.length)];
+  const u = p.fu[Math.floor(Math.random() * p.fu.length)];
+  setMode("舆图");
+  selectProv(p.id);
+  setTimeout(()=>{
+    openFu(p, u);
+    // 打开原文，随机滚到一段
+    setTimeout(()=>{
+      openFuText(p, u);
+      setTimeout(()=>{
+        const tps = document.querySelectorAll(".tp");
+        if (tps.length > 3){
+          const k = Math.floor(Math.random() * Math.min(tps.length, 20));
+          tps[k].scrollIntoView({behavior:"smooth", block:"center"});
+          tps[k].classList.add("flash");
+          setTimeout(()=>tps[k].classList.remove("flash"), 2000);
+        }
+      }, 1200);
+    }, 800);
+  }, 500);
+}
+
+var _wl = document.getElementById("wanderlink");
+if (_wl) _wl.onclick = wander;
