@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><title>自动验证 · 全旅程</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=51">
+</head>
+<body class="m-舆图 nopanel">
+<div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
+<header><div class="brand"><div class="seal">方舆</div><div><h1>方舆经纬</h1><p>读史方舆纪要</p></div></div>
+<nav id="modes"><button data-m="舆图" class="on"><b>舆　图</b></button><button data-m="形势"><b>形　势</b></button><button data-m="川渎"><b>川　渎</b></button></nav>
+<div id="searchwrap"><input id="search"><div id="sresults"></div></div></header>
+<aside id="rail"><div class="rt" id="railtitle"></div><div id="raillist"></div></aside>
+<section id="panel"><button id="pclose">✕</button><div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div><div id="pbody"></div></section>
+<footer><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<div id="tl"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap"></pre>
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=51" defer></script>
+<script src="js/map.js?v=51" defer></script>
+<script src="js/panels.js?v=51" defer></script>
+<script src="js/rail.js?v=51" defer></script>
+<script src="js/search.js?v=51" defer></script>
+<script src="js/reader.js?v=51" defer></script>
+<script src="js/bookmarks.js?v=51" defer></script>
+<script src="js/fulltext.js?v=51" defer></script>
+<script src="js/app.js?v=51" defer></script>
+<script src="js/modes.js?v=51" defer></script>
+<script defer>
+window.addEventListener("load",()=>{
+  const NL=String.fromCharCode(10), log=[];
+  const P=(name,ok)=>log.push(name+" "+(ok?"PASS":"FAIL"));
+  const done=()=>{document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
+    document.title=log.every(l=>l.includes("PASS"))?"ALL-PASS":"HAS-FAIL";};
+  try{localStorage.clear();}catch(e){}
+  setTimeout(()=>{
+    try{
+      // ① 检索桃源
+      const si=document.getElementById("search");
+      si.value="桃源县"; si.dispatchEvent(new Event("input"));
+      const hasResult=document.querySelectorAll("#sresults .sr").length>0;
+      P("SEARCH",hasResult);
+      // ② 点第一条（应飞淮安府桃源县）
+      document.querySelector("#sresults .sr[data-i]").click();
+      setTimeout(()=>{
+        try{
+          const isFu=document.getElementById("vname").textContent.length>0;
+          P("FLY-FU",isFu);
+          // ③ 阅原卷全文
+          const ft=document.querySelector("[data-ft]");
+          if(ft)ft.click();
+          setTimeout(()=>{
+            try{
+              const hasText=document.querySelectorAll(".tp").length>10;
+              P("READ",hasText);
+              // ④ 夜读
+              const nb=document.getElementById("tnight");
+              if(nb)nb.click();
+              const isNight=document.getElementById("panel").classList.contains("panel-night");
+              P("NIGHT",isNight);
+              // ⑤ 朗读（桩）
+              const spoken=[];
+              speechSynthesis.speak=function(u){spoken.push(u.text.slice(0,8));};
+              const tb=document.getElementById("ttsb");
+              if(tb)tb.click();
+              const isSpeaking=spoken.length>0;
+              P("TTS",isSpeaking);
+              if(tb)tb.click(); // 停
+              // ⑥ 书签（回府详情再点）
+              const bk=document.querySelector("[data-st]");
+              if(bk)bk.click(); // 需回详情……当前在阅读态，直接调 BM
+              const hg=FY.provinces.find(x=>x.id==="nanzhi");
+              const ha=hg.fu.find(x=>x.n==="淮安府");
+              BM.toggle(hg,ha);
+              P("BOOKMARK",BM.has("nanzhi","淮安府"));
+              // ⑦ 续读
+              const last=BM.getLast();
+              P("RESUME",!!last&&last.fu==="淮安府");
+              // ⑧ 全文检索
+              ftRun("形胜");
+              setTimeout(()=>{
+                try{
+                  const hasHead=!!document.querySelector(".fthead");
+                  P("FULLTEXT",hasHead);
+                  done();
+                }catch(e){log.push("FT-ERR "+e);done();}
+              },6000);
+            }catch(e){log.push("4-ERR "+e);done();}
+          },2000);
+        }catch(e){log.push("3-ERR "+e);done();}
+      },2000);
+    }catch(e){log.push("1-ERR "+e);done();}
+  },2500);
+});
+</script>
+</body>
+</html>

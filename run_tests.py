@@ -20,7 +20,8 @@ if not EDGE:
 print("浏览器:", EDGE)
 
 PAGES = ["test_auto.html", "test_filter.html", "test_events.html",
-         "test_night.html", "test_tts.html", "test_counties.html"]
+         "test_night.html", "test_tts.html", "test_counties.html",
+         "test_journey.html"]
 BASE = "http://127.0.0.1:8613/"
 
 fails = []
