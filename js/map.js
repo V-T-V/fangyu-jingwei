@@ -101,6 +101,7 @@ function buildFu(){
 map.on("zoomend",()=>{
   document.body.classList.toggle("z6", map.getZoom()>=6);
   document.body.classList.toggle("z7", map.getZoom()>=7);
+  document.body.classList.toggle("z5", map.getZoom()>=5);
 });
 
 /* ── 形势模式 ── */
@@ -228,6 +229,24 @@ function buildRivers(sel){
   safeFly(r._line.getBounds().pad(.08),{duration:1.1});
   return r;
 }
+
+/* 关隘图层：40 处天下名关（人工整编），zoom≥5 显现 */
+let passMarkers = [];
+function buildPasses(){
+  fetch("data/passes.json").then(r=>r.json()).then(list=>{
+    list.forEach(q=>{
+      const m = L.marker(q.c, {icon: L.divIcon({className:"", iconSize:[14,14],
+        html: `<div class="passmark ${q.type.indexOf("九边")>=0?"bian":""}" title="${q.n}"></div>`}),
+        zIndexOffset:600}).addTo(fuLayer);
+      m.bindTooltip(`<b style="font-family:KaiTi,serif;font-size:14px;letter-spacing:2px">${q.n}</b><br>
+        <span style="font-size:10px;letter-spacing:1px;color:#b23a2e">${q.type}</span><br>
+        <span style="font-size:10px;letter-spacing:1px;color:#57503f">${q.fu} · 今${q.now}</span>`,
+        {direction:"top",offset:[0,-5],opacity:.95,className:"ftip"});
+      passMarkers.push(m);
+    });
+  });
+}
+buildPasses();
 
 /* 量距：shift+点击两点 → 直线(km) + 折合明里（0.62 驿路系数标定） */
 let measurePts = [];
