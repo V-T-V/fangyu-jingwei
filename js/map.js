@@ -3,8 +3,24 @@
 const map = L.map("map",{zoomControl:true,minZoom:4,maxZoom:12,
   attributionControl:false,maxBounds:[[15,88],[47,140]],maxBoundsViscosity:.6});
 map.fitBounds([[17,96],[44,129]]);
-L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}",{
+const tileLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}",{
   maxZoom:12,maxNativeZoom:8}).addTo(map);
+/* 瓦片断供兜底：>5 张 404 → 隐瓦片层，绢底自足（矢量数据不受影响） */
+let tileErrs = 0;
+tileLayer.on("tileerror", ()=>{
+  tileErrs++;
+  if (tileErrs === 6){
+    map.removeLayer(tileLayer);
+    document.getElementById("map").style.background =
+      "radial-gradient(ellipse 130% 100% at 50% 30%, #efe6cf 0%, #e7dcbc 50%, #ddd0ae 100%)";
+    const note = document.createElement("div");
+    note.style.cssText = "position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:500;" +
+      "background:rgba(245,238,218,.95);border:1px solid var(--line,#8b765a);padding:4px 14px;" +
+      "font:11px KaiTi,serif;letter-spacing:3px;color:#8b8069;pointer-events:none";
+    note.textContent = "底图离线 · 标记与数据不受影响";
+    document.getElementById("map").appendChild(note);
+  }
+});
 
 const fuLayer = L.layerGroup().addTo(map);      // 舆图：府治印章
 const eraLayer = L.layerGroup().addTo(map);     // 形势：都城要地
