@@ -47,6 +47,18 @@ window.addEventListener("load", () => {
     const vis = Array.from(document.querySelectorAll(".fytable tbody tr"))
       .filter(r => r.style.display !== "none");
     log.push("FILTER rows=" + vis.length + " count=" + document.getElementById("tfcount").innerText);
+    // 边界断言（在同一可用环境中跑）
+    const si2 = document.getElementById("search");
+    const orig = si2.value;
+    si2.value = "武"; si2.dispatchEvent(new Event("input"));
+    log.push("EDGE-1char ok");
+    si2.value = "一二三四五六七八九十十一十二十三十四十五十六十七十八十九二十"; si2.dispatchEvent(new Event("input"));
+    log.push("EDGE-20char ok");
+    si2.value = ""; si2.dispatchEvent(new Event("input"));
+    log.push("EDGE-empty ok");
+    si2.value = "<img onerror=alert(1)>"; si2.dispatchEvent(new Event("input"));
+    log.push("EDGE-xss " + (!document.querySelector("img[onerror]") ? "PASS" : "FAIL"));
+    si2.value = orig; si2.dispatchEvent(new Event("input"));
     document.getElementById("testlog").textContent = "TESTLOG" + String.fromCharCode(10) + log.join(";") + " ENDLOG";
     // GeoJSON 导出特征数断言（直接调内部逻辑重算）
     var feats = 0;

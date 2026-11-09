@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><title>自动验证 · 边界</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=51">
+</head>
+<body class="m-舆图 nopanel">
+<div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
+<header><div class="brand"><div class="seal">方舆</div><div><h1>方舆经纬</h1><p>读史方舆纪要</p></div></div>
+<nav id="modes"><button data-m="舆图" class="on"><b>舆　图</b></button><button data-m="形势"><b>形　势</b></button><button data-m="川渎"><b>川　渎</b></button></nav>
+<div id="searchwrap"><input id="search"><div id="sresults"></div></div></header>
+<aside id="rail"><div class="rt" id="railtitle"></div><div id="raillist"></div></aside>
+<section id="panel"><button id="pclose">✕</button><div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div><div id="pbody"></div></section>
+<footer><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<div id="tl"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:500px;white-space:pre-wrap"></pre>
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=51" defer></script>
+<script src="js/map.js?v=51" defer></script>
+<script src="js/panels.js?v=51" defer></script>
+<script src="js/rail.js?v=51" defer></script>
+<script src="js/search.js?v=51" defer></script>
+<script src="js/reader.js?v=51" defer></script>
+<script src="js/bookmarks.js?v=51" defer></script>
+<script src="js/fulltext.js?v=51" defer></script>
+<script src="js/app.js?v=51" defer></script>
+<script src="js/modes.js?v=51" defer></script>
+<script defer>
+window.addEventListener("error",e=>{window.__err=(window.__err||"")+"|"+e.message});
+window.addEventListener("load",()=>{
+  const NL=String.fromCharCode(10),log=[];
+  const P=(n,ok)=>log.push(n+" "+(ok?"PASS":"FAIL"));
+  const done=()=>{document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ERR:"+(window.__err||"none")+" ENDLOG";
+    document.title=log.every(l=>l.includes("PASS"))?"ALL-PASS":"HAS-FAIL";};
+  const si=document.getElementById("search");
+  setTimeout(()=>{
+    try{
+      // ① 1 字检索
+      si.value="武"; si.dispatchEvent(new Event("input"));
+      const r1=document.querySelectorAll("#sresults .sr").length;
+      P("EDGE-1char", r1>=0 && !window.__err); // 不崩溃即可
+      // ② 20 字长串
+      si.value="一二三四五六七八九十十一十二十三十四十五十六十七十八十九二十"; si.dispatchEvent(new Event("input"));
+      const r2=document.querySelectorAll("#sresults .sr,#sresults .none").length;
+      P("EDGE-20char", r2>=0 && !window.__err);
+      // ③ 空串
+      si.value=""; si.dispatchEvent(new Event("input"));
+      P("EDGE-empty", !window.__err);
+      // ④ 特殊字符
+      si.value="<script>alert(1)</"+"script>"; si.dispatchEvent(new Event("input"));
+      P("EDGE-xss", !window.__err);
+      si.value=""; si.dispatchEvent(new Event("input"));
+      // ⑤ 书签超限（31 个）
+      try{localStorage.removeItem("fybm");}catch(e){}
+      const ny=FY.provinces.find(p=>p.id==="nanzhi");
+      for(let i=0;i<35;i++){
+        const fu=ny.fu[i%ny.fu.length];
+        BM.toggle(ny,fu); if(!BM.has(ny.id,fu.n)) BM.toggle(ny,fu); // 确保加
+      }
+      const bmCount=BM.load().length;
+      P("EDGE-bm35", bmCount<=30); // 上限 30
+      try{localStorage.removeItem("fybm");}catch(e){}
+      // ⑥ 不存在的省
+      si.value="不存在的省"; si.dispatchEvent(new Event("input"));
+      const none=document.querySelector("#sresults .none");
+      P("EDGE-nofind", !!none);
+      si.value=""; si.dispatchEvent(new Event("input"));
+      // ⑦ 极速三模式连切
+      setMode("形势"); setMode("川渎"); setMode("舆图"); setMode("形势");
+      P("EDGE-quickswitch", !window.__err);
+      // ⑧ 不存在的河
+      const badRiver=buildRivers("不存在的河");
+      P("EDGE-badriver", !!badRiver); // 应回退到大江
+      done();
+    }catch(e){log.push("ERR "+e);done();}
+  },2500);
+});
+</script>
+</body>
+</html>

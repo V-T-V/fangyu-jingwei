@@ -57,6 +57,6 @@ document.addEventListener("keydown",e=>{
   }
 });
 
-document.getElementById("aboutlink").onclick = openAbout;
+var _al = document.getElementById("aboutlink"); if (_al) _al.onclick = openAbout;
 
-document.getElementById("tablelink").onclick = openTable;
+var _tl = document.getElementById("tablelink"); if (_tl) _tl.onclick = openTable;

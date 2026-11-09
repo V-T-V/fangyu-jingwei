@@ -96,6 +96,7 @@ function ftJump(r, q){
 function ftRun(q){
   const sres = document.getElementById("sresults");
   sres.classList.add("open");
+  q = q.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); // XSS 转义
   sres.innerHTML = `<div class="ftprog">正在加载全书原文…</div>`;
   const keepOpen = ()=>sres.classList.add("open");
   ensureTextAll((key, i, total)=>{

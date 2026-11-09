@@ -23,8 +23,9 @@ function searchHits(q){
     .slice(0,14);
 }
 function renderHits(hits,q){
-  const ftRow = `<div class="sr ftall" id="ftall">📖 在全书原文中检索「${q}」…</div>`;
-  if(!hits.length){sres.innerHTML=`<div class="none">名录未见「${q}」</div>`+ftRow;}
+  const escQ = q.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const ftRow = `<div class="sr ftall" id="ftall">📖 在全书原文中检索「${escQ}」…</div>`;
+  if(!hits.length){sres.innerHTML=`<div class="none">名录未见「${escQ}」</div>`+ftRow;}
   else sres.innerHTML=hits.map((h,i)=>`<div class="sr" data-i="${i}">
       <span class="tag t${h.k}">${h.k}</span><span>${h.t}</span><span class="ctx">${h.ctx}</span></div>`).join("")
     + ftRow;
