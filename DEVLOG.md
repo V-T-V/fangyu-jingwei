@@ -71,8 +71,18 @@
   深链页的 safeFly 布局重试会晚于 setView 把地图拉回全国景——定格页
   不走深链，手动 dismissBoot+selectProv+setView+防回弹护栏
 
-## 七、继续开发的方向（若要）
+## 七、已完成与待决方向
 
+已实现：
+- ✅ 县治上图（99.3% 覆盖，三重方法见第六节）
+- ✅ CI（GitHub Actions 双套件，历次全绿）
+- ✅ 安全加固（XSS 转义 / null 守卫 / TDZ，边界轰炸驱动）
+- ✅ 计量分析（ANALYSIS.md：一日可达 / 府域面积 / 战略焦点）
+- ✅ CLI 查询工具（query.py）
+- ✅ 离线兜底（瓦片断供自动切绢底）
+- ✅ KML 导出（三格式并列）
+
+待决（需所有者拍板）：
 - 换善本（如四库/标点本）重跑管线：build_*.py 全量可重入，校验体系兜底
 - 公开发布：仓库现私有；gh repo edit --public 后可开 GitHub Pages
   （纯静态站，Actions 部署 index.html 即可）
