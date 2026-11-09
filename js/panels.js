@@ -246,7 +246,8 @@ function openTable(level){
     <div class="tabbar">
       <button class="tb ${isFu?"on":""}" data-l="fu">府州 ${isFu?rows.length:""}</button>
       <button class="tb ${!isFu?"on":""}" data-l="xian">县 ${!isFu?rows.length:""}</button>
-      <button class="readfull" id="geojsondl" style="margin-left:auto" title="全部治所点位（府/州/县）">⤓ GeoJSON</button>
+      <button class="readfull" id="kmldl" style="margin-left:auto" title="Google Earth 格式">⤓ KML</button>
+      <button class="readfull" id="geojsondl" title="全部治所点位（府/州/县）">⤓ GeoJSON</button>
       <button class="readfull" id="csvdl">⤓ CSV</button>
     </div>
     <input id="tfilter" type="text" placeholder="表内筛选：县名 / 省名 / 隶属…" autocomplete="off">
@@ -276,6 +277,29 @@ function openTable(level){
     if(mode!=="舆图") setMode("舆图");
     selectProv(p.id); openFu(p,u);
   });
+  document.getElementById("kmldl").onclick = ()=>{
+    let pins = "";
+    FY.provinces.forEach(p=>p.fu.forEach(u=>{
+      const mk = (nm, lat, lng, cls, desc)=>{
+        pins += `<Placemark><name>${nm}</name><description>${desc}</description>`
+             +  `<Point><coordinates>${lng},${lat},0</coordinates></Point></Placemark>`;
+      };
+      if (u.c) mk(u.n, u.c[0], u.c[1], "府", p.name + (u.now?" 今"+u.now:""));
+      (u.zx||[]).forEach(z=>{ if(z.c) mk(z.n, z.c[0], z.c[1], "州", p.name+"·"+u.n); });
+      const xc = u.xianc || {};
+      Object.keys(xc).forEach(nm=>mk(nm, xc[nm][0], xc[nm][1], "县", p.name+"·"+u.n+"（推算）"));
+    }));
+    const kml = `<?xml version="1.0" encoding="UTF-8"?>`
+      + `<kml xmlns="http://www.opengis.net/kml/2.2"><Document>`
+      + `<name>方舆经纬·治所点位</name>`
+      + `<Style id="fu"><IconStyle><color>ff2e5d6f</color><scale>1.2</scale></IconStyle></Style>`
+      + pins + `</Document></kml>`;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([kml], {type:"application/vnd.google-earth.kml+xml"}));
+    a.download = "方舆经纬-治所点位.kml";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  };
   document.getElementById("geojsondl").onclick = ()=>{
     const feats = [];
     FY.provinces.forEach(p=>p.fu.forEach(u=>{
