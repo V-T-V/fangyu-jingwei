@@ -645,6 +645,13 @@ body.z7 .leaflet-marker-icon .xseal:hover{opacity:1;transform:scale(1.6)}
   opacity:0;pointer-events:none;transition:opacity .35s;
   filter:drop-shadow(0 1px 2px rgba(90,30,20,.3));
 }
-body.z5 .passmark{opacity:.85;pointer-events:auto}
-body.z5 .passmark.bian{opacity:1;border-bottom-width:14px;border-left-width:6px;border-right-width:6px}
+body.z4 .passmark,body.z5 .passmark{opacity:.85;pointer-events:auto}
+body.z4 .passmark.bian,body.z5 .passmark.bian{opacity:1;border-bottom-width:14px;border-left-width:6px;border-right-width:6px}
 .passmark:hover{transform:scale(1.5);border-bottom-color:var(--cinnabar-d)}
+
+/* 九边防线标签 */
+.fronlab{
+  font-family:"KaiTi",serif;font-size:10px;letter-spacing:2px;color:var(--cinnabar-d);
+  background:rgba(245,238,218,.9);border:1px solid rgba(178,58,46,.35);
+  padding:1px 6px;white-space:nowrap;text-align:center;
+}

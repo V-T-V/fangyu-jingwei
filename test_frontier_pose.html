@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>自动验证 · 县治</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=43">
+</head>
+<body class="m-舆图 nopanel">
+<div id="map"></div>
+<div class="paper-wash"></div><div class="grain"></div>
+<header><div class="brand"><div class="seal">方舆</div><div><h1>方舆经纬</h1><p>读史方舆纪要 · 顾祖禹 · 全书舆图</p></div></div>
+<nav id="modes">
+  <button data-m="舆图" class="on"><b>舆　图</b></button>
+  <button data-m="形势"><b>形　势</b></button>
+  <button data-m="川渎"><b>川　渎</b></button>
+</nav>
+<div id="searchwrap"><input id="search"><div id="sresults"></div></div></header>
+<aside id="rail"><div class="rt" id="railtitle"></div><div id="raillist"></div></aside>
+<section id="panel"><button id="pclose">✕</button>
+  <div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div>
+  <div id="pbody"></div></section>
+<footer><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<div id="tl"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:460px;white-space:pre-wrap"></pre>
+
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=43" defer></script>
+<script src="js/map.js?v=43" defer></script>
+<script src="js/panels.js?v=43" defer></script>
+<script src="js/rail.js?v=43" defer></script>
+<script src="js/search.js?v=43" defer></script>
+<script src="js/reader.js?v=43" defer></script>
+<script src="js/bookmarks.js?v=43" defer></script>
+<script src="js/fulltext.js?v=43" defer></script>
+<script src="js/app.js?v=43" defer></script>
+<script src="js/modes.js?v=43" defer></script>
+<script defer>
+window.addEventListener("load", function(){
+  try {
+    dismissBoot();
+    // 居中于九边中段（大同），zoom 4 可见嘉峪关→山海关全段
+    map.setView([40.5, 111.5], 4, {animate:false});
+    var guard = setInterval(function(){ map.setView([40.5, 111.5], 4, {animate:false}); }, 400);
+    setTimeout(function(){ clearInterval(guard); }, 8000);
+  } catch(e){}
+});
+</script>
+</body>
+</html>

@@ -102,6 +102,7 @@ map.on("zoomend",()=>{
   document.body.classList.toggle("z6", map.getZoom()>=6);
   document.body.classList.toggle("z7", map.getZoom()>=7);
   document.body.classList.toggle("z5", map.getZoom()>=5);
+  document.body.classList.toggle("z4", map.getZoom()>=4);
 });
 
 /* ── 形势模式 ── */
@@ -229,6 +230,27 @@ function buildRivers(sel){
   safeFly(r._line.getBounds().pad(.08),{duration:1.1});
   return r;
 }
+
+/* 九边防线：自辽东至甘肃，横亘北疆的明帝国边防体系 */
+function buildFrontier(){
+  fetch("data/passes.json").then(r=>r.json()).then(list=>{
+    const bianPasses = list.filter(q=>q.type.indexOf("九边")>=0 || q.type.indexOf("内三关")>=0);
+    // 按经度排序（西→东），串成防线
+    const sorted = bianPasses.sort((a,b)=>a.c[1]-b.c[1]);
+    const line = L.polyline(sorted.map(q=>q.c), {
+      color:"#b23a2e", weight:4, dashArray:"12 8", opacity:.7,
+      lineCap:"round", interactive:false}).addTo(fuLayer);
+    // 两端标签
+    const west = sorted[0], east = sorted[sorted.length-1];
+    if (west) L.marker(west.c, {icon:L.divIcon({className:"",iconSize:[60,18],
+      html:`<div class="fronlab">九边西端·${west.n}</div>`}), interactive:false})
+      .addTo(fuLayer);
+    if (east) L.marker(east.c, {icon:L.divIcon({className:"",iconSize:[60,18],
+      html:`<div class="fronlab">九边东端·${east.n}</div>`}), interactive:false})
+      .addTo(fuLayer);
+  });
+}
+buildFrontier();
 
 /* 关隘图层：40 处天下名关（人工整编），zoom≥5 显现 */
 let passMarkers = [];
