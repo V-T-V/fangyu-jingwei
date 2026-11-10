@@ -11,6 +11,9 @@ function setMode(m){
   document.getElementById("modenote").textContent=NOTE[m];
   fuLayer.remove();eraLayer.remove();riverLayer.remove();
   if (typeof hideProvHull === "function") hideProvHull();
+  if (typeof clearCountyTerritories === "function") clearCountyTerritories();
+  if (typeof clearJurisdiction === "function") clearJurisdiction();
+  if (typeof clearFuHull === "function") clearFuHull();
   selPid=null;document.body.classList.remove("selprov");
   if(m==="舆图") setFuLabels(null);
   hidePanel();
