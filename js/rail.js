@@ -71,6 +71,7 @@ function selectProv(pid){
   if(pid){
     const p=FY.provinces.find(x=>x.id===pid);
     if (typeof showProvHull === "function") showProvHull(p);
+  if (typeof showProvinceVoronoi === "function") showProvinceVoronoi(p);
     highlightRail("舆图",pid);
     const b=L.latLngBounds(p.fu.filter(u=>u.c).map(u=>u.c)).pad(.22);
     safeFly(b,{duration:1.1});
