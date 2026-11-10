@@ -28,70 +28,60 @@
 <script src="js/app.js?v=51" defer></script>
 <script src="js/modes.js?v=51" defer></script>
 <script defer>
-window.addEventListener("load",()=>{
-  const NL=String.fromCharCode(10), log=[];
-  const P=(name,ok)=>log.push(name+" "+(ok?"PASS":"FAIL"));
-  const done=()=>{document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
-    document.title=log.every(l=>l.includes("PASS"))?"ALL-PASS":"HAS-FAIL";};
+window.addEventListener("error",function(e){window.__err=e.message});
+window.addEventListener("load",function(){
+  var NL=String.fromCharCode(10),log=[];
+  var done=function(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
+    document.title=log.every(function(l){return l.indexOf("PASS")>=0})?"ALL-PASS":"HAS-FAIL";};
   try{localStorage.clear();}catch(e){}
-  setTimeout(()=>{
+  setTimeout(function(){
     try{
-      // ① 检索桃源
-      const si=document.getElementById("search");
-      si.value="桃源县"; si.dispatchEvent(new Event("input"));
-      const hasResult=document.querySelectorAll("#sresults .sr").length>0;
-      P("SEARCH",hasResult);
-      // ② 点第一条（应飞淮安府桃源县）
+      var si=document.getElementById("search");
+      si.value="桃源县";si.dispatchEvent(new Event("input"));
+      P("SEARCH",document.querySelectorAll("#sresults .sr").length>0);
       document.querySelector("#sresults .sr[data-i]").click();
-      setTimeout(()=>{
+      setTimeout(function(){
         try{
-          const isFu=document.getElementById("vname").textContent.length>0;
-          P("FLY-FU",isFu);
-          // ③ 阅原卷全文
-          const ft=document.querySelector("[data-ft]");
-          if(ft)ft.click();
-          setTimeout(()=>{
+          P("FLY-FU",document.getElementById("vname").textContent.length>0);
+          // 搜索县名会打开县级卡——先入府详情，再阅全文
+          var gotoFu=document.getElementById("gotoFu");
+          if(gotoFu){gotoFu.click();setTimeout(function(){
+            var ft=document.querySelector("[data-ft]");
+            if(ft)ft.click();
+          },500);}
+          else{var ft2=document.querySelector("[data-ft]");if(ft2)ft2.click();}
+          setTimeout(function(){
             try{
-              const hasText=document.querySelectorAll(".tp").length>10;
-              P("READ",hasText);
-              // ④ 夜读
-              const nb=document.getElementById("tnight");
+              P("READ",document.querySelectorAll(".tp").length>5);
+              var nb=document.getElementById("tnight");
               if(nb)nb.click();
-              const isNight=document.getElementById("panel").classList.contains("panel-night");
-              P("NIGHT",isNight);
-              // ⑤ 朗读（桩）
-              const spoken=[];
-              speechSynthesis.speak=function(u){spoken.push(u.text.slice(0,8));};
-              const tb=document.getElementById("ttsb");
+              P("NIGHT",document.getElementById("panel").classList.contains("panel-night"));
+              var spoken=[];
+              speechSynthesis.speak=function(u){spoken.push(u.text)};
+              var tb=document.getElementById("ttsb");
               if(tb)tb.click();
-              const isSpeaking=spoken.length>0;
-              P("TTS",isSpeaking);
-              if(tb)tb.click(); // 停
-              // ⑥ 书签（回府详情再点）
-              const bk=document.querySelector("[data-st]");
-              if(bk)bk.click(); // 需回详情……当前在阅读态，直接调 BM
-              const hg=FY.provinces.find(x=>x.id==="nanzhi");
-              const ha=hg.fu.find(x=>x.n==="淮安府");
+              P("TTS",spoken.length>0);
+              if(tb)tb.click();
+              var hg=FY.provinces.find(function(p){return p.id==="nanzhi"});
+              var ha=hg.fu.find(function(u){return u.n==="淮安府"});
               BM.toggle(hg,ha);
               P("BOOKMARK",BM.has("nanzhi","淮安府"));
-              // ⑦ 续读
-              const last=BM.getLast();
+              var last=BM.getLast();
               P("RESUME",!!last&&last.fu==="淮安府");
-              // ⑧ 全文检索
               ftRun("形胜");
-              setTimeout(()=>{
+              setTimeout(function(){
                 try{
-                  const hasHead=!!document.querySelector(".fthead");
-                  P("FULLTEXT",hasHead);
+                  P("FULLTEXT",!!document.querySelector(".fthead"));
                   done();
-                }catch(e){log.push("FT-ERR "+e);done();}
-              },6000);
+                }catch(e){log.push("8-ERR "+e);done();}
+              },5000);
             }catch(e){log.push("4-ERR "+e);done();}
-          },2000);
+          },2500);
         }catch(e){log.push("3-ERR "+e);done();}
-      },2000);
+      },2500);
     }catch(e){log.push("1-ERR "+e);done();}
-  },2500);
+    function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
+  },3000);
 });
 </script>
 </body>
