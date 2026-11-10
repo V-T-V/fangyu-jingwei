@@ -1,0 +1,14 @@
+{
+  "name": "方舆经纬 · 读史方舆纪要",
+  "short_name": "方舆经纬",
+  "description": "顾祖禹《读史方舆纪要》130卷全书数字舆图",
+  "start_url": "/fangyu-jingwei/",
+  "display": "standalone",
+  "background_color": "#efe6cf",
+  "theme_color": "#b23a2e",
+  "icons": [{
+    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='12' fill='%23b23a2e'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='%23f6efdc' font-family='serif'%3E方%3C/text%3E%3C/svg%3E",
+    "sizes": "any",
+    "type": "image/svg+xml"
+  }]
+}
