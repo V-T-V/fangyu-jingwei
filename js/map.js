@@ -130,17 +130,29 @@ map.on("zoomend",()=>{
   document.body.classList.toggle("z7", map.getZoom()>=7);
   document.body.classList.toggle("z5", map.getZoom()>=5);
   document.body.classList.toggle("z4", map.getZoom()>=4);
-  // zoom≥8：县名常显
+  // zoom≥8：县名常显（带碰撞检测——近距离县名交替显示）
   document.body.classList.toggle("z8", map.getZoom()>=8);
-  fuMarkers && Object.values(fuMarkers).flat().forEach(m=>{
-    if(m._xian){
-      const tips = m.getTooltip();
-      if(tips){
-        if(map.getZoom()>=8){ m.unbindTooltip(); m.bindTooltip(m._xian.replace(/县$/,""),{permanent:true,direction:"right",offset:[8,0],className:"xianlab"}); }
-        else { m.unbindTooltip(); }
+  if(map.getZoom()>=8){
+    const all = Object.values(fuMarkers).flat().filter(m=>m._xian);
+    // 按屏幕位置分组，距离 < 40px 的只显示一个
+    const shown = [];
+    all.forEach(m=>{
+      m.unbindTooltip();
+      const pt = map.latLngToContainerPoint(m.getLatLng());
+      const too = shown.some(s=>{
+        const p2 = map.latLngToContainerPoint(s.getLatLng());
+        return Math.abs(pt.x-p2.x)<45 && Math.abs(pt.y-p2.y)<18;
+      });
+      if(!too){
+        m.bindTooltip(m._xian.replace(/县$/,""),{permanent:true,direction:"right",offset:[8,0],className:"xianlab"});
+        shown.push(m);
       }
-    }
-  });
+    });
+  } else {
+    Object.values(fuMarkers).flat().forEach(m=>{
+      if(m._xian) m.unbindTooltip();
+    });
+  }
 });
 
 /* ── 形势模式 ── */
@@ -349,9 +361,14 @@ function revealCounty(pid, fuName, xianName){
   if(mode!=="舆图") setMode("舆图");
   selectProv(pid);
   openFu(p,u);
-  const pos = u.xianc[xianName];
+  const d = u.xianc[xianName];
+  const pos = Array.isArray(d) ? d : d.c;
   setTimeout(()=>{
     safeFlyTo(pos, 8, {duration:1});
+    // 打开县级信息卡
+    if (typeof openCountyCard === "function") {
+      setTimeout(()=>openCountyCard(p, u, xianName, d, null), 600);
+    }
     const ring = L.circleMarker(pos, {radius:14, weight:2.2, color:"#b23a2e",
       opacity:.9, fill:false, className:"evring"}).addTo(map);
     setTimeout(()=>map.removeLayer(ring), 3200);
