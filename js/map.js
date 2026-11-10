@@ -352,6 +352,30 @@ map.on("click",()=>{
   if(mode==="舆图" && selPid) selectProv(null);
 });
 
+/* 府→县领属线：选中一府时显示其行政辐射 */
+let jurLines = [];
+function showJurisdiction(p, u){
+  clearJurisdiction();
+  if (!u.c || !u.xianc) return;
+  const col = PCOLORS[p.id] || "#2f5d70";
+  Object.keys(u.xianc).forEach(nm => {
+    const d = u.xianc[nm];
+    const pos = Array.isArray(d) ? d : d.c;
+    if (!pos) return;
+    const dist = map.distance(u.c, pos);
+    if (dist > 300000) return;  // >300km 跳过
+    const line = L.polyline([u.c, pos], {
+      color: col, weight: 1, opacity: .25,
+      dashArray: "3 5", interactive: false
+    }).addTo(map);
+    jurLines.push(line);
+  });
+}
+function clearJurisdiction(){
+  jurLines.forEach(l => map.removeLayer(l));
+  jurLines = [];
+}
+
 /* 检索定位到县治推算点：飞至 + 脉冲环 */
 function revealCounty(pid, fuName, xianName){
   const p = FY.provinces.find(x=>x.id===pid);
