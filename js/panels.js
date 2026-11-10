@@ -6,7 +6,11 @@ const panel=document.getElementById("panel"),
       vseal=document.getElementById("vseal");
 function showPanel(){panel.classList.add("open");document.body.classList.remove("nopanel");}
 function hidePanel(){panel.classList.remove("open");document.body.classList.add("nopanel");}
-document.getElementById("pclose").onclick=()=>{hidePanel();if(mode==="舆图")selectProv(null);};
+document.getElementById("pclose").onclick=()=>{
+  hidePanel();
+  if (typeof clearJurisdiction === "function") clearJurisdiction();
+  if(mode==="舆图")selectProv(null);
+};
 
 function vset(name,seal){vname.textContent=name;vseal.textContent=seal||"纪要";}
 
@@ -140,6 +144,7 @@ function openFu(p,u){
     sb.textContent = (added?"★":"☆") + " 书签";
   };
   if(u.c) safeFlyTo(u.c,7,{duration:1.1});
+  if (typeof showJurisdiction === "function") showJurisdiction(p, u);
   syncHash("舆图", "p=" + p.id + "&fu=" + encodeURIComponent(u.n));
   showPanel();
 }
@@ -347,16 +352,34 @@ function openCountyCard(p, u, nm, d, latlng){
   const typ = isObj ? (d.type || "推算") : "推算";
   const dir = isObj && d.dir ? d.dir : "";
   const li = isObj && d.li ? d.li : "";
-  // 原文检索该县段首句
+  // 原文段首：优先已缓存，否则懒加载后补入
   let excerpt = "";
+  const tryExcerpt = bag => {
+    const fuTxt = bag && bag.fu && bag.fu[u.n];
+    if (!fuTxt) return "";
+    const i = fuTxt.indexOf(nm + "府");
+    const j = i >= 0 ? i : fuTxt.indexOf("○" + nm);
+    return j >= 0 ? fuTxt.slice(j, j + 160).split(String.fromCharCode(10)).join("") : "";
+  };
   if (typeof FYTEXT !== "undefined" && FYTEXT[p.id]){
-    const bag = FYTEXT[p.id];
-    const fuTxt = bag.fu && bag.fu[u.n];
-    if (fuTxt){
-      const i = fuTxt.indexOf(nm + "府");  // 段首"XX县府东N里"
-      const j = i >= 0 ? i : fuTxt.indexOf("○" + nm);
-      if (j >= 0) excerpt = fuTxt.slice(j, j + 120).split(String.fromCharCode(10)).join("");
-    }
+    excerpt = tryExcerpt(FYTEXT[p.id]);
+  }
+  if (!excerpt && typeof loadTextFile === "function"){
+    loadTextFile(p.id, ok=>{
+      if (ok && FYTEXT[p.id]){
+        const e2 = tryExcerpt(FYTEXT[p.id]);
+        if (e2){
+          const q = pbody.querySelector(".quote");
+          if (q) q.innerHTML = e2 + "……";
+          else {
+            // 插入到"操作"之前
+            const cap = pbody.querySelector(".p-cap:nth-of-type(2)");
+            if (cap) cap.insertAdjacentHTML("beforebegin",
+              '<div class="p-cap">原文段首</div><div class="quote">' + e2 + '……</div>');
+          }
+        }
+      }
+    });
   }
   const km = li ? Math.round(parseInt(li.replace(/[^0-9]/g,"")) * 0.357) : null;
   pbody.innerHTML = `
@@ -386,6 +409,7 @@ function openCountyCard(p, u, nm, d, latlng){
       else textFallback(u.n, ()=>openCountyCard(p,u,nm,d,latlng));
     });
   };
+  if (typeof showJurisdiction === "function") showJurisdiction(p, u);
   showPanel();
   if(latlng) map.flyTo(latlng, 8, {duration:.8});
 }
