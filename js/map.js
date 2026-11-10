@@ -352,6 +352,32 @@ map.on("click",()=>{
   if(mode==="舆图" && selPid) selectProv(null);
 });
 
+/* 府域晕：选中一府时显示该府县治凸包轮廓 */
+let fuHull = null;
+function showFuHull(p, u){
+  clearFuHull();
+  const pts = [];
+  if (u.c) pts.push(u.c);
+  const xc = u.xianc || {};
+  Object.keys(xc).forEach(nm => {
+    const d = xc[nm];
+    const pos = Array.isArray(d) ? d : d.c;
+    if (pos) pts.push(pos);
+  });
+  if (pts.length < 3) return;
+  const hull = hullLatLngs(pts, 1.15);
+  if (!hull) return;
+  const col = PCOLORS[p.id] || "#2f5d70";
+  fuHull = L.polygon(hull, {
+    color: col, weight: 1.5, dashArray: "5 5", opacity: .6,
+    fillColor: col, fillOpacity: .07,
+    lineCap: "round", interactive: false
+  }).addTo(map);
+}
+function clearFuHull(){
+  if (fuHull){ map.removeLayer(fuHull); fuHull = null; }
+}
+
 /* 府→县领属线：选中一府时显示其行政辐射 */
 let jurLines = [];
 function showJurisdiction(p, u){
