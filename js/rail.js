@@ -79,6 +79,7 @@ function selectProv(pid){
     openProv(p);
   }else{
     if (typeof hideProvHull === "function") hideProvHull();
+    if (typeof clearCountyTerritories === "function") clearCountyTerritories();
     highlightRail("舆图",null);
     syncHash("舆图", null);
   }
