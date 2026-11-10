@@ -20,8 +20,11 @@ for p in data["provinces"]:
         for z in (u.get("zx") or []):
             IDX[z["n"]] = (z["n"], "属州", p["name"], u["n"], z.get("now", ""),
                             tuple(z.get("c", [])), p["vols"][0])
-        for nm, pos in (u.get("xianc") or {}).items():
-            IDX[nm] = (nm, "县（推算）", p["name"], u["n"], "", tuple(pos), p["vols"][0])
+        for nm, d in (u.get("xianc") or {}).items():
+            pos = d if isinstance(d, list) else d.get("c", [])
+            if not pos: continue
+            typ = d.get("type", "推算") if isinstance(d, dict) else "推算"
+            IDX[nm] = (nm, "县（" + typ + "）", p["name"], u["n"], "", tuple(pos), p["vols"][0])
 
 # 关隘（从 config.js 中提取 PASSES）
 import re as _re
