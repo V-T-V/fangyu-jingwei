@@ -9,6 +9,7 @@ function hidePanel(){panel.classList.remove("open");document.body.classList.add(
 document.getElementById("pclose").onclick=()=>{
   hidePanel();
   if (typeof clearJurisdiction === "function") clearJurisdiction();
+  if (typeof clearFuHull === "function") clearFuHull();
   if(mode==="舆图")selectProv(null);
 };
 
@@ -145,6 +146,7 @@ function openFu(p,u){
   };
   if(u.c) safeFlyTo(u.c,7,{duration:1.1});
   if (typeof showJurisdiction === "function") showJurisdiction(p, u);
+  if (typeof showFuHull === "function") showFuHull(p, u);
   syncHash("舆图", "p=" + p.id + "&fu=" + encodeURIComponent(u.n));
   showPanel();
 }
@@ -317,9 +319,17 @@ function openTable(level){
         geometry:{type:"Point",coordinates:[z.c[1], z.c[0]]},
         properties:{名:z.n, 类:"属州", 省:p.name, 隶:u.n, 今地:z.now||"", 起始卷:p.vols[0], 依据:"整编"}}); });
       const xc = u.xianc || {};
-      Object.keys(xc).forEach(nm=>feats.push({type:"Feature",
-        geometry:{type:"Point",coordinates:[xc[nm][1], xc[nm][0]]},
-        properties:{名:nm, 类:"县", 省:p.name, 隶:u.n, 今地:"", 起始卷:p.vols[0], 依据:"推算"}}));
+      Object.keys(xc).forEach(nm=>{
+        const d = xc[nm];
+        const pos = Array.isArray(d) ? d : d.c;
+        const typ = Array.isArray(d) ? "推算" : (d.type || "推算");
+        const dir = Array.isArray(d) ? "" : (d.dir || "");
+        const li = Array.isArray(d) ? "" : (d.li || "");
+        feats.push({type:"Feature",
+          geometry:{type:"Point",coordinates:[pos[1], pos[0]]},
+          properties:{名:nm, 类:"县", 省:p.name, 隶:u.n, 今地:"", 起始卷:p.vols[0],
+            依据:typ, 方位:dir, 原载里程:li}});
+      });
     }));
     const gj = JSON.stringify({type:"FeatureCollection", features:feats});
     const a = document.createElement("a");
