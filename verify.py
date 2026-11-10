@@ -80,7 +80,8 @@ check(not missing, f"各府均有全文（缺 {len(missing)}：{missing[:6]}）"
 print("── 5. 县治推算")
 n_xc = sum(len(u.get("xianc", {})) for p_ in data["provinces"] for u in p_["fu"])
 bad_xc = [nm for p_ in data["provinces"] for u in p_["fu"]
-          for nm, pos in (u.get("xianc") or {}).items()
+          for nm, d in (u.get("xianc") or {}).items()
+          for pos in [d if isinstance(d, list) else d.get("c", [])]
           if not (18 < pos[0] < 54 and 73 < pos[1] < 136)]
 check(n_xc >= 700, f"县治推算 ≥700（实得 {n_xc}）")
 check(not bad_xc, f"县点全落域（越界 {len(bad_xc)}）")
