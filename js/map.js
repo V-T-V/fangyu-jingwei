@@ -378,7 +378,39 @@ function clearFuHull(){
   if (fuHull){ map.removeLayer(fuHull); fuHull = null; }
 }
 
-/* 县域示意：每县一个半透明圆域，半径=最近邻距半，色深浅交替 */
+/* Voronoi 县域：精确多边形分区，县界完美拼合 */
+function voronoiCell(target, neighbors, bounds) {
+  // 半平面裁剪法：从大方框开始，逐一用与邻居的垂直平分线裁剪
+  let poly = [
+    [bounds.south, bounds.west], [bounds.north, bounds.west],
+    [bounds.north, bounds.east], [bounds.south, bounds.east]
+  ];
+  const [ty, tx] = target;
+  for (const [ny, nx] of neighbors) {
+    // 垂直平分线上的两个点 + 法向量
+    const my = (ty + ny) / 2, mx = (tx + nx) / 2;
+    const dx = nx - tx, dy = ny - ty;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 1) continue;
+    const nxn = dx / len, nyn = dy / len; // 单位法向量（指向邻居）
+    // 裁剪：保留 target 侧（点积 < 0 的一侧）
+    const newPoly = [];
+    for (let i = 0; i < poly.length; i++) {
+      const cur = poly[i], next = poly[(i+1) % poly.length];
+      const curSide = (cur[0]-my)*nxn + (cur[1]-mx)*nyn;
+      const nextSide = (next[0]-my)*nxn + (next[1]-mx)*nyn;
+      if (curSide <= 0) newPoly.push(cur);
+      if ((curSide < 0) !== (nextSide < 0)) {
+        const t = curSide / (curSide - nextSide);
+        newPoly.push([cur[0] + t*(next[0]-cur[0]), cur[1] + t*(next[1]-cur[1])]);
+      }
+    }
+    poly = newPoly;
+    if (poly.length < 3) return null;
+  }
+  return poly;
+}
+
 let countyCircles = [];
 function showCountyTerritories(p, u){
   clearCountyTerritories();
@@ -390,27 +422,36 @@ function showCountyTerritories(p, u){
     const d = xc[nm];
     return { nm, pos: Array.isArray(d) ? d : d.c };
   }).filter(x => x.pos);
+  if (u.c) pts.push({ nm: "__fu__", pos: u.c });
   if (pts.length < 2) return;
-  if (u.c) pts.push({ nm: "府治", pos: u.c });
+
+  // 找 bounds
+  let south=99, north=0, west=199, east=0;
+  pts.forEach(pt => {
+    south = Math.min(south, pt.pos[0]); north = Math.max(north, pt.pos[0]);
+    west = Math.min(west, pt.pos[1]); east = Math.max(east, pt.pos[1]);
+  });
+  const pad = 0.5;
+  const bounds = { south: south-pad, north: north+pad, west: west-pad, east: east+pad };
 
   pts.forEach((pt, i) => {
-    // 找最近邻距离
-    let minDist = Infinity;
-    pts.forEach(other => {
-      if (other === pt) return;
-      const d = map.distance(pt.pos, other.pos);
-      if (d < minDist) minDist = d;
-    });
-    if (minDist < 1000) return; // 太近跳过（附郭）
-    const radius = Math.min(minDist * 0.48, 60000); // 半径=最近邻半，上限60km
-    const shade = i % 2 === 0 ? 0.06 : 0.11;
-    const circle = L.circle(pt.pos, {
-      radius: radius,
-      color: col, weight: 0.5, opacity: .15,
+    // 邻居 = 距离 < 3x 最近距离的其他县
+    const dists = pts.filter(o => o !== pt).map(o => ({
+      o, d: map.distance(pt.pos, o.pos)
+    })).sort((a,b) => a.d - b.d);
+    if (!dists.length) return;
+    const minD = dists[0].d;
+    if (minD < 1000) return; // 附郭跳过
+    const neighbors = dists.filter(x => x.d < Math.max(minD * 3, 50000)).map(x => x.o.pos);
+    const cell = voronoiCell(pt.pos, neighbors, bounds);
+    if (!cell || cell.length < 3) return;
+    const shade = pt.nm === "__fu__" ? 0.03 : (i % 2 === 0 ? 0.06 : 0.10);
+    const polygon = L.polygon(cell, {
+      color: col, weight: 0.8, opacity: .3,
       fillColor: col, fillOpacity: shade,
       interactive: false
     }).addTo(map);
-    countyCircles.push(circle);
+    countyCircles.push(polygon);
   });
 }
 function clearCountyTerritories(){
