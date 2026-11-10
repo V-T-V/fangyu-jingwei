@@ -378,6 +378,46 @@ function clearFuHull(){
   if (fuHull){ map.removeLayer(fuHull); fuHull = null; }
 }
 
+/* 县域示意：每县一个半透明圆域，半径=最近邻距半，色深浅交替 */
+let countyCircles = [];
+function showCountyTerritories(p, u){
+  clearCountyTerritories();
+  const xc = u.xianc || {};
+  const names = Object.keys(xc);
+  if (names.length < 2) return;
+  const col = PCOLORS[p.id] || "#2f5d70";
+  const pts = names.map(nm => {
+    const d = xc[nm];
+    return { nm, pos: Array.isArray(d) ? d : d.c };
+  }).filter(x => x.pos);
+  if (pts.length < 2) return;
+  if (u.c) pts.push({ nm: "府治", pos: u.c });
+
+  pts.forEach((pt, i) => {
+    // 找最近邻距离
+    let minDist = Infinity;
+    pts.forEach(other => {
+      if (other === pt) return;
+      const d = map.distance(pt.pos, other.pos);
+      if (d < minDist) minDist = d;
+    });
+    if (minDist < 1000) return; // 太近跳过（附郭）
+    const radius = Math.min(minDist * 0.48, 60000); // 半径=最近邻半，上限60km
+    const shade = i % 2 === 0 ? 0.06 : 0.11;
+    const circle = L.circle(pt.pos, {
+      radius: radius,
+      color: col, weight: 0.5, opacity: .15,
+      fillColor: col, fillOpacity: shade,
+      interactive: false
+    }).addTo(map);
+    countyCircles.push(circle);
+  });
+}
+function clearCountyTerritories(){
+  countyCircles.forEach(c => map.removeLayer(c));
+  countyCircles = [];
+}
+
 /* 府→县领属线：选中一府时显示其行政辐射 */
 let jurLines = [];
 function showJurisdiction(p, u){
