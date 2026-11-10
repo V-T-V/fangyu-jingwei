@@ -378,6 +378,60 @@ function clearFuHull(){
   if (fuHull){ map.removeLayer(fuHull); fuHull = null; }
 }
 
+/* 省级 Voronoi：全省所有县治同时分区，按府着色深浅交替 */
+function showProvinceVoronoi(p){
+  clearCountyTerritories();
+  const bounds = { south: 99, north: 0, west: 199, east: 0 };
+  const allPts = [];
+  p.fu.forEach((u, fi) => {
+    if (!u.c) return;
+    const col = PCOLORS[p.id] || "#2f5d70";
+    // 府治也作为一个点参与 Voronoi
+    allPts.push({ pos: u.c, fu: fi, col, isFu: true });
+    Object.keys(u.xianc || {}).forEach(nm => {
+      const d = u.xianc[nm];
+      const pos = Array.isArray(d) ? d : d.c;
+      if (pos) allPts.push({ pos, fu: fi, col, isFu: false });
+    });
+    // 更新 bounds
+    const xc = u.xianc || {};
+    [u.c, ...Object.values(xc).map(d => Array.isArray(d) ? d : d.c)].forEach(pos => {
+      if (!pos) return;
+      bounds.south = Math.min(bounds.south, pos[0]);
+      bounds.north = Math.max(bounds.north, pos[0]);
+      bounds.west = Math.min(bounds.west, pos[1]);
+      bounds.east = Math.max(bounds.east, pos[1]);
+    });
+  });
+  if (allPts.length < 3) return;
+  const pad = 0.5;
+  bounds.south -= pad; bounds.north += pad;
+  bounds.west -= pad; bounds.east += pad;
+
+  allPts.forEach((pt, i) => {
+    // 邻居 = 最近的 12 个点
+    const dists = allPts.filter(o => o !== pt)
+      .map(o => ({ o, d: map.distance(pt.pos, o.pos) }))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 12)
+      .map(x => x.o.pos);
+    if (!dists.length) return;
+    // 附郭跳过
+    if (dists[0] && map.distance(pt.pos, dists[0]) < 2000 && pt.isFu) return;
+    const cell = voronoiCell(pt.pos, dists, bounds);
+    if (!cell || cell.length < 3) return;
+    // 同府交替深浅，不同府用同一省色
+    const shade = pt.isFu ? 0.02 : ((pt.fu + (i % 2)) % 2 === 0 ? 0.05 : 0.09);
+    const polygon = L.polygon(cell, {
+      color: pt.col, weight: pt.isFu ? 1.5 : 0.6,
+      opacity: pt.isFu ? 0.5 : 0.25,
+      fillColor: pt.col, fillOpacity: shade,
+      interactive: false
+    }).addTo(map);
+    countyCircles.push(polygon);
+  });
+}
+
 /* Voronoi 县域：精确多边形分区，县界完美拼合 */
 function voronoiCell(target, neighbors, bounds) {
   // 半平面裁剪法：从大方框开始，逐一用与邻居的垂直平分线裁剪
