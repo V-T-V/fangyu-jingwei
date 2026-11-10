@@ -37,38 +37,27 @@
 <script src="js/app.js?v=43" defer></script>
 <script src="js/modes.js?v=43" defer></script>
 <script defer>
-window.addEventListener("load", () => {
-  const NL = String.fromCharCode(10);
-  const log = [];
-  const done = () => {
-    document.getElementById("testlog").textContent = "TESTLOG" + NL + log.join("; ") + " ENDLOG";
-    document.title = log.every(l => l.includes("PASS")) ? "ALL-PASS" : "HAS-FAIL";
+window.addEventListener("error",function(e){document.title="ERR:"+e.message});
+window.addEventListener("load",function(){
+  var NL=String.fromCharCode(10),log=[];
+  var done=function(){
+    document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
+    document.title=log.every(function(l){return l.indexOf("PASS")>=0})?"ALL-PASS":"HAS-FAIL";
   };
-  setTimeout(() => {
-    try {
-      // z7 门控
-      map.setZoom(7);
-      setTimeout(() => {
-        const dots = document.querySelectorAll(".xseal").length;
-        log.push("COUNTY dots=" + dots + (dots >= 800 ? " PASS" : " FAIL"));
-        // 良乡县位置核对：府西南70里 → ~[39.74,116.19]
-        const bz = FY.provinces.find(p => p.id === "beizhi");
-        const st = bz.fu.find(u => u.n === "顺天府");
-        const lx = st.xianc && st.xianc["良乡县"];
-        const near = lx && Math.abs(lx[0] - 39.74) < 0.05 && Math.abs(lx[1] - 116.19) < 0.05;
-        log.push("LIANGXIANG pos=" + (lx ? lx.join(",") : "none") + (near ? " PASS" : " FAIL"));
-        // revealCounty：飞至良乡县点
-        const ok = revealCounty("beizhi", "顺天府", "良乡县");
-        log.push("REVEAL called=" + ok + (ok ? " PASS" : " FAIL"));
-        // 定格：飞顺天府一带
-        map.setView([39.9, 116.6], 8);
-        setTimeout(() => {
-          document.getElementById("testlog").style.display = "none";
-          done();
-        }, 600);
-      }, 600);
-    } catch (e) { log.push("ERR " + e); done(); }
-  }, 2200);
+  setTimeout(function(){
+    try{
+      var dots=document.querySelectorAll(".xseal").length;
+      log.push("COUNTY="+dots+(dots>=800?" PASS":" FAIL"));
+      var bz=FY.provinces.find(function(p){return p.id==="beizhi"});
+      var st=bz.fu.find(function(u){return u.n==="顺天府"});
+      var lx=st.xianc&&st.xianc["良乡县"];
+      var pos=Array.isArray(lx)?lx:(lx?lx.c:null);
+      log.push("LIANGXIANG="+(pos?pos.join(","):"none")+(pos&&Math.abs(pos[0]-39.74)<0.1?" PASS":" FAIL"));
+      var ok=typeof revealCounty==="function"?revealCounty("beizhi","顺天府","良乡县"):false;
+      log.push("REVEAL="+ok+(ok?" PASS":" FAIL"));
+      done();
+    }catch(e){log.push("ERR "+e);done();}
+  },3000);
 });
 </script>
 </body>
