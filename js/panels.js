@@ -337,3 +337,55 @@ function openTable(level){
   showPanel();
 }
 
+
+/* ── 县级信息卡 ── */
+function openCountyCard(p, u, nm, d, latlng){
+  vset(nm.replace(/县$/,""), "县");
+  vseal.textContent = "县";
+  const isObj = !Array.isArray(d);
+  const pos = isObj ? d.c : d;
+  const typ = isObj ? (d.type || "推算") : "推算";
+  const dir = isObj && d.dir ? d.dir : "";
+  const li = isObj && d.li ? d.li : "";
+  // 原文检索该县段首句
+  let excerpt = "";
+  if (typeof FYTEXT !== "undefined" && FYTEXT[p.id]){
+    const bag = FYTEXT[p.id];
+    const fuTxt = bag.fu && bag.fu[u.n];
+    if (fuTxt){
+      const i = fuTxt.indexOf(nm + "府");  // 段首"XX县府东N里"
+      const j = i >= 0 ? i : fuTxt.indexOf("○" + nm);
+      if (j >= 0) excerpt = fuTxt.slice(j, j + 120).split(String.fromCharCode(10)).join("");
+    }
+  }
+  const km = li ? Math.round(parseInt(li.replace(/[^0-9]/g,"")) * 0.357) : null;
+  pbody.innerHTML = `
+    <div class="p-kicker">${p.name} · ${u.n}</div>
+    <div class="stat-strip" style="margin-top:2px">
+      <div class="st"><b>${typ}</b><span>定位类型</span></div>
+      <div class="st"><b>${dir || "—"}</b><span>方位</span></div>
+      <div class="st"><b>${li || "—"}</b><span>原载里程</span></div>
+      <div class="st"><b>${km !== null ? km + "km" : "—"}</b><span>折合直线</span></div>
+    </div>
+    ${excerpt ? `<div class="p-cap">原文段首</div><div class="quote">${excerpt}……</div>` : ""}
+    <div class="p-cap">操作</div>
+    <div class="readrow">
+      <button class="readfull" id="gotoFu">➤ 入 ${u.n} 详情</button>
+      ${typeof loadTextFile === "function" ? '<button class="readfull" id="readXian" style="margin-left:8px">📖 读原文</button>' : ""}
+    </div>
+    <div class="hint" style="margin-top:10px">坐标由原书「${dir ? `府${dir}${li}` : "附郭"}」推算${km ? `，折合直线约 ${km} km` : ""}。</div>`;
+  document.getElementById("gotoFu").onclick = ()=>openFu(p,u);
+  const rb = document.getElementById("readXian");
+  if (rb) rb.onclick = ()=>{
+    renderText._q = nm;
+    loadTextFile(p.id, ok=>{
+      const bag = FYTEXT[p.id];
+      const t = ok && bag && bag.fu && bag.fu[u.n];
+      if (t) renderText(u.n, p.name+"方舆纪要", t, ()=>openCountyCard(p,u,nm,d,latlng), p.id,
+        [u.fg,...u.zhou,...u.xian].filter(Boolean).map(x=>x.replace(/〔.*?〕/g,"")));
+      else textFallback(u.n, ()=>openCountyCard(p,u,nm,d,latlng));
+    });
+  };
+  showPanel();
+  if(latlng) map.flyTo(latlng, 8, {duration:.8});
+}

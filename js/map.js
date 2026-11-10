@@ -97,17 +97,28 @@ function buildFu(){
         zm.on("click",()=>openFu(p,u));
         fuMarkers[p.id].push(zm);
       });
-      // 县治推算点（zoom≥7 显现，点击入其府）
+      // 县治推算点（zoom≥7 显现，富信息 + zoom≥8 常显标签）
       const xc = u.xianc || {};
       Object.keys(xc).forEach(nm=>{
+        const d = xc[nm];
+        const pos = Array.isArray(d) ? d : d.c;    // 兼容旧数组格式
+        const isObj = !Array.isArray(d);
+        const typ = isObj ? (d.type || "推算") : "推算";
+        const dirStr = isObj && d.dir ? `府${d.dir}` : "";
+        const liStr = isObj && d.li ? `${d.li}里` : "";
         const xi = L.divIcon({className:"", iconSize:[5,5],
-          html:`<div class="xseal" style="--pc:${PCOLORS[p.id]||"#2f5d70"}" title="${nm}"></div>`});
-        const xm = L.marker(xc[nm],{icon:xi, zIndexOffset:-400}).addTo(fuLayer);
-        xm._pid=p.id;
-        xm.bindTooltip(`<b style="font-family:KaiTi,serif;font-size:12px;letter-spacing:2px">${nm}</b><br>
-          <span style="font-size:9.5px;letter-spacing:1px;color:#8b8069">隶 ${u.n} · 推算位置</span>`,
-          {direction:"top",offset:[0,-3],opacity:.9,className:"ftip"});
-        xm.on("click",()=>openFu(p,u));
+          html:`<div class="xseal ${typ==="附郭"?"fg-x":""}" style="--pc:${PCOLORS[p.id]||"#2f5d70"}" title="${nm}"></div>`});
+        const xm = L.marker(pos,{icon:xi, zIndexOffset:-400}).addTo(fuLayer);
+        xm._pid=p.id; xm._xian=nm; xm._fu=u.n; xm._prov=p;
+        xm.bindTooltip(`<b style="font-family:KaiTi,serif;font-size:13px;letter-spacing:2px">${nm}</b><br>
+          <span style="font-size:10px;letter-spacing:1px;color:#57503f">隶 ${u.n}</span><br>
+          <span style="font-size:10px;letter-spacing:1px;color:${typ==="附郭"?"#9a6b3f":"#8b8069"}">${dirStr?dirStr+" ·":""} ${typ}${liStr?" · "+liStr:""}</span>`,
+          {direction:"top",offset:[0,-3],opacity:.95,className:"ftip"});
+        // zoom≥8 常显县名标签
+        const dir8 = ["right","left","bottom","right"][Object.keys(xc).indexOf(nm)%4];
+        const off8 = {right:[8,0],left:[-8,0],bottom:[0,8]}[dir8];
+        xm.bindTooltip(nm.replace(/县$/,""),{permanent:false,direction:dir8,offset:off8,className:"xianlab"});
+        xm.on("click",e=>openCountyCard(p,u,nm,d,e.latlng));
         fuMarkers[p.id].push(xm);
       });
     });
@@ -119,6 +130,17 @@ map.on("zoomend",()=>{
   document.body.classList.toggle("z7", map.getZoom()>=7);
   document.body.classList.toggle("z5", map.getZoom()>=5);
   document.body.classList.toggle("z4", map.getZoom()>=4);
+  // zoom≥8：县名常显
+  document.body.classList.toggle("z8", map.getZoom()>=8);
+  fuMarkers && Object.values(fuMarkers).flat().forEach(m=>{
+    if(m._xian){
+      const tips = m.getTooltip();
+      if(tips){
+        if(map.getZoom()>=8){ m.unbindTooltip(); m.bindTooltip(m._xian.replace(/县$/,""),{permanent:true,direction:"right",offset:[8,0],className:"xianlab"}); }
+        else { m.unbindTooltip(); }
+      }
+    }
+  });
 });
 
 /* ── 形势模式 ── */
