@@ -148,6 +148,7 @@ function openFu(p,u){
   if(u.c) safeFlyTo(u.c,7,{duration:1.1});
   if (typeof showJurisdiction === "function") showJurisdiction(p, u);
   if (typeof showFuHull === "function") showFuHull(p, u);
+  if (typeof showProvinceVoronoi === "function") clearCountyTerritories();
   if (typeof showCountyTerritories === "function") showCountyTerritories(p, u);
   syncHash("舆图", "p=" + p.id + "&fu=" + encodeURIComponent(u.n));
   showPanel();
