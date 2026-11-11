@@ -6,17 +6,21 @@ const FT_KEYS = [
   ...FY.provinces.map(p=>p.id), "juanshou", "xingshi", "chuandu"
 ];
 
-/* 逐个加载文本文件（带进度回调），全部就绪后 cb() */
+/* 并行加载全部文本（带进度回调），全部就绪后 cb()
+   —— 浏览器并发取 18 文件，比逐个串行快数倍；loadTextFile 自带去重队列 */
 function ensureTextAll(onProg, cb){
-  let i = 0;
-  const next = ()=>{
-    if (i >= FT_KEYS.length) { cb(); return; }
-    const key = FT_KEYS[i];
-    if (FYTEXT[key]) { i++; next(); return; }
-    onProg && onProg(key, i, FT_KEYS.length);
-    loadTextFile(key, ()=>{ i++; next(); });
-  };
-  next();
+  const total = FT_KEYS.length;
+  let done = 0;
+  if (!total) { cb(); return; }
+  FT_KEYS.forEach(key=>{
+    const fin = ()=>{
+      done++;
+      onProg && onProg(key, done, total);
+      if (done === total) cb();
+    };
+    if (FYTEXT[key]) { fin(); return; }
+    loadTextFile(key, fin);      // onload/onerror 都会回调
+  });
 }
 
 /* 转义 + 片段：命中处前后各 18 字 */

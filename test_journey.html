@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"><title>自动验证 · 全旅程</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<script src="vendor/leaflet.js"></script>
 <link rel="stylesheet" href="css/main.css?v=51">
 </head>
 <body class="m-舆图 nopanel">
@@ -38,47 +38,52 @@ window.addEventListener("load",function(){
     try{
       var si=document.getElementById("search");
       si.value="桃源县";si.dispatchEvent(new Event("input"));
-      P("SEARCH",document.querySelectorAll("#sresults .sr").length>0);
-      document.querySelector("#sresults .sr[data-i]").click();
+      /* 检索输入有 110ms 防抖：等结果渲染后再点 */
       setTimeout(function(){
         try{
-          P("FLY-FU",document.getElementById("vname").textContent.length>0);
-          // 搜索县名会打开县级卡——先入府详情，再阅全文
-          var gotoFu=document.getElementById("gotoFu");
-          if(gotoFu){gotoFu.click();setTimeout(function(){
-            var ft=document.querySelector("[data-ft]");
-            if(ft)ft.click();
-          },500);}
-          else{var ft2=document.querySelector("[data-ft]");if(ft2)ft2.click();}
+          P("SEARCH",document.querySelectorAll("#sresults .sr").length>0);
+          document.querySelector("#sresults .sr[data-i]").click();
           setTimeout(function(){
             try{
-              P("READ",document.querySelectorAll(".tp").length>5);
-              var nb=document.getElementById("tnight");
-              if(nb)nb.click();
-              P("NIGHT",document.getElementById("panel").classList.contains("panel-night"));
-              var spoken=[];
-              speechSynthesis.speak=function(u){spoken.push(u.text)};
-              var tb=document.getElementById("ttsb");
-              if(tb)tb.click();
-              P("TTS",spoken.length>0);
-              if(tb)tb.click();
-              var hg=FY.provinces.find(function(p){return p.id==="nanzhi"});
-              var ha=hg.fu.find(function(u){return u.n==="淮安府"});
-              BM.toggle(hg,ha);
-              P("BOOKMARK",BM.has("nanzhi","淮安府"));
-              var last=BM.getLast();
-              P("RESUME",!!last&&last.fu==="淮安府");
-              ftRun("形胜");
+              P("FLY-FU",document.getElementById("vname").textContent.length>0);
+              // 搜索县名会打开县级卡——先入府详情，再阅全文
+              var gotoFu=document.getElementById("gotoFu");
+              if(gotoFu){gotoFu.click();setTimeout(function(){
+                var ft=document.querySelector("[data-ft]");
+                if(ft)ft.click();
+              },500);}
+              else{var ft2=document.querySelector("[data-ft]");if(ft2)ft2.click();}
               setTimeout(function(){
                 try{
-                  P("FULLTEXT",!!document.querySelector(".fthead"));
-                  done();
-                }catch(e){log.push("8-ERR "+e);done();}
-              },5000);
-            }catch(e){log.push("4-ERR "+e);done();}
+                  P("READ",document.querySelectorAll(".tp").length>5);
+                  var nb=document.getElementById("tnight");
+                  if(nb)nb.click();
+                  P("NIGHT",document.getElementById("panel").classList.contains("panel-night"));
+                  var spoken=[];
+                  speechSynthesis.speak=function(u){spoken.push(u.text)};
+                  var tb=document.getElementById("ttsb");
+                  if(tb)tb.click();
+                  P("TTS",spoken.length>0);
+                  if(tb)tb.click();
+                  var hg=FY.provinces.find(function(p){return p.id==="nanzhi"});
+                  var ha=hg.fu.find(function(u){return u.n==="淮安府"});
+                  BM.toggle(hg,ha);
+                  P("BOOKMARK",BM.has("nanzhi","淮安府"));
+                  var last=BM.getLast();
+                  P("RESUME",!!last&&last.fu==="淮安府");
+                  ftRun("形胜");
+                  setTimeout(function(){
+                    try{
+                      P("FULLTEXT",!!document.querySelector(".fthead"));
+                      done();
+                    }catch(e){log.push("8-ERR "+e);done();}
+                  },5000);
+                }catch(e){log.push("4-ERR "+e);done();}
+              },2500);
+            }catch(e){log.push("3-ERR "+e);done();}
           },2500);
-        }catch(e){log.push("3-ERR "+e);done();}
-      },2500);
+        }catch(e){log.push("2-ERR "+e);done();}
+      },450);
     }catch(e){log.push("1-ERR "+e);done();}
     function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
   },3000);

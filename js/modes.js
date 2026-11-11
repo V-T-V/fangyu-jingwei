@@ -10,6 +10,7 @@ function setMode(m){
   document.getElementById("modelabel").textContent=m;
   document.getElementById("modenote").textContent=NOTE[m];
   fuLayer.remove();eraLayer.remove();riverLayer.remove();
+  zhouLayer.remove();countyLayer.remove();passLayer.remove();   // 分级图层随主层摘除
   if (typeof hideProvHull === "function") hideProvHull();
   if (typeof clearCountyTerritories === "function") clearCountyTerritories();
   if (typeof clearJurisdiction === "function") clearJurisdiction();
@@ -20,7 +21,7 @@ function setMode(m){
   if (typeof stopTTS === "function") stopTTS();
   if (typeof eraPlaying !== "undefined" && eraPlaying) toggleEraPlay();
   syncHash(m, null);
-  if(m==="舆图"){fuLayer.addTo(map);railYutu();safeFly([[17,96],[44,129]],{duration:1});}
+  if(m==="舆图"){fuLayer.addTo(map);applyZoomGates();railYutu();safeFly([[17,96],[44,129]],{duration:1});}
   if(m==="形势"){eraLayer.addTo(map);railXingshi();buildEra(0);openEra(0);highlightRail("形势",0);}
   if(m==="川渎"){riverLayer.addTo(map);railChuandu();const r=buildRivers("大江");openRiver(r);highlightRail("川渎","大江");}
 }

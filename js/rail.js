@@ -52,21 +52,12 @@ function highlightRail(m,key){
   });
 }
 
-/* ── 省选择：高亮本省印章，淡出他省，飞至省域 ── */
-let selPid=null;
+/* ── 省选择：高亮本省印章，淡出他省，飞至省域 ──
+   selPid 声明在 map.js（var，跨脚本无 TDZ）；淡出统一走 applyProvDim */
 function selectProv(pid){
   selPid=pid;
   document.body.classList.toggle("selprov",!!pid);
-  for(const id in fuMarkers){
-    fuMarkers[id].forEach(m=>{
-      const el=m.getElement&&m.getElement();
-      if(el){
-        const f=el.querySelector(".fuseal"); if(f)f.classList.toggle("dim",!!pid&&id!==pid);
-        const z=el.querySelector(".zseal"); if(z)z.classList.toggle("dim",!!pid&&id!==pid);
-        const x=el.querySelector(".xseal"); if(x)x.classList.toggle("dim",!!pid&&id!==pid);
-      }
-    });
-  }
+  applyProvDim();
   setFuLabels(pid);
   if(pid){
     const p=FY.provinces.find(x=>x.id===pid);

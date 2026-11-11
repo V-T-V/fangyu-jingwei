@@ -47,10 +47,13 @@ function goHit(h){
     selectProv(h.pid);openFu(p,u);}
 }
 
+/* 输入防抖：IME 组合期不逐键重建结果（回车路径不受影响，直达第一条） */
+let _sT = null;
 sinput.addEventListener("input",()=>{
   const q=sinput.value.trim();
   if(!q){sres.classList.remove("open");return;}
-  renderHits(searchHits(q),q);
+  clearTimeout(_sT);
+  _sT=setTimeout(()=>renderHits(searchHits(q),q),110);
 });
 /* 回车直达第一条 */
 sinput.addEventListener("keydown",e=>{

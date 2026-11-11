@@ -1,6 +1,7 @@
 /* ═══════════ 方舆经纬 · 地图与三图层 ═══════════ */
 
-const map = L.map("map",{zoomControl:true,minZoom:4,maxZoom:12,
+/* var（非 const）：map 挂到 window，测试页可直取 */
+var map = L.map("map",{zoomControl:true,minZoom:4,maxZoom:12,
   attributionControl:false,maxBounds:[[15,88],[47,140]],maxBoundsViscosity:.6});
 map.fitBounds([[17,96],[44,129]]);
 const tileLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}",{
@@ -22,11 +23,36 @@ tileLayer.on("tileerror", ()=>{
   }
 });
 
-const fuLayer = L.layerGroup().addTo(map);      // 舆图：府治印章
+const fuLayer = L.layerGroup().addTo(map);      // 舆图：府治印章（常驻）
+const zhouLayer = L.layerGroup();               // 属州方章（zoom≥6 挂载，省 DOM）
+const countyLayer = L.layerGroup();             // 县治点（zoom≥7 挂载——1476 点常驻拖慢平移）
+const passLayer = L.layerGroup();               // 关隘（zoom≥5 挂载）
 const eraLayer = L.layerGroup().addTo(map);     // 形势：都城要地
 const riverLayer = L.layerGroup().addTo(map);   // 川渎：水道
 const fuMarkers = {};                            // pid -> [markers]
+var selPid = null;                               // 当前选中省（var：跨脚本无 TDZ）
 let curEra = 0;                                  // 当前形势卷（键盘翻卷用）
+
+/* 缩放分级挂载：低缩放只留府治印，县/州/关按需上屏 */
+function applyZoomGates(){
+  const z = map.getZoom();
+  if(z>=6) map.addLayer(zhouLayer); else map.removeLayer(zhouLayer);
+  if(z>=7) map.addLayer(countyLayer); else map.removeLayer(countyLayer);
+  if(z>=5) map.addLayer(passLayer); else map.removeLayer(passLayer);
+  applyProvDim();          // 图层重挂后元素是新建的，需补省选淡出
+}
+/* 省选淡出：非选中省的印/章/点加 .dim（CSS: body.selprov × .dim） */
+function applyProvDim(){
+  for(const id in fuMarkers){
+    fuMarkers[id].forEach(m=>{
+      const el = m.getElement && m.getElement();
+      if(!el) return;
+      const f = el.querySelector(".fuseal"); if(f) f.classList.toggle("dim", !!selPid && id!==selPid);
+      const z = el.querySelector(".zseal");  if(z) z.classList.toggle("dim", !!selPid && id!==selPid);
+      const x = el.querySelector(".xseal");  if(x) x.classList.toggle("dim", !!selPid && id!==selPid);
+    });
+  }
+}
 
 /* 容器未完成布局（尺寸为 0）时飞行动画会算出 NaN —— 就绪前延迟重试 */
 function safeFly(bounds, opts){
@@ -66,7 +92,7 @@ function setFuLabels(pid){
   for(const id in fuMarkers) fuMarkers[id].forEach(m=>bindFuTip(m, !!pid && id===pid));
 }
 function buildFu(){
-  fuLayer.clearLayers();
+  fuLayer.clearLayers(); zhouLayer.clearLayers(); countyLayer.clearLayers();
   for(const pid in fuMarkers) delete fuMarkers[pid];
   FY.provinces.forEach(p=>{
     fuMarkers[p.id]=[];
@@ -89,7 +115,7 @@ function buildFu(){
         if(!z.c) return;
         const zi = L.divIcon({className:"", iconSize:[8,8],
           html:`<div class="zseal" style="--pc:${PCOLORS[p.id]||"#2f5d70"}" title="${z.n}"></div>`});
-        const zm = L.marker(z.c,{icon:zi, zIndexOffset:-200}).addTo(fuLayer);
+        const zm = L.marker(z.c,{icon:zi, zIndexOffset:-200}).addTo(zhouLayer);
         zm._pid=p.id; zm._zhou=z.n;
         zm.bindTooltip(`<b style="font-family:KaiTi,serif;font-size:13px;letter-spacing:2px">${z.n}</b><br>
           <span style="font-size:10px;letter-spacing:1px;color:#57503f">隶 ${u.n}${z.now?" · 今 "+z.now:""}</span>`,
@@ -109,7 +135,7 @@ function buildFu(){
         const liStr = isObj && d.li ? `${d.li}里` : "";
         const xi = L.divIcon({className:"", iconSize:[5,5],
           html:`<div class="xseal ${typ==="附郭"?"fg-x":""}" style="--pc:${PCOLORS[p.id]||"#2f5d70"}" title="${nm}"></div>`});
-        const xm = L.marker(pos,{icon:xi, zIndexOffset:-400}).addTo(fuLayer);
+        const xm = L.marker(pos,{icon:xi, zIndexOffset:-400}).addTo(countyLayer);
         xm._pid=p.id; xm._xian=nm; xm._fu=u.n; xm._prov=p;
         /* 富信息 tip 存于标记：zoomend 重建（常显名/富信息）皆从此取 */
         xm._tipHtml = `<b style="font-family:KaiTi,serif;font-size:13px;letter-spacing:2px">${nm}</b><br>
@@ -127,14 +153,15 @@ function bindXianTip(m){
   if(m._tipHtml) m.bindTooltip(m._tipHtml,
     {direction:"top",offset:[0,-3],opacity:.95,className:"ftip"});
 }
-/* 属州层 zoom 门控 */
+/* 属州层 zoom 门控：CSS 类管样式过渡，图层挂载管 DOM 数量 */
 map.on("zoomend",()=>{
   document.body.classList.toggle("z6", map.getZoom()>=6);
   document.body.classList.toggle("z7", map.getZoom()>=7);
   document.body.classList.toggle("z5", map.getZoom()>=5);
   document.body.classList.toggle("z4", map.getZoom()>=4);
-  // zoom≥8：县名常显（带碰撞检测——近距离县名只显示一个，其余退回富信息悬停）
   document.body.classList.toggle("z8", map.getZoom()>=8);
+  applyZoomGates();
+  // zoom≥8：县名常显（带碰撞检测——近距离县名只显示一个，其余退回富信息悬停）
   if(map.getZoom()>=8){
     const all = Object.values(fuMarkers).flat().filter(m=>m._xian);
     const shown = [];
@@ -306,7 +333,7 @@ function buildFrontier(){
   }
 }
 
-/* 关隘图层：50 处天下名关（人工整编），zoom≥5 显现 */
+/* 关隘图层：50 处天下名关（人工整编），zoom≥5 挂载 */
 let passMarkers = [];
 function buildPasses(){
   {
@@ -314,7 +341,7 @@ function buildPasses(){
     list.forEach(q=>{
       const m = L.marker(q.c, {icon: L.divIcon({className:"", iconSize:[14,14],
         html: `<div class="passmark ${q.type.indexOf("九边")>=0?"bian":""}" title="${q.n}"></div>`}),
-        zIndexOffset:600}).addTo(fuLayer);
+        zIndexOffset:600}).addTo(passLayer);
       m.bindTooltip(`<b style="font-family:KaiTi,serif;font-size:14px;letter-spacing:2px">${q.n}</b><br>
         <span style="font-size:10px;letter-spacing:1px;color:#b23a2e">${q.type}</span><br>
         <span style="font-size:10px;letter-spacing:1px;color:#57503f">${q.fu} · 今${q.now}</span>`,

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><title>自动验证 · 缩放门控</title>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<script src="vendor/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=74">
+</head>
+<body class="m-舆图 nopanel">
+<div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
+<header><div class="brand"><div class="seal">方</div><div><h1>方舆经纬</h1><p>读史方舆纪要</p></div></div>
+<nav id="modes"><button data-m="舆图" class="on"><b>舆　图</b></button></nav>
+<div id="searchwrap"><input id="search"><div id="sresults"></div></div></header>
+<aside id="rail"><div class="rt" id="railtitle"></div><div id="raillist"></div></aside>
+<section id="panel"><button id="pclose">✕</button><div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div><div id="pbody"></div></section>
+<footer><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<div id="tl"></div><div id="tlPlay"></div><div id="boot"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap"></pre>
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=74" defer></script>
+<script src="js/map.js?v=74" defer></script>
+<script src="js/panels.js?v=74" defer></script>
+<script src="js/rail.js?v=74" defer></script>
+<script src="js/search.js?v=74" defer></script>
+<script src="js/reader.js?v=74" defer></script>
+<script src="js/bookmarks.js?v=74" defer></script>
+<script src="js/fulltext.js?v=74" defer></script>
+<script src="js/app.js?v=74" defer></script>
+<script src="js/modes.js?v=74" defer></script>
+<script defer>
+var NL=String.fromCharCode(10),log=[];
+function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
+function done(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
+  document.title=log.every(function(l){return l.indexOf("PASS")>=0})?"ALL-PASS":"HAS-FAIL";}
+window.addEventListener("load",function(){
+  setTimeout(function(){
+    try{
+      /* 初态（约 z4）：县/州/关不挂载，府印常驻 */
+      P("LOW-XIAN-0",document.querySelectorAll(".xseal").length===0);
+      P("LOW-ZHOU-0",document.querySelectorAll(".zseal").length===0);
+      P("LOW-PASS-0",document.querySelectorAll(".passmark").length===0);
+      P("LOW-FU",document.querySelectorAll(".fuseal").length>150);
+      /* 飞到府级缩放：县点上屏 + 常显县名标签 */
+      /* animate:false 时 zoomend 在 setZoom 内同步触发，直接等拍取 DOM */
+      map.setZoom(8,{animate:false});
+      setTimeout(function(){
+        P("Z8-XIAN",document.querySelectorAll(".xseal").length>900);
+        P("Z8-ZHOU",document.querySelectorAll(".zseal").length>100);
+        P("Z8-PASS",document.querySelectorAll(".passmark").length===50);
+        P("Z8-LABEL",document.querySelectorAll(".xianlab").length>0);
+        /* 省选淡出在重挂后仍生效 */
+        selectProv("nanzhi");
+        setTimeout(function(){
+          P("DIM-ON",document.querySelectorAll(".xseal.dim").length>0);
+          /* 缩回全景：县层卸载 */
+          map.setZoom(4,{animate:false});
+          setTimeout(function(){
+            P("BACK-XIAN-0",document.querySelectorAll(".xseal").length===0);
+            selectProv(null);
+            done();
+          },600);
+        },600);
+      },800);
+    }catch(e){log.push("ERR "+e);done();}
+  },2500);
+});
+</script>
+</body>
+</html>

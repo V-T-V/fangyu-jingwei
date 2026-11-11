@@ -614,7 +614,8 @@ def derive_county_coords(data):
             if 18 < pos[0] < 54 and 73 < pos[1] < 136:
                 if u_ref:
                     # 富对象：坐标 + 原书方位/里程（里程存纯数字串，展示层补"里"）
-                    u_ref.setdefault("xianc", {})[nm] = {"c": pos, "dir": dr, "li": li, "type": "推算"}
+                    # type 省缺＝推算（前端各处 d.type||"推算" 默认），附郭才显式标注
+                    u_ref.setdefault("xianc", {})[nm] = {"c": pos, "dir": dr, "li": li}
                     n_hit += 1
         # 兜底二：全文任意位置 县名(在)?(府|州)方位N里（段落锚定漏网者）
         for u in p["fu"]:
@@ -632,7 +633,7 @@ def derive_county_coords(data):
                     continue
                 pos = offset_point(u["c"], DIR_DEG[m.group(2)], km)
                 if 18 < pos[0] < 54 and 73 < pos[1] < 136:
-                    u.setdefault("xianc", {})[nm_c] = {"c": pos, "dir": m.group(2), "li": m.group(3), "type": "推算"}
+                    u.setdefault("xianc", {})[nm_c] = {"c": pos, "dir": m.group(2), "li": m.group(3)}
                     n_hit += 1
         n_prov += 1
     return n_prov, n_hit
