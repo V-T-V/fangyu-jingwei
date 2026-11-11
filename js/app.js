@@ -89,3 +89,6 @@ function wander(){
 
 var _wl = document.getElementById("wanderlink");
 if (_wl) _wl.onclick = wander;
+
+var _ana = document.getElementById("analyticslink");
+if (_ana) _ana.onclick = openAnalytics;
