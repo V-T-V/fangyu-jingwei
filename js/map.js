@@ -102,6 +102,7 @@ function buildFu(){
       Object.keys(xc).forEach(nm=>{
         const d = xc[nm];
         const pos = Array.isArray(d) ? d : d.c;    // 兼容旧数组格式
+        if (!pos) return;
         const isObj = !Array.isArray(d);
         const typ = isObj ? (d.type || "推算") : "推算";
         const dirStr = isObj && d.dir ? `府${d.dir}` : "";
@@ -110,19 +111,21 @@ function buildFu(){
           html:`<div class="xseal ${typ==="附郭"?"fg-x":""}" style="--pc:${PCOLORS[p.id]||"#2f5d70"}" title="${nm}"></div>`});
         const xm = L.marker(pos,{icon:xi, zIndexOffset:-400}).addTo(fuLayer);
         xm._pid=p.id; xm._xian=nm; xm._fu=u.n; xm._prov=p;
-        xm.bindTooltip(`<b style="font-family:KaiTi,serif;font-size:13px;letter-spacing:2px">${nm}</b><br>
+        /* 富信息 tip 存于标记：zoomend 重建（常显名/富信息）皆从此取 */
+        xm._tipHtml = `<b style="font-family:KaiTi,serif;font-size:13px;letter-spacing:2px">${nm}</b><br>
           <span style="font-size:10px;letter-spacing:1px;color:#57503f">隶 ${u.n}</span><br>
-          <span style="font-size:10px;letter-spacing:1px;color:${typ==="附郭"?"#9a6b3f":"#8b8069"}">${dirStr?dirStr+" ·":""} ${typ}${liStr?" · "+liStr:""}</span>`,
-          {direction:"top",offset:[0,-3],opacity:.95,className:"ftip"});
-        // zoom≥8 常显县名标签
-        const dir8 = ["right","left","bottom","right"][Object.keys(xc).indexOf(nm)%4];
-        const off8 = {right:[8,0],left:[-8,0],bottom:[0,8]}[dir8];
-        xm.bindTooltip(nm.replace(/县$/,""),{permanent:false,direction:dir8,offset:off8,className:"xianlab"});
+          <span style="font-size:10px;letter-spacing:1px;color:${typ==="附郭"?"#9a6b3f":"#8b8069"}">${dirStr?dirStr+" ·":""} ${typ}${liStr?" · "+liStr:""}</span>`;
+        bindXianTip(xm);
         xm.on("click",e=>openCountyCard(p,u,nm,d,e.latlng));
         fuMarkers[p.id].push(xm);
       });
     });
   });
+}
+/* 县标记富信息悬停 tip（bindTooltip 单槽——常显标签与富信息互斥切换） */
+function bindXianTip(m){
+  if(m._tipHtml) m.bindTooltip(m._tipHtml,
+    {direction:"top",offset:[0,-3],opacity:.95,className:"ftip"});
 }
 /* 属州层 zoom 门控 */
 map.on("zoomend",()=>{
@@ -130,11 +133,10 @@ map.on("zoomend",()=>{
   document.body.classList.toggle("z7", map.getZoom()>=7);
   document.body.classList.toggle("z5", map.getZoom()>=5);
   document.body.classList.toggle("z4", map.getZoom()>=4);
-  // zoom≥8：县名常显（带碰撞检测——近距离县名交替显示）
+  // zoom≥8：县名常显（带碰撞检测——近距离县名只显示一个，其余退回富信息悬停）
   document.body.classList.toggle("z8", map.getZoom()>=8);
   if(map.getZoom()>=8){
     const all = Object.values(fuMarkers).flat().filter(m=>m._xian);
-    // 按屏幕位置分组，距离 < 40px 的只显示一个
     const shown = [];
     all.forEach(m=>{
       m.unbindTooltip();
@@ -146,11 +148,13 @@ map.on("zoomend",()=>{
       if(!too){
         m.bindTooltip(m._xian.replace(/县$/,""),{permanent:true,direction:"right",offset:[8,0],className:"xianlab"});
         shown.push(m);
+      }else{
+        bindXianTip(m);          // 被避让的县仍可悬停看富信息
       }
     });
   } else {
     Object.values(fuMarkers).flat().forEach(m=>{
-      if(m._xian) m.unbindTooltip();
+      if(m._xian){ m.unbindTooltip(); bindXianTip(m); }
     });
   }
 });
@@ -302,7 +306,7 @@ function buildFrontier(){
   }
 }
 
-/* 关隘图层：40 处天下名关（人工整编），zoom≥5 显现 */
+/* 关隘图层：50 处天下名关（人工整编），zoom≥5 显现 */
 let passMarkers = [];
 function buildPasses(){
   {
@@ -342,7 +346,7 @@ map.on("click", e=>{
              white-space:nowrap;text-align:center">
         ${km.toFixed(0)} 公里<br>折合明里 <b style="color:#b23a2e">${mingLi}</b> 里</div>`}),
       interactive:false, zIndexOffset:1000}).addTo(map);
-    setTimeout(()=>{ map.removeLayer(line); map.removeLayer(label); measurePts=[]; }, 6000);
+    setTimeout(()=>{ map.removeLayer(line); map.removeLayer(label); }, 6000);
     measurePts = [];
   }
 });

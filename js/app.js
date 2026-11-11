@@ -41,7 +41,7 @@ function dismissBoot(cb){
   b.classList.add("gone");
   setTimeout(()=>{b.remove();cb&&cb();},900);
 }
-document.getElementById("boot").onclick=()=>dismissBoot(()=>openIntro());
+var _bt = document.getElementById("boot"); if (_bt) _bt.onclick=()=>dismissBoot(()=>openIntro());
 
 /* 快捷键：Esc 收面板；形势模式 ←/→ 翻卷 */
 document.addEventListener("keydown",e=>{
@@ -51,6 +51,7 @@ document.addEventListener("keydown",e=>{
     return;
   }
   if(e.key==="?" && e.target.tagName!=="INPUT"){ openAbout(); return; }
+  if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT") return;  // 输入中不抢键
   if(mode!=="形势") return;
   if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
     const d=e.key==="ArrowRight"?1:-1;
@@ -93,12 +94,13 @@ if (_wl) _wl.onclick = wander;
 var _ana = document.getElementById("analyticslink");
 if (_ana) _ana.onclick = openAnalytics;
 
-/* ── 形势自动播放：Play 键穿越九朝 ── */
-let eraPlaying = false, eraTimer = null;
+/* ── 形势自动播放：Play 键穿越九朝 ──
+   var（非 let）：app.js 若中途崩，modes.js 的 typeof 守卫不致落入 TDZ */
+var eraPlaying = false, eraTimer = null;
 function toggleEraPlay(){
   const btn = document.getElementById("eraPlay");
   if (eraPlaying) {
-    clearInterval(eraTimer);
+    clearTimeout(eraTimer);
     eraPlaying = false;
     if (typeof stopTTS === "function") stopTTS();
     if (btn) { btn.textContent = "▶"; btn.style.background = ""; btn.title = "播放九朝演进"; }
@@ -119,9 +121,12 @@ function toggleEraPlay(){
     document.querySelectorAll("#tl .seg").forEach((g,i)=>g.classList.toggle("on", i===idx));
     narrate(idx);
   };
-  const speed = +(document.getElementById("eraSpeed")||{value:"4000"}).value;
-  eraTimer = setInterval(step, speed);
-  step();
+  /* 递归 setTimeout：每轮重读速度档，播放中途换档立即生效 */
+  const tick = () => {
+    const speed = +(document.getElementById("eraSpeed")||{value:"4000"}).value || 4000;
+    eraTimer = setTimeout(()=>{ if (eraPlaying) { step(); tick(); } }, speed);
+  };
+  step(); tick();
 }
 
 var _ep = document.getElementById("eraPlay");

@@ -427,10 +427,10 @@ def main():
                 continue
             for st in seats:
                 if st in u_["xian"] and st not in (u_.get("xianc") or {}):
-                    u_.setdefault("xianc", {})[st] = list(u_["c"])
+                    u_.setdefault("xianc", {})[st] = {"c": list(u_["c"]), "type": "附郭"}
                     n_fg += 1
             if u_.get("fg") and u_["fg"] not in (u_.get("xianc") or {}):
-                u_.setdefault("xianc", {})[u_["fg"]] = list(u_["c"])
+                u_.setdefault("xianc", {})[u_["fg"]] = {"c": list(u_["c"]), "type": "附郭"}
                 n_fg += 1
     print(f"县治推算 {nc_} 条 + 附郭兜底 {n_fg} 条（{np_} 省扫描）")
     total_fu = sum(p["stats"]["fu"] for p in provinces)
@@ -604,12 +604,6 @@ def derive_county_coords(data):
                 anchor = None; anchor_name = ""      # 县段以府为锚
             u_ref = next((u for u in p["fu"] if nm in u["xian"] or
                           any(nm in z.get("x", []) for z in u.get("zx", []))), None)
-            # 附郭县（段首"附郭"）＝ 府治本身
-            if not m and para.startswith(nm) and para[len(nm):len(nm)+2] == "附郭":
-                if u_ref and u_ref.get("c"):
-                    u_ref.setdefault("xianc", {})[nm] = list(u_ref["c"])
-                    n_hit += 1
-                continue
             a = anchor if (base == "州" and anchor) else (u_ref["c"] if u_ref and u_ref.get("c") else None)
             if not a:
                 continue
@@ -619,7 +613,8 @@ def derive_county_coords(data):
             pos = offset_point(a, DIR_DEG[dr], km)
             if 18 < pos[0] < 54 and 73 < pos[1] < 136:
                 if u_ref:
-                    u_ref.setdefault("xianc", {})[nm] = pos
+                    # 富对象：坐标 + 原书方位/里程（里程存纯数字串，展示层补"里"）
+                    u_ref.setdefault("xianc", {})[nm] = {"c": pos, "dir": dr, "li": li, "type": "推算"}
                     n_hit += 1
         # 兜底二：全文任意位置 县名(在)?(府|州)方位N里（段落锚定漏网者）
         for u in p["fu"]:
@@ -637,7 +632,7 @@ def derive_county_coords(data):
                     continue
                 pos = offset_point(u["c"], DIR_DEG[m.group(2)], km)
                 if 18 < pos[0] < 54 and 73 < pos[1] < 136:
-                    u.setdefault("xianc", {})[nm_c] = pos
+                    u.setdefault("xianc", {})[nm_c] = {"c": pos, "dir": m.group(2), "li": m.group(3), "type": "推算"}
                     n_hit += 1
         n_prov += 1
     return n_prov, n_hit

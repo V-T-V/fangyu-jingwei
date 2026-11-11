@@ -96,7 +96,8 @@ function ftJump(r, q){
 function ftRun(q){
   const sres = document.getElementById("sresults");
   sres.classList.add("open");
-  q = q.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); // XSS 转义
+  /* q 保持原样用于文本检索；HTML 模板处才转义（不污染查询词） */
+  const escQ = q.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   sres.innerHTML = `<div class="ftprog">正在加载全书原文…</div>`;
   const keepOpen = ()=>sres.classList.add("open");
   ensureTextAll((key, i, total)=>{
@@ -106,7 +107,7 @@ function ftRun(q){
   }, ()=>{
     const results = ftSearch(q);
     if (!results.length){
-      sres.innerHTML = `<div class="none">全书原文未见「${q}」</div>`;
+      sres.innerHTML = `<div class="none">全书原文未见「${escQ}」</div>`;
       return;
     }
     keepOpen();
@@ -121,7 +122,7 @@ function ftRun(q){
         </span>
       </div>`).join("");
     sres.innerHTML =
-      `<div class="fthead">全书「${q}」 — ${total} 处 / ${results.length} 篇</div>` +
+      `<div class="fthead">全书「${escQ}」 — ${total} 处 / ${results.length} 篇</div>` +
       rows +
       (results.length>30?`<div class="fttail">已列前 30 篇 · 共 ${results.length} 篇命中</div>`:"");
     sres.querySelectorAll(".ftr").forEach(el=>el.onclick=()=>{

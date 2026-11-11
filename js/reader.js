@@ -93,9 +93,22 @@ function stopTTS(){
   const b = document.getElementById("ttsb");
   if(b) b.textContent = "🔊";
 }
-function startTTS(){
+function startTTS(txt){
   if(!("speechSynthesis" in window)) return;
   stopTTS();
+  /* 直接文本模式（形势自动播放旁白）：读完即止，不逐段跟随 */
+  if(txt){
+    ttsOn = true;
+    const b0 = document.getElementById("ttsb");
+    if(b0) b0.textContent = "⏹";
+    const u0 = new SpeechSynthesisUtterance(String(txt));
+    if(ttsVoice) u0.voice = ttsVoice;
+    u0.lang = "zh-CN"; u0.rate = 0.95;
+    u0.onend = ()=>{ ttsOn = false; };
+    u0.onerror = ()=>stopTTS();
+    speechSynthesis.speak(u0);
+    return;
+  }
   const tps = Array.from(pbody.querySelectorAll(".tp"));
   if(!tps.length) return;
   const top = pbody.getBoundingClientRect().top;
@@ -128,9 +141,17 @@ function jumpInText(q){
   const eq = escT(q);
   for (const tp of pbody.querySelectorAll(".tp")){
     if (!tp.textContent.includes(q)) continue;
-    const i = tp.innerHTML.indexOf(eq);
+    /* innerHTML 中的命中可能落在属性值里（如 data-fu='武昌府'）——
+       取首个不在标签内部（前方无未闭合的 <）的命中再包裹 */
+    const html = tp.innerHTML;
+    let i = -1, from = 0;
+    while ((i = html.indexOf(eq, from)) >= 0){
+      const head = html.slice(0, i);
+      if (head.lastIndexOf("<") <= head.lastIndexOf(">")) break;
+      from = i + 1;
+    }
     if (i >= 0){
-      tp.innerHTML = tp.innerHTML.slice(0,i) + "<span class='hitmark'>"+eq+"</span>" + tp.innerHTML.slice(i+eq.length);
+      tp.innerHTML = html.slice(0,i) + "<span class='hitmark'>"+eq+"</span>" + html.slice(i+eq.length);
       tp.querySelector(".hitmark").scrollIntoView({behavior:"smooth", block:"center"});
     } else {
       tp.scrollIntoView({behavior:"smooth", block:"start"});

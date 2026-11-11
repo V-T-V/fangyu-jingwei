@@ -199,18 +199,15 @@ function openAnalytics(){
 
   const pf = document.getElementById("provFilter");
   if (pf) pf.onchange = () => {
-    const prov = pf.value;
-    if (!prov) return; // 全部 = 不筛选（暂不重绘）
-    // 高亮该省的条形图行
+    const prov = pf.value;   // 空 = 全部：清除全部高亮
     pbody.querySelectorAll(".prov-row").forEach(row => {
       const isMatch = row.querySelector(".prov-nm").textContent === prov;
-      row.style.background = isMatch ? "rgba(178,58,46,.08)" : "";
+      row.style.background = prov && isMatch ? "rgba(178,58,46,.08)" : "";
       row.style.opacity = prov && !isMatch ? .35 : 1;
     });
-    // 高亮表格中该省的行
     pbody.querySelectorAll(".ana-table tbody tr").forEach(tr => {
       const isMatch = tr.cells[2] && tr.cells[2].textContent === prov;
-      tr.style.background = isMatch ? "rgba(178,58,46,.06)" : "";
+      tr.style.background = prov && isMatch ? "rgba(178,58,46,.06)" : "";
       tr.style.opacity = prov && !isMatch ? .3 : 1;
     });
   };

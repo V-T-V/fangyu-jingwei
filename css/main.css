@@ -454,6 +454,9 @@ body.nopanel .north{right:24px}
 }
 body.nopanel #tl{right:40px}
 body.m-形势 #tl{display:flex}
+/* 自动播放控件（▶ + 速度）：与时间轴同门控，仅形势模式可见 */
+#tlPlay{display:none}
+body.m-形势 #tlPlay{display:block}
 #tl .axis{
   position:absolute;left:8px;right:8px;top:26px;height:1px;
   background:var(--line);

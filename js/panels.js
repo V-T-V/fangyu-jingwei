@@ -5,7 +5,11 @@ const panel=document.getElementById("panel"),
       vname=document.getElementById("vname"),
       vseal=document.getElementById("vseal");
 function showPanel(){panel.classList.add("open");document.body.classList.remove("nopanel");}
-function hidePanel(){panel.classList.remove("open");document.body.classList.add("nopanel");}
+function hidePanel(){
+  panel.classList.remove("open");document.body.classList.add("nopanel");
+  /* 透视页等设置的内联尺寸一并清除，避免泄漏到后续面板 */
+  panel.style.width="";panel.style.top="";panel.style.bottom="";
+}
 document.getElementById("pclose").onclick=()=>{
   hidePanel();
   if (typeof clearJurisdiction === "function") clearJurisdiction();
@@ -148,7 +152,7 @@ function openFu(p,u){
   if(u.c) safeFlyTo(u.c,7,{duration:1.1});
   if (typeof showJurisdiction === "function") showJurisdiction(p, u);
   if (typeof showFuHull === "function") showFuHull(p, u);
-  if (typeof showProvinceVoronoi === "function") clearCountyTerritories();
+  if (typeof clearCountyTerritories === "function") clearCountyTerritories();
   if (typeof showCountyTerritories === "function") showCountyTerritories(p, u);
   syncHash("舆图", "p=" + p.id + "&fu=" + encodeURIComponent(u.n));
   showPanel();
@@ -291,14 +295,18 @@ function openTable(level){
   document.getElementById("kmldl").onclick = ()=>{
     let pins = "";
     FY.provinces.forEach(p=>p.fu.forEach(u=>{
-      const mk = (nm, lat, lng, cls, desc)=>{
+      const mk = (nm, lat, lng, desc)=>{
         pins += `<Placemark><name>${nm}</name><description>${desc}</description>`
              +  `<Point><coordinates>${lng},${lat},0</coordinates></Point></Placemark>`;
       };
-      if (u.c) mk(u.n, u.c[0], u.c[1], "府", p.name + (u.now?" 今"+u.now:""));
-      (u.zx||[]).forEach(z=>{ if(z.c) mk(z.n, z.c[0], z.c[1], "州", p.name+"·"+u.n); });
+      if (u.c) mk(u.n, u.c[0], u.c[1], p.name + (u.now?" 今"+u.now:""));
+      (u.zx||[]).forEach(z=>{ if(z.c) mk(z.n, z.c[0], z.c[1], p.name+"·"+u.n); });
       const xc = u.xianc || {};
-      Object.keys(xc).forEach(nm=>mk(nm, xc[nm][0], xc[nm][1], "县", p.name+"·"+u.n+"（推算）"));
+      Object.keys(xc).forEach(nm=>{
+        const dd = xc[nm];
+        const pos = Array.isArray(dd) ? dd : dd.c;
+        if (pos) mk(nm, pos[0], pos[1], p.name+"·"+u.n+"（"+(Array.isArray(dd)?"推算":(dd.type||"推算"))+"）");
+      });
     }));
     const kml = `<?xml version="1.0" encoding="UTF-8"?>`
       + `<kml xmlns="http://www.opengis.net/kml/2.2"><Document>`
@@ -331,7 +339,7 @@ function openTable(level){
         feats.push({type:"Feature",
           geometry:{type:"Point",coordinates:[pos[1], pos[0]]},
           properties:{名:nm, 类:"县", 省:p.name, 隶:u.n, 今地:"", 起始卷:p.vols[0],
-            依据:typ, 方位:dir, 原载里程:li}});
+            依据:typ, 方位:dir, 原载里程:li ? li + "里" : ""}});
       });
     }));
     const gj = JSON.stringify({type:"FeatureCollection", features:feats});
@@ -357,6 +365,16 @@ function openTable(level){
 
 
 /* ── 县级信息卡 ── */
+/* 汉数字 → 数值（一~百位："六十"→60，"一百二十三"→123） */
+function cnNum(s){
+  const D = {零:0,一:1,二:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9}, U = {十:10,百:100};
+  let n = 0, cur = 0;
+  for (const ch of String(s)){
+    if (D[ch] !== undefined) cur = D[ch];
+    else if (U[ch]) { n += (cur || 1) * U[ch]; cur = 0; }
+  }
+  return n + cur;
+}
 function openCountyCard(p, u, nm, d, latlng){
   vset(nm.replace(/县$/,""), "县");
   vseal.textContent = "县";
@@ -394,13 +412,13 @@ function openCountyCard(p, u, nm, d, latlng){
       }
     });
   }
-  const km = li ? Math.round(parseInt(li.replace(/[^0-9]/g,"")) * 0.357) : null;
+  const km = li ? Math.round(cnNum(li) * 0.357) : null;
   pbody.innerHTML = `
     <div class="p-kicker">${p.name} · ${u.n}</div>
     <div class="stat-strip" style="margin-top:2px">
       <div class="st"><b>${typ}</b><span>定位类型</span></div>
       <div class="st"><b>${dir || "—"}</b><span>方位</span></div>
-      <div class="st"><b>${li || "—"}</b><span>原载里程</span></div>
+      <div class="st"><b>${li ? li + "里" : "—"}</b><span>原载里程</span></div>
       <div class="st"><b>${km !== null ? km + "km" : "—"}</b><span>折合直线</span></div>
     </div>
     ${excerpt ? `<div class="p-cap">原文段首</div><div class="quote">${excerpt}……</div>` : ""}
@@ -409,7 +427,7 @@ function openCountyCard(p, u, nm, d, latlng){
       <button class="readfull" id="gotoFu">➤ 入 ${u.n} 详情</button>
       ${typeof loadTextFile === "function" ? '<button class="readfull" id="readXian" style="margin-left:8px">📖 读原文</button>' : ""}
     </div>
-    <div class="hint" style="margin-top:10px">坐标由原书「${dir ? `府${dir}${li}` : "附郭"}」推算${km ? `，折合直线约 ${km} km` : ""}。</div>`;
+    <div class="hint" style="margin-top:10px">坐标由原书「${dir ? `府${dir}${li}里` : "附郭"}」推算${km ? `，折合直线约 ${km} km` : ""}。</div>`;
   document.getElementById("gotoFu").onclick = ()=>openFu(p,u);
   const rb = document.getElementById("readXian");
   if (rb) rb.onclick = ()=>{
