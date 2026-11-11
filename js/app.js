@@ -100,19 +100,28 @@ function toggleEraPlay(){
   if (eraPlaying) {
     clearInterval(eraTimer);
     eraPlaying = false;
-    if (btn) { btn.textContent = "▶"; btn.style.background = ""; }
+    if (typeof stopTTS === "function") stopTTS();
+    if (btn) { btn.textContent = "▶"; btn.style.background = ""; btn.title = "播放九朝演进"; }
     return;
   }
   eraPlaying = true;
-  if (btn) { btn.textContent = "⏸"; btn.style.background = "rgba(178,58,46,.1)"; }
+  if (btn) { btn.textContent = "⏸"; btn.style.background = "rgba(178,58,46,.1)"; btn.title = "暂停"; }
   let idx = curEra;
+  const narrate = i => {
+    if (typeof startTTS !== "function" || !("speechSynthesis" in window)) return;
+    const xs = FY.xingshi[i];
+    const txt = xs ? xs.ex.slice(0, 50) + "。" : "";
+    if (txt) startTTS(txt);
+  };
   const step = () => {
     idx = (idx + 1) % ERAS.length;
     buildEra(idx); openEra(idx); highlightRail("形势", idx);
     document.querySelectorAll("#tl .seg").forEach((g,i)=>g.classList.toggle("on", i===idx));
+    narrate(idx);
   };
-  eraTimer = setInterval(step, 4000);
-  step(); // 立即跳到下一朝
+  const speed = +(document.getElementById("eraSpeed")||{value:"4000"}).value;
+  eraTimer = setInterval(step, speed);
+  step();
 }
 
 var _ep = document.getElementById("eraPlay");
