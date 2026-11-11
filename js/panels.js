@@ -95,6 +95,9 @@ function openProv(p){
     <div class="readrow"><button class="readfull" data-xu="1">阅序全文 ➤</button></div>
     <div class="p-cap">州域沿革</div>
     <div class="quote">${p.zhouyu}……</div>
+    <div class="readrow" style="margin:0 0 6px">
+      <button class="readfull" id="voroDl">⤓ Voronoi GeoJSON</button>
+    </div>
     <div class="p-cap">府·直隶州</div>
     <ul class="ful">
       ${p.fu.map((u,i)=>`<li data-i="${i}">
@@ -108,6 +111,22 @@ function openProv(p){
   });
   const xb = pbody.querySelector("[data-xu]");
   if (xb) xb.onclick = ()=>openXuText(p);
+  const vd = pbody.querySelector("#voroDl");
+  if (vd) vd.onclick = ()=>{
+    const gj = exportVoronoi();
+    if (!gj || !gj.features.length) return;
+    const fuNames = p.fu.map(u=>u.n);
+    gj.features.forEach(f => {
+      f.properties.省份 = p.name;
+      f.properties.所属府 = fuNames[f.properties.府序] || "";
+      delete f.properties.府序;
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(gj)], {type:"application/geo+json"}));
+    a.download = "方舆经纬-" + p.name + "-县域Voronoi.geojson";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  };
   showPanel();
 }
 

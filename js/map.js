@@ -428,8 +428,32 @@ function showProvinceVoronoi(p){
       fillColor: pt.col, fillOpacity: shade,
       interactive: false
     }).addTo(map);
+    polygon._meta = { nm: pt.nm, fu: pt.fu, isFu: pt.isFu, pos: pt.pos };
     countyCircles.push(polygon);
   });
+}
+
+/* Voronoi GeoJSON 导出 */
+function exportVoronoi(){
+  if (!countyCircles.length) return null;
+  const feats = countyCircles.filter(c => c._meta).map(c => {
+    const m = c._meta;
+    const latlngs = c.getLatLngs()[0];
+    const coords = latlngs.map(ll => [ll.lng, ll.lat]);
+    coords.push(coords[0]); // close ring
+    return {
+      type: "Feature",
+      geometry: { type: "Polygon", coordinates: [coords] },
+      properties: {
+        名: m.isFu ? "府治" : m.nm,
+        类型: m.isFu ? "府治" : "县",
+        府序: m.fu,
+        省份: "当前选中省",
+        中心: [m.pos[1], m.pos[0]]
+      }
+    };
+  });
+  return { type: "FeatureCollection", features: feats };
 }
 
 /* Voronoi 县域：精确多边形分区，县界完美拼合 */
