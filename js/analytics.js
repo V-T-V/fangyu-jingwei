@@ -1,4 +1,37 @@
 /* ═══════════ 方舆经纬 · 数据透视 ═══════════ */
+/* 自包含工具：不依赖 map.js / Leaflet */
+function _anaDist(a, b) {
+  const R = 6371;
+  const la1 = a[0]*Math.PI/180, la2 = b[0]*Math.PI/180;
+  const dLa = (b[0]-a[0])*Math.PI/180, dLo = (b[1]-a[1])*Math.PI/180;
+  const h = Math.sin(dLa/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLo/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h)); // km
+}
+function _anaHullArea(pts) {
+  if (pts.length < 3) return 0;
+  const sorted = [...pts].sort((a,b) => a[0]-b[0] || a[1]-b[1]);
+  const cross = (o,a,b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+  const lower = [], upper = [];
+  for (const p of sorted) {
+    while (lower.length >= 2 && cross(lower[lower.length-2], lower[lower.length-1], p) <= 0) lower.pop();
+    lower.push(p);
+  }
+  for (let i = sorted.length-1; i >= 0; i--) {
+    const p = sorted[i];
+    while (upper.length >= 2 && cross(upper[upper.length-2], upper[upper.length-1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  const hull = lower.slice(0,-1).concat(upper.slice(0,-1));
+  if (hull.length < 3) return 0;
+  let area = 0;
+  for (let i = 0; i < hull.length; i++) {
+    const j = (i+1) % hull.length;
+    area += hull[i][0]*hull[j][1] - hull[j][0]*hull[i][1];
+  }
+  const latAvg = (pts.reduce((s,p) => s + p[0], 0) / pts.length) * Math.PI / 180;
+  return Math.abs(area/2) * 111 * 111 * Math.cos(latAvg); // km²
+}
+
 function openAnalytics(){
   vset("透视", "分析");
   vseal.textContent = "统计";
@@ -22,7 +55,7 @@ function openAnalytics(){
         const pos = Array.isArray(d) ? d : d.c;
         if (pos) {
           pts.push(pos);
-          const km = map.distance(u.c, pos) / 1000;
+          const km = _anaDist(u.c, pos);
           if (km > 1) {
             dists.push({ prov: p.name, fu: u.n, km });
             provDists[p.name].push(km);
@@ -30,15 +63,8 @@ function openAnalytics(){
         }
       });
       if (pts.length >= 3) {
-        const hull = hullLatLngs(pts, 1);
-        if (hull) {
-          let area = 0;
-          for (let i = 0; i < hull.length; i++) {
-            const j = (i+1) % hull.length;
-            area += hull[i][0]*hull[j][1] - hull[j][0]*hull[i][1];
-          }
-          fuAreas.push({ prov: p.name, fu: u.n, area: Math.abs(area/2) * 12365 * Math.cos(35*Math.PI/180) });
-        }
+        const area = _anaHullArea(pts);
+        if (area > 0) fuAreas.push({ prov: p.name, fu: u.n, area });
       }
     }
   }
@@ -118,6 +144,13 @@ function openAnalytics(){
   </style>
 
   <div class="p-kicker">读史方舆纪要 · 空间统计 · 基于 ${dists.length} 个非附郭县治推算坐标</div>
+    <div style="margin:8px 0;display:flex;gap:8px;align-items:center">
+      <label style="font-size:12px;letter-spacing:2px;color:var(--ink-mid)">省份筛选</label>
+      <select id="provFilter" style="padding:4px 10px;font-family:inherit;font-size:13px;letter-spacing:1px;border:1px solid var(--line);background:var(--silk-3);color:var(--ink);outline:none;border-radius:0">
+        <option value="">全部十五省</option>
+        ${FY.provinces.map(x=>`<option value="${x.name}">${x.name}</option>`).join("")}
+      </select>
+    </div>
 
   <div class="ana-section">
     <div class="ana-title">总览</div>
@@ -157,6 +190,23 @@ function openAnalytics(){
     <button class="readfull" id="anaBack">⟨ 返回舆图</button>
   </div>`;
 
+  const pf = document.getElementById("provFilter");
+  if (pf) pf.onchange = () => {
+    const prov = pf.value;
+    if (!prov) return; // 全部 = 不筛选（暂不重绘）
+    // 高亮该省的条形图行
+    pbody.querySelectorAll(".prov-row").forEach(row => {
+      const isMatch = row.querySelector(".prov-nm").textContent === prov;
+      row.style.background = isMatch ? "rgba(178,58,46,.08)" : "";
+      row.style.opacity = prov && !isMatch ? .35 : 1;
+    });
+    // 高亮表格中该省的行
+    pbody.querySelectorAll(".ana-table tbody tr").forEach(tr => {
+      const isMatch = tr.cells[2] && tr.cells[2].textContent === prov;
+      tr.style.background = isMatch ? "rgba(178,58,46,.06)" : "";
+      tr.style.opacity = prov && !isMatch ? .3 : 1;
+    });
+  };
   document.getElementById("anaBack").onclick = () => {
     panel.style.width = "";
     panel.style.top = "";
