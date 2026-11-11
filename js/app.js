@@ -92,3 +92,28 @@ if (_wl) _wl.onclick = wander;
 
 var _ana = document.getElementById("analyticslink");
 if (_ana) _ana.onclick = openAnalytics;
+
+/* ── 形势自动播放：Play 键穿越九朝 ── */
+let eraPlaying = false, eraTimer = null;
+function toggleEraPlay(){
+  const btn = document.getElementById("eraPlay");
+  if (eraPlaying) {
+    clearInterval(eraTimer);
+    eraPlaying = false;
+    if (btn) { btn.textContent = "▶"; btn.style.background = ""; }
+    return;
+  }
+  eraPlaying = true;
+  if (btn) { btn.textContent = "⏸"; btn.style.background = "rgba(178,58,46,.1)"; }
+  let idx = curEra;
+  const step = () => {
+    idx = (idx + 1) % ERAS.length;
+    buildEra(idx); openEra(idx); highlightRail("形势", idx);
+    document.querySelectorAll("#tl .seg").forEach((g,i)=>g.classList.toggle("on", i===idx));
+  };
+  eraTimer = setInterval(step, 4000);
+  step(); // 立即跳到下一朝
+}
+
+var _ep = document.getElementById("eraPlay");
+if (_ep) _ep.onclick = toggleEraPlay;

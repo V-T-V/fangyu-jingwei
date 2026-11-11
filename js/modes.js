@@ -18,6 +18,7 @@ function setMode(m){
   if(m==="舆图") setFuLabels(null);
   hidePanel();
   if (typeof stopTTS === "function") stopTTS();
+  if (typeof eraPlaying !== "undefined" && eraPlaying) toggleEraPlay();
   syncHash(m, null);
   if(m==="舆图"){fuLayer.addTo(map);railYutu();safeFly([[17,96],[44,129]],{duration:1});}
   if(m==="形势"){eraLayer.addTo(map);railXingshi();buildEra(0);openEra(0);highlightRail("形势",0);}
