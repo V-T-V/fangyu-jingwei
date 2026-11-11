@@ -655,3 +655,11 @@ body.z4 .passmark.bian,body.z5 .passmark.bian{opacity:1;border-bottom-width:14px
   background:rgba(245,238,218,.9);border:1px solid rgba(178,58,46,.35);
   padding:1px 6px;white-space:nowrap;text-align:center;
 }
+
+/* 散点图 */
+.sc-wrap{display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 16px;gap:2px;height:180px;margin:8px 0}
+.sc-y{writing-mode:vertical-rl;font-size:10px;color:var(--ink-faint);text-align:center;letter-spacing:2px}
+.sc-x{grid-column:2;font-size:10px;color:var(--ink-faint);text-align:center;letter-spacing:2px}
+.sc-plot{position:relative;background:rgba(47,93,112,.04);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.sc-dot{position:absolute;background:rgba(90,131,104,.7);border-radius:50%;transform:translate(-50%,50%);cursor:pointer}
+.sc-dot:hover{background:var(--cinnabar);z-index:2}
