@@ -186,7 +186,14 @@ function openAnalytics(){
     <div class="ana-note">天下第一府 = 夔州（${Math.round(fuAreas[0]?.area||0).toLocaleString()} km²），最小 = ${fuAreas[fuAreas.length-1]?.fu}（${Math.round(fuAreas[fuAreas.length-1]?.area||0).toLocaleString()} km²），差距 ${fuAreas.length>0 ? Math.round(fuAreas[0].area / fuAreas[fuAreas.length-1].area) : 0} 倍。</div>
   </div>
 
-  <div class="readrow" style="margin-top:14px">
+  <div class="ana-section">
+    <div class="ana-title">府域面积 × 平均县距</div>
+    <div id="scatterArea"></div>
+    <div class="ana-note">每个点 = 一府。横轴：府域面积（km²，对数），纵轴：县治平均距离（km）。可见面积越大、县距越远的正相关趋势。</div>
+  </div>
+
+  <div class="readrow" style="margin-top:14px;display:flex;gap:8px">
+    <button class="readfull" id="anaCsv">⤓ 导出 CSV</button>
     <button class="readfull" id="anaBack">⟨ 返回舆图</button>
   </div>`;
 
@@ -206,6 +213,41 @@ function openAnalytics(){
       tr.style.background = isMatch ? "rgba(178,58,46,.06)" : "";
       tr.style.opacity = prov && !isMatch ? .3 : 1;
     });
+  };
+  // 散点图渲染
+  const scArea = document.getElementById("scatterArea");
+  if (scArea) {
+    const fuDists = {};
+    dists.forEach(d => {
+      if (!fuDists[d.fu]) fuDists[d.fu] = [];
+      fuDists[d.fu].push(d.km);
+    });
+    const pts = fuAreas
+      .filter(f => fuDists[f.fu] && fuDists[f.fu].length >= 2)
+      .map(f => ({ fu: f.fu, prov: f.prov, area: f.area,
+        avgD: fuDists[f.fu].reduce((s,x) => s+x, 0) / fuDists[f.fu].length }));
+    if (pts.length >= 5) {
+      const maxA = Math.max(...pts.map(x => x.area));
+      const maxD = Math.max(...pts.map(x => x.avgD));
+      const dots = pts.map(x => {
+        const left = (Math.log10(x.area) / Math.log10(maxA)) * 88 + 4;
+        const bottom = (x.avgD / maxD) * 82 + 5;
+        const sz = Math.min(Math.log2(x.avgD) * 4, 14);
+        return '<div class="sc-dot" style="left:'+left+'%;bottom:'+bottom+'%;width:'+sz+'px;height:'+sz+'px" title="'+x.fu+'('+x.prov+'): '+Math.round(x.area)+'km² / '+x.avgD.toFixed(0)+'km"></div>';
+      }).join("");
+      scArea.innerHTML = '<div class="sc-wrap"><div class="sc-y">km</div><div class="sc-plot">'+dots+'</div><div class="sc-x">km²</div></div>';
+    }
+  }
+  // CSV 导出
+  document.getElementById("anaCsv").onclick = () => {
+    const NL = String.fromCharCode(10);
+    let csv = String.fromCharCode(0xFEFF) + "省份,府,县治距离km" + NL;
+    dists.forEach(d => { csv += d.prov + "," + d.fu + "," + d.km.toFixed(1) + NL; });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+    a.download = "方舆经纬-县治距离.csv";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
   };
   document.getElementById("anaBack").onclick = () => {
     panel.style.width = "";
