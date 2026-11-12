@@ -666,3 +666,10 @@ body.z4 .passmark.bian,body.z5 .passmark.bian{opacity:1;border-bottom-width:14px
 .sc-plot{position:relative;background:rgba(47,93,112,.04);border:1px solid var(--line);border-radius:2px;overflow:hidden}
 .sc-dot{position:absolute;background:rgba(90,131,104,.7);border-radius:50%;transform:translate(-50%,50%);cursor:pointer}
 .sc-dot:hover{background:var(--cinnabar);z-index:2}
+
+/* ── 九边专题 ─────────────────────────────────────────── */
+.bian-zhen{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px dashed rgba(120,96,54,.18);cursor:pointer}
+.bian-zhen:hover .bz-nm{color:var(--cinnabar-d)}
+.bz-nm{font-family:KaiTi,serif;font-size:15px;letter-spacing:2px;color:var(--ink);flex:none;width:58px;padding-top:2px}
+.bz-nm i{display:block;font-style:normal;font-size:9px;letter-spacing:1px;color:var(--ink-faint);margin-top:2px}
+.bz-chips{flex:1;display:flex;flex-wrap:wrap;gap:4px}

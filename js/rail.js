@@ -9,8 +9,14 @@ function railYutu(){
     `<div class="ri" data-p="${p.id}">
       <span class="dot" style="color:${PCOLORS[p.id]}"></span>
       <span><span class="nm">${p.name}</span><span class="ju">${p.vols[0]}起</span></span>
-      <span class="ct">${p.fu.length}府</span></div>`).join("");
-  rail.querySelectorAll(".ri").forEach(el=>el.onclick=()=>selectProv(el.dataset.p));
+      <span class="ct">${p.fu.length}府</span></div>`).join("")
+    + `<div class="ri" id="bianrow" style="margin-top:6px;border-top:1px dashed var(--line);padding-top:7px;cursor:pointer">
+         <span class="dot" style="color:#b23a2e"></span>
+         <span><span class="nm">九边防线</span><span class="ju">五十关隘</span></span>
+       </div>`;
+  rail.querySelectorAll(".ri[data-p]").forEach(el=>el.onclick=()=>selectProv(el.dataset.p));
+  const br = rail.querySelector("#bianrow");
+  if (br) br.onclick = ()=>{ if (typeof openBian === "function") openBian(); };
 }
 function railXingshi(){
   railtitle.innerHTML = `历代州域形势<small>凡九卷</small>`;

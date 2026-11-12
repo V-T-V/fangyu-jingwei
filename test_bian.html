@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><title>自动验证 · 九边专题</title>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<script src="vendor/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=81">
+</head>
+<body class="m-舆图 nopanel">
+<div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
+<header><div class="brand"><div class="seal">方</div><div><h1>方舆经纬</h1><p>读史方舆纪要</p></div></div>
+<nav id="modes"><button data-m="舆图" class="on"><b>舆　图</b></button></nav>
+<div id="searchwrap"><input id="search"><div id="sresults"></div></div></header>
+<aside id="rail"><div class="rt" id="railtitle"></div><div id="raillist"></div></aside>
+<section id="panel"><button id="pclose">✕</button><div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div><div id="pbody"></div></section>
+<footer><span id="bianlink" style="cursor:pointer">⚔ 九边</span><span class="sep"></span><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<div id="tl"></div><div id="tlPlay"></div><div id="boot"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap"></pre>
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=81" defer></script>
+<script src="js/map.js?v=81" defer></script>
+<script src="js/panels.js?v=81" defer></script>
+<script src="js/rail.js?v=81" defer></script>
+<script src="js/search.js?v=81" defer></script>
+<script src="js/reader.js?v=81" defer></script>
+<script src="js/bookmarks.js?v=81" defer></script>
+<script src="js/fulltext.js?v=81" defer></script>
+<script src="js/app.js?v=81" defer></script>
+<script src="js/modes.js?v=81" defer></script>
+<script src="js/analytics.js?v=81" defer></script>
+<script src="js/wenxin.js?v=81" defer></script>
+<script src="js/bian.js?v=81" defer></script>
+<script defer>
+var NL=String.fromCharCode(10),log=[];
+function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
+function done(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
+  document.title=log.every(function(l){return l.indexOf("PASS")>=0})?"ALL-PASS":"HAS-FAIL";}
+window.addEventListener("load",function(){
+  setTimeout(function(){
+    try{
+      /* 纲目入口存在 */
+      var br=document.getElementById("bianrow");
+      P("RAIL-ROW",!!br);
+      var bl=document.getElementById("bianlink");
+      P("FOOTER-ENTRY",!!bl);
+      if(bl)bl.click();
+      if(br&&!document.getElementById("vname").textContent)br.click();
+      /* 面板：九镇行 + 50 关 chip + 全线按钮 */
+      P("OPEN",document.getElementById("vname").textContent.indexOf("九边")>=0);
+      P("ZHEN-ROWS",document.querySelectorAll(".bian-zhen").length===10);      // 九镇+内三关+太行八陉
+      P("PASS-CHIPS",document.querySelectorAll(".chip[data-p]").length===50);
+      P("GO-BTN",!!document.getElementById("bianGo"));
+      /* 点一关：题签同步为关名 */
+      var c=document.querySelector(".chip[data-p]");
+      var cn=c.dataset.p;
+      c.click();
+      P("REVEAL",document.getElementById("vname").textContent===cn);
+      done();
+    }catch(e){log.push("ERR "+e);done();}
+  },2500);
+});
+</script>
+</body>
+</html>
