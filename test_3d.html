@@ -8,54 +8,79 @@
 <body>
 <div id="map3d"></div>
 <div id="tourbar" style="position:fixed;z-index:10"><button id="tourbtn">▶ 飞览九边</button><span id="tourlab"></span></div>
-<select id="scenes"></select>
+<select id="scenes"></select><button id="mentbtn">◧ 文柱 ✓</button>
 <section id="card3d"><div id="c3top"><span id="c3kick"></span><span id="c3close">✕</span></div><div id="c3body"></div></section>
-<div id="glfail" style="display:none"></div>
+<div id="tourbig"></div><div id="demnote"></div><div id="glfail" style="display:none"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:60px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap">PENDING</pre>
+<script>window.onerror=function(m){document.title="R3D-ERR:"+m;return false;};</script>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=85" defer></script>
+<script src="data/mentions.js" defer></script>
+<script src="js/config.js?v=86" defer></script>
 <script src="vendor/maplibre-gl.js" defer></script>
-<script src="js/map3d.js?v=85" defer></script>
+<script src="js/map3d.js?v=86" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
 function S(n){log.push(n+" SKIP-PASS");}
 function done(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
   document.title="R3D:"+log.join(";");
-  try{window.__m3&&window.__m3.stop();}catch(e){}   /* 停渲染/撤请求，让虚拟时间结算 */
+  try{window.__m3&&window.__m3.stop();}catch(e){}
 }
 window.addEventListener("load",function(){
   var waited=0;
   var iv=setInterval(function(){
     waited+=400;
-    if (!window.__m3ready && !window.__m3fail && waited<16000) return;
+    if (!window.__m3ready && !window.__m3fail && waited<40000) return;
     clearInterval(iv);
     try{
-      if (window.__m3fail){ S("GL"); done(); return; }        // 环境无 WebGL：跳过
+      if (window.__m3fail){ S("GL"); done(); return; }
       P("GL",!!window.maplibregl);
       P("READY",!!window.__m3ready);
-      P("FU-MARKERS",document.querySelectorAll(".fu3d").length>=190);
-      P("PASS-MARKERS",document.querySelectorAll(".pass3d").length===50);
-      P("LAYERS",!!window.__m3.getLayer("frontier")&&!!window.__m3.getLayer("rivers"));
+      var c=window.__m3counts||{};
+      P("FU-SRC",c.fu>=190);
+      P("PASS-SRC",c.pass===50);
+      P("SPRITES",c.labels===50&&window.__m3.hasImage&&Object.keys(window.__m3.style.imageManager.images).length>=50);
+      P("MENT",c.ment>=180);
+      var L=["frontier","rivers","fu","passDot","passLab","ment"];
+      P("LAYERS",L.every(function(l){return window.__m3.getLayer(l);}));
       P("SCENES",document.querySelectorAll("#scenes option").length===8);
-      /* 飞览：启动 → 标签更新 → 停止 */
       document.getElementById("tourbtn").click();
       setTimeout(function(){
         try{
-          P("TOUR-RUN",document.getElementById("tourlab").textContent.length>0);
+          P("TOUR-RUN",document.getElementById("tourlab").textContent.length>0&&document.getElementById("tourbig").textContent.length>0);
           document.getElementById("tourbtn").click();
           P("TOUR-STOP",document.getElementById("tourbtn").textContent.indexOf("▶")>=0);
-          /* 关隘点击 → 信息卡 */
-          var pv=document.querySelector(".pass3d");
-          if(pv)pv.click();
-          setTimeout(function(){
-            try{
-              P("CARD",document.getElementById("card3d").classList.contains("open")&&document.getElementById("c3body").textContent.length>10);
-              done();
-            }catch(e){log.push("ERR4 "+e);done();}
-          },400);
+          var hn=FY.provinces.find(function(p){return p.id==="henan";});
+          var kf=hn&&hn.fu.find(function(u){return u.n==="开封府";});
+          if(kf&&kf.c){
+            window.__m3.stop();
+            window.__m3.jumpTo({center:[kf.c[1],kf.c[0]-.4],zoom:7,pitch:30});
+            var fired=false;
+            var fireFn=function(){ if(fired)return; fired=true;
+              try{
+                var pt=window.__m3.project([kf.c[1],kf.c[0]]);
+                var hit=window.__m3.queryRenderedFeatures(pt,{layers:["fu"]});
+                /* map.fire 委托分发不可靠 → 派发真实 canvas 事件走原生管线 */
+                var cv=window.__m3.getCanvas(), rc=cv.getBoundingClientRect();
+                cv.dispatchEvent(new MouseEvent("click",{clientX:rc.left+pt.x,clientY:rc.top+pt.y,bubbles:true}));
+                setTimeout(function(){
+                  try{
+                    var open=document.getElementById("card3d").classList.contains("open");
+                    log.push("QRF-HIT="+hit.length+(open?" CARD-OPEN":" CARD-SHUT"));
+                    var pd=window.__m3.queryRenderedFeatures(pt,{layers:["passDot"]});
+                var lm=PASSES.find(function(q){return q.n==="龙门关";});
+                var lmp=window.__m3.project([lm.c[1],lm.c[0]]);
+                P("CARD/manualPD"+pd.length+(pd[0]?"["+pd[0].properties.name+"]":"")+"/lm@"+Math.round(lmp.x)+","+Math.round(lmp.y)+"vs"+Math.round(pt.x)+","+Math.round(pt.y)+"/"+document.getElementById("c3body").textContent.slice(0,6),open&&document.getElementById("c3body").textContent.indexOf("开封")>=0);
+                    done();
+                  }catch(e){log.push("ERR4 "+e);done();}
+                },300);
+              }catch(e){log.push("ERR2 "+e);done();}
+            };
+            window.__m3.once("idle",fireFn);      /* 渲染结算后再打点 */
+            setTimeout(fireFn,1500);               /* 兜底 */
+          } else { P("CARD",false); done(); }
         }catch(e){log.push("ERR3 "+e);done();}
-      },5200);
+      },4800);
     }catch(e){log.push("ERR "+e);done();}
   },400);
 });

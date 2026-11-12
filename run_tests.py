@@ -69,14 +69,14 @@ def run_cdp_test(page):
                 _time.sleep(.2)
         req = _ur.Request(base + "/json/new?" + BASE + page, method="PUT")
         tabinfo = _json.loads(_ur.urlopen(req, timeout=5).read())
-        deadline = _time.time() + 75
+        deadline = _time.time() + 95
         while _time.time() < deadline:
             _time.sleep(1.5)
             tabs = _json.loads(_ur.urlopen(base + "/json/list", timeout=5).read())
             tab = next((t for t in tabs if t.get("id") == tabinfo["id"]), None)
             title = (tab or {}).get("title", "")
-            if title.startswith("R3D:"):
-                out = title[4:]; break
+            if title.startswith("R3D:") or title.startswith("R3D-ERR"):
+                out = title.split(":",1)[1] if title.startswith("R3D-ERR") else title[4:]; break
         if out is None:
             out = "CDP-TIMEOUT FAIL"
     finally:

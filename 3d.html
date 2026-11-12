@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>方舆形胜 · 三维 · 读史方舆纪要</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23b23a2e'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23f6efdc' font-family='KaiTi,serif'%3E方%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="css/main.css?v=85">
+<link rel="stylesheet" href="css/main.css?v=86">
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
 <style>
   html,body{margin:0;height:100%;overflow:hidden;background:var(--silk-1,#efe6cf)}
@@ -51,6 +51,15 @@
   #tourbtn{appearance:none;cursor:pointer;font:14px/1 KaiTi,serif;letter-spacing:3px;color:var(--cinnabar-d);
     background:var(--silk-3);border:1px solid rgba(178,58,46,.45);padding:7px 16px}
   #tourlab{font:13px/1 KaiTi,serif;letter-spacing:2px;color:var(--ink-mid);min-width:96px;text-align:center}
+  #mentbtn{appearance:none;cursor:pointer;font:12.5px/1 KaiTi,serif;letter-spacing:2px;
+    color:var(--ink-mid);background:var(--silk-3);border:1px solid var(--line);padding:6px 10px}
+  #mentbtn:hover{color:var(--cinnabar-d);border-color:rgba(178,58,46,.5)}
+  #tourbig{position:fixed;left:50%;top:20%;transform:translateX(-50%);z-index:9;pointer-events:none;
+    font:64px/1 KaiTi,serif;letter-spacing:14px;color:rgba(246,239,220,.96);
+    text-shadow:0 0 14px rgba(178,58,46,.75),0 0 34px rgba(120,20,10,.6),0 2px 4px rgba(0,0,0,.8);
+    opacity:0}
+  #tourbig.pop{animation:tbig 4.2s ease-out forwards}
+  @keyframes tbig{0%{opacity:0;transform:translateX(-50%) scale(1.5)}12%{opacity:1;transform:translateX(-50%) scale(1)}80%{opacity:.92}100%{opacity:0}}
   #demnote{display:none;position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:11;
     background:rgba(245,238,218,.95);border:1px solid var(--line);padding:4px 14px;
     font:11px KaiTi,serif;letter-spacing:2px;color:var(--ink-faint)}
@@ -77,6 +86,7 @@
   <div class="seal">方</div>
   <div><h1>方舆形胜</h1><p>读史方舆纪要 · 三维山河</p></div>
   <select id="scenes" title="形胜视角——立在关口，以顾祖禹之眼观之"></select>
+  <button id="mentbtn" title="各府全书被引次数 → 高度（示意尺度）">◧ 文柱 ✓</button>
   <a class="m3back" href="index.html">⟩ 返平面舆图</a>
 </header>
 
@@ -90,6 +100,7 @@
   <span id="tourlab"></span>
 </div>
 <div id="demnote">高程数据不可用 · 已降为平面显示</div>
+<div id="tourbig"></div>
 
 <footer class="m3foot">
   <span>影像 · Esri World Imagery ｜ 高程 · AWS Terrain Tiles ｜ 引擎 · MapLibre GL</span>
@@ -104,8 +115,8 @@
 </div>
 
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=85" defer></script>
+<script src="js/config.js?v=86" defer></script>
 <script src="vendor/maplibre-gl.js" defer></script>
-<script src="js/map3d.js?v=85" defer></script>
+<script src="js/map3d.js?v=86" defer></script>
 </body>
 </html>
