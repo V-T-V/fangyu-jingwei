@@ -49,6 +49,46 @@ for page in PAGES:
         fails.append((page, [l]))
         print("    FAIL  " + l)
 
+
+# ── 3D 页（MapLibre 与虚拟时间不合）：CDP 真实时间 + 标题协议 ──
+import json as _json, urllib.request as _ur, time as _time
+def run_cdp_test(page):
+    port, proc, out = 9333, None, None
+    import subprocess as _sp, tempfile as _tf, os as _os
+    prof = _tf.mkdtemp(prefix="fy3d_")
+    proc = _sp.Popen([EDGE, "--headless=new", "--disable-gpu", "--use-angle=swiftshader",
+        "--no-first-run", "--remote-debugging-port=%d" % port,
+        "--user-data-dir=" + prof, "about:blank"],
+        stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    try:
+        base = "http://127.0.0.1:%d" % port
+        for _ in range(50):                      # 等调试端口就绪
+            try:
+                _ur.urlopen(base + "/json/version", timeout=1).read(); break
+            except Exception:
+                _time.sleep(.2)
+        req = _ur.Request(base + "/json/new?" + BASE + page, method="PUT")
+        tabinfo = _json.loads(_ur.urlopen(req, timeout=5).read())
+        deadline = _time.time() + 75
+        while _time.time() < deadline:
+            _time.sleep(1.5)
+            tabs = _json.loads(_ur.urlopen(base + "/json/list", timeout=5).read())
+            tab = next((t for t in tabs if t.get("id") == tabinfo["id"]), None)
+            title = (tab or {}).get("title", "")
+            if title.startswith("R3D:"):
+                out = title[4:]; break
+        if out is None:
+            out = "CDP-TIMEOUT FAIL"
+    finally:
+        proc.terminate()
+    lines = [l.strip() for l in out.split(";") if l.strip()]
+    bad = [l for l in lines if "FAIL" in l and "SKIP" not in l]
+    print(("✓" if not bad else "✗") + " %-20s %d 项断言%s" % (page, len(lines), "" if not bad else "："))
+    for l in bad: print("    FAIL  " + l)
+    if bad: fails.append((page, bad))
+
+run_cdp_test("test_3d.html")
+
 # CLI 测试
 import importlib.util
 cli_test = os.path.join(os.path.dirname(__file__), "test_cli.py")
@@ -63,4 +103,4 @@ print()
 if fails:
     print("回归未过：%d 个失败项" % sum(len(f[1]) for f in fails))
     sys.exit(1)
-print("回归通过：%d 页 × 全部断言" % len(PAGES))
+print("回归通过：%d 页 × 全部断言（%d 无头 + 1 CDP 三维）" % (len(PAGES)+1, len(PAGES)))

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方舆形胜 · 三维 · 读史方舆纪要</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23b23a2e'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23f6efdc' font-family='KaiTi,serif'%3E方%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/main.css?v=85">
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--silk-1,#efe6cf)}
+  #map3d{position:fixed;inset:0}
+  .paper-wash{position:fixed;inset:0;z-index:2;pointer-events:none;
+    background:radial-gradient(ellipse 140% 110% at 50% 40%,transparent 60%,rgba(120,96,54,.12) 100%)}
+  /* 顶栏 */
+  .m3head{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;align-items:center;gap:12px;
+    padding:8px 14px;background:linear-gradient(rgba(239,230,207,.96),rgba(239,230,207,.88));
+    border-bottom:1px solid var(--line);font-family:KaiTi,serif}
+  .m3head .seal{width:36px;height:36px;flex:none}
+  .m3head h1{font-size:19px;letter-spacing:5px;margin:0;color:var(--ink);font-weight:400}
+  .m3head p{margin:0;font-size:10px;letter-spacing:2px;color:var(--ink-faint)}
+  #scenes{appearance:none;font-family:KaiTi,serif;font-size:13px;letter-spacing:2px;color:var(--ink-mid);
+    background:var(--silk-3);border:1px solid var(--line);padding:5px 10px;outline:none}
+  .m3back{margin-left:auto;font-size:13px;letter-spacing:3px;color:var(--cinnabar-d);cursor:pointer;
+    border:1px solid rgba(178,58,46,.4);padding:5px 12px;background:var(--silk-3);text-decoration:none}
+  /* 府印 / 关隘标记 */
+  .fu3d{width:11px;height:11px;border-radius:2.5px;cursor:pointer;
+    background:var(--pc,#2f5d70);transform:rotate(45deg);
+    box-shadow:inset 0 0 0 1.5px rgba(246,239,220,.65),0 0 4px rgba(0,0,0,.35)}
+  .fu3d:hover{box-shadow:inset 0 0 0 2px rgba(246,239,220,.95),0 0 8px rgba(178,58,46,.8)}
+  .pass3d{display:flex;flex-direction:column;align-items:center;cursor:pointer;pointer-events:auto}
+  .pass3d .diamond3d{width:11px;height:11px;transform:rotate(45deg);background:var(--cinnabar,#b23a2e);
+    box-shadow:0 0 0 1.5px rgba(246,239,220,.9),0 0 6px rgba(178,58,46,.55)}
+  .pass3d span{margin-top:5px;font:10.5px/1 KaiTi,serif;letter-spacing:1px;color:#f2ead6;
+    text-shadow:0 0 3px rgba(20,12,4,.95),0 0 6px rgba(20,12,4,.8);white-space:nowrap}
+  .pass3d:hover span{color:#ffd9c9}
+  /* 信息卡 */
+  #card3d{position:fixed;right:14px;top:64px;bottom:60px;width:min(360px,calc(100vw - 28px));z-index:9;
+    background:linear-gradient(#f5eeda,#efe6cf);border:1px solid var(--line);
+    box-shadow:-4px 4px 18px rgba(60,45,20,.28);transform:translateX(110%);
+    transition:transform .45s cubic-bezier(.2,.75,.25,1);display:flex;flex-direction:column}
+  #card3d.open{transform:none}
+  #c3top{display:flex;align-items:flex-start;padding:12px 14px 8px;border-bottom:1px solid var(--line)}
+  #c3kick{font-family:KaiTi,serif;font-size:12px;letter-spacing:4px;color:var(--ink-faint)}
+  #c3close{margin-left:auto;cursor:pointer;color:var(--ink-faint);font-size:14px;padding:2px 6px}
+  #c3body{padding:6px 16px 16px;overflow-y:auto}
+  /* 飞览条 */
+  #tourbar{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:10;
+    display:flex;align-items:center;gap:10px;padding:6px 12px;
+    background:rgba(239,230,207,.94);border:1px solid var(--line);box-shadow:0 3px 14px rgba(60,45,20,.25)}
+  #tourbtn{appearance:none;cursor:pointer;font:14px/1 KaiTi,serif;letter-spacing:3px;color:var(--cinnabar-d);
+    background:var(--silk-3);border:1px solid rgba(178,58,46,.45);padding:7px 16px}
+  #tourlab{font:13px/1 KaiTi,serif;letter-spacing:2px;color:var(--ink-mid);min-width:96px;text-align:center}
+  #demnote{display:none;position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:11;
+    background:rgba(245,238,218,.95);border:1px solid var(--line);padding:4px 14px;
+    font:11px KaiTi,serif;letter-spacing:2px;color:var(--ink-faint)}
+  .m3foot{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:space-between;
+    padding:5px 14px;background:linear-gradient(transparent,rgba(239,230,207,.9));
+    font:10px/1.8 KaiTi,serif;letter-spacing:2px;color:var(--ink-faint)}
+  /* WebGL 不可用兜底 */
+  #glfail{display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;text-align:center;font-family:KaiTi,serif}
+  #glfail .bseal{margin:0 auto}
+  #glfail a{color:var(--cinnabar-d);letter-spacing:3px;font-size:15px;text-decoration:none;
+    border:1px solid rgba(178,58,46,.4);padding:8px 18px}
+  @media (max-width:640px){
+    #card3d{left:10px;right:10px;width:auto;top:auto;bottom:58px;height:52vh}
+    #scenes{max-width:38vw}
+  }
+</style>
+</head>
+<body class="m3d">
+<div id="map3d"></div>
+<div class="paper-wash"></div>
+
+<header class="m3head">
+  <div class="seal">方</div>
+  <div><h1>方舆形胜</h1><p>读史方舆纪要 · 三维山河</p></div>
+  <select id="scenes" title="形胜视角——立在关口，以顾祖禹之眼观之"></select>
+  <a class="m3back" href="index.html">⟩ 返平面舆图</a>
+</header>
+
+<section id="card3d">
+  <div id="c3top"><span id="c3kick"></span><span id="c3close">✕</span></div>
+  <div id="c3body"></div>
+</section>
+
+<div id="tourbar">
+  <button id="tourbtn">▶ 飞览九边</button>
+  <span id="tourlab"></span>
+</div>
+<div id="demnote">高程数据不可用 · 已降为平面显示</div>
+
+<footer class="m3foot">
+  <span>影像 · Esri World Imagery ｜ 高程 · AWS Terrain Tiles ｜ 引擎 · MapLibre GL</span>
+  <span>Ctrl+拖拽 俯仰 · 右键拖拽 旋转</span>
+</footer>
+
+<div id="glfail">
+  <div class="bseal">方</div>
+  <h2 style="letter-spacing:6px;font-weight:400">三维视图需 WebGL</h2>
+  <p style="color:var(--ink-faint);letter-spacing:2px">当前环境不支持，请返回平面舆图——功能全备。</p>
+  <a href="index.html">⟩ 返平面舆图</a>
+</div>
+
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=85" defer></script>
+<script src="vendor/maplibre-gl.js" defer></script>
+<script src="js/map3d.js?v=85" defer></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><title>自动验证 · 3D 形胜</title>
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
+<style>html,body{margin:0;height:100%;overflow:hidden}#map3d{position:fixed;inset:0}</style>
+</head>
+<body>
+<div id="map3d"></div>
+<div id="tourbar" style="position:fixed;z-index:10"><button id="tourbtn">▶ 飞览九边</button><span id="tourlab"></span></div>
+<select id="scenes"></select>
+<section id="card3d"><div id="c3top"><span id="c3kick"></span><span id="c3close">✕</span></div><div id="c3body"></div></section>
+<div id="glfail" style="display:none"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:60px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap">PENDING</pre>
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=85" defer></script>
+<script src="vendor/maplibre-gl.js" defer></script>
+<script src="js/map3d.js?v=85" defer></script>
+<script defer>
+var NL=String.fromCharCode(10),log=[];
+function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
+function S(n){log.push(n+" SKIP-PASS");}
+function done(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
+  document.title="R3D:"+log.join(";");
+  try{window.__m3&&window.__m3.stop();}catch(e){}   /* 停渲染/撤请求，让虚拟时间结算 */
+}
+window.addEventListener("load",function(){
+  var waited=0;
+  var iv=setInterval(function(){
+    waited+=400;
+    if (!window.__m3ready && !window.__m3fail && waited<16000) return;
+    clearInterval(iv);
+    try{
+      if (window.__m3fail){ S("GL"); done(); return; }        // 环境无 WebGL：跳过
+      P("GL",!!window.maplibregl);
+      P("READY",!!window.__m3ready);
+      P("FU-MARKERS",document.querySelectorAll(".fu3d").length>=190);
+      P("PASS-MARKERS",document.querySelectorAll(".pass3d").length===50);
+      P("LAYERS",!!window.__m3.getLayer("frontier")&&!!window.__m3.getLayer("rivers"));
+      P("SCENES",document.querySelectorAll("#scenes option").length===8);
+      /* 飞览：启动 → 标签更新 → 停止 */
+      document.getElementById("tourbtn").click();
+      setTimeout(function(){
+        try{
+          P("TOUR-RUN",document.getElementById("tourlab").textContent.length>0);
+          document.getElementById("tourbtn").click();
+          P("TOUR-STOP",document.getElementById("tourbtn").textContent.indexOf("▶")>=0);
+          /* 关隘点击 → 信息卡 */
+          var pv=document.querySelector(".pass3d");
+          if(pv)pv.click();
+          setTimeout(function(){
+            try{
+              P("CARD",document.getElementById("card3d").classList.contains("open")&&document.getElementById("c3body").textContent.length>10);
+              done();
+            }catch(e){log.push("ERR4 "+e);done();}
+          },400);
+        }catch(e){log.push("ERR3 "+e);done();}
+      },5200);
+    }catch(e){log.push("ERR "+e);done();}
+  },400);
+});
+</script>
+</body>
+</html>

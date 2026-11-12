@@ -100,6 +100,9 @@ if (_wx) _wx.onclick = function(){ if (typeof openWenxin === "function") openWen
 var _bl = document.getElementById("bianlink");
 if (_bl) _bl.onclick = function(){ if (typeof openBian === "function") openBian(); };
 
+var _td = document.getElementById("tdlink");
+if (_td) _td.onclick = function(){ location.href = "3d.html"; };
+
 /* 底图切换：地形 ⇄ 影像（观山川形胜） */
 var _bm = document.getElementById("bmtoggle");
 if (_bm) _bm.onclick = function(){
