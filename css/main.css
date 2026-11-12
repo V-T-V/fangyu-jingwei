@@ -498,6 +498,8 @@ body.m-形势 #tlPlay{display:block}
   .north{display:none}
   footer{left:10px;right:10px;flex-wrap:wrap;gap:8px;padding:6px 10px}
   footer .right{display:none}
+  /* 底图切换钮避开换行后的头与纲目列 */
+  #bmtoggle{top:168px!important;left:166px!important}
 }
 @media (max-width:640px){
   #tl{left:132px;bottom:96px;height:34px}
@@ -518,6 +520,11 @@ body.m-形势 #tlPlay{display:block}
   #pbody{padding-bottom:34px}
   .brand p,#searchwrap .sicon{display:block}
   nav button i{display:none}
+  #bmtoggle{top:174px!important;left:136px!important;padding:6px 8px;font-size:11px;letter-spacing:2px}
+  /* 透视/文心的内联宽高在手机上强制回归底部抽屉（内联样式会击穿本档） */
+  #panel.open{top:auto!important;bottom:58px!important;height:52vh!important;
+    width:auto!important;left:10px!important;right:10px!important}
+  #tlPlay{right:12px;bottom:142px}
 }
 
 /* ── 打印版式（阅读视图 Ctrl+P）────────────────────── */
