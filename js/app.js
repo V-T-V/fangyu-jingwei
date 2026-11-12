@@ -94,6 +94,9 @@ if (_wl) _wl.onclick = wander;
 var _ana = document.getElementById("analyticslink");
 if (_ana) _ana.onclick = openAnalytics;
 
+var _wx = document.getElementById("wenxinlink");
+if (_wx) _wx.onclick = function(){ if (typeof openWenxin === "function") openWenxin(); };
+
 /* ── 形势自动播放：Play 键穿越九朝 ──
    var（非 let）：app.js 若中途崩，modes.js 的 typeof 守卫不致落入 TDZ */
 var eraPlaying = false, eraTimer = null;

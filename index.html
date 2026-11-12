@@ -37,7 +37,7 @@
 <link rel="stylesheet" href="vendor/leaflet.css">
 <link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=75">
+<link rel="stylesheet" href="css/main.css?v=77">
 </head>
 <body class="m-舆图 nopanel">
 
@@ -83,7 +83,7 @@
 </section>
 
 <footer>
-  <span id="wanderlink" style="cursor:pointer;font-family:KaiTi,serif;letter-spacing:4px;color:var(--ochre-d)">⚑ 漫步</span><span class="sep"></span><span id="analyticslink" style="cursor:pointer;font-family:KaiTi,serif;letter-spacing:3px;color:var(--azur-d)">📊 透视</span><span class="sep"></span><span id="modelabel">舆图</span><span class="sep"></span>
+  <span id="wanderlink" style="cursor:pointer;font-family:KaiTi,serif;letter-spacing:4px;color:var(--ochre-d)">⚑ 漫步</span><span class="sep"></span><span id="analyticslink" style="cursor:pointer;font-family:KaiTi,serif;letter-spacing:3px;color:var(--azur-d)">📊 透视</span><span class="sep"></span><span id="wenxinlink" style="cursor:pointer;font-family:KaiTi,serif;letter-spacing:3px;color:var(--ochre-d)">🖋 文心</span><span class="sep"></span><span id="modelabel">舆图</span><span class="sep"></span>
   <span id="modenote">十五布政使司 · 府州县治所见于图</span>
   <span class="sep"></span><span class="fb" id="bookstat"></span>
   <div class="right"><span id="swstate" title="Service Worker 就绪后：整本书与已览瓦片离线可用" style="display:none;color:var(--azur-d);cursor:default"></span><span id="tablelink" style="cursor:pointer">古今对照</span><span id="aboutlink" style="cursor:pointer">关于 · 校勘记</span><span>文本 · 国学导航</span><span>底图 · Esri World Physical</span></div>
@@ -106,17 +106,18 @@
 
 <!-- 加载链：解析数据 → 配置 → 地图 → 面板/纲目/检索 → 启动 → 模式与深链 -->
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=75" defer></script>
-<script src="js/map.js?v=75" defer></script>
-<script src="js/panels.js?v=75" defer></script>
-<script src="js/rail.js?v=75" defer></script>
-<script src="js/search.js?v=75" defer></script>
-<script src="js/reader.js?v=75" defer></script>
-<script src="js/bookmarks.js?v=75" defer></script>
-<script src="js/fulltext.js?v=75" defer></script>
-<script src="js/app.js?v=75" defer></script>
-<script src="js/modes.js?v=75" defer></script>
-<script src="js/analytics.js?v=75" defer></script>
+<script src="js/config.js?v=77" defer></script>
+<script src="js/map.js?v=77" defer></script>
+<script src="js/panels.js?v=77" defer></script>
+<script src="js/rail.js?v=77" defer></script>
+<script src="js/search.js?v=77" defer></script>
+<script src="js/reader.js?v=77" defer></script>
+<script src="js/bookmarks.js?v=77" defer></script>
+<script src="js/fulltext.js?v=77" defer></script>
+<script src="js/app.js?v=77" defer></script>
+<script src="js/modes.js?v=77" defer></script>
+<script src="js/analytics.js?v=77" defer></script>
+<script src="js/wenxin.js?v=77" defer></script>
 <script>
 /* PWA：HTTP(S) 下注册 Service Worker（file:// 静默跳过，注册失败不影响站点） */
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {

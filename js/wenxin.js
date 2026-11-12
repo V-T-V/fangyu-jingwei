@@ -1,0 +1,219 @@
+/* ═══════════ 方舆经纬 · 文心（全书文本计量） ═══════════
+   依赖 fulltext.js 的 ensureTextAll / countHits 与 panels.js 的面板基元。
+   三问：顾祖禹的笔墨写到哪里去？哪些地名被反复掂量？战略词汇浓在何处？ */
+
+/* 战略词汇（顾祖禹军事地理语汇，人工整编 16 词） */
+const WX_VOCAB = ["形胜","险要","要害","咽喉","锁钥","门户","屏蔽","冲要",
+                  "守御","屯戍","关隘","堡寨","烽堠","营垒","倭寇","盗贼"];
+
+let _wxCache = null;          // 计算结果缓存（重开面板即时呈现）
+let _wxBusy = false;
+
+function openWenxin(){
+  vset("文心", "计量");
+  vseal.textContent = "笔墨";
+  document.body.classList.remove("nopanel");
+  panel.classList.add("open");
+  panel.style.width = "min(720px, calc(100vw - 20px))";
+  panel.style.top = "76px";
+  panel.style.bottom = "52px";
+
+  if (_wxCache){ wxRender(_wxCache); return; }
+  if (_wxBusy) return;
+  _wxBusy = true;
+
+  pbody.innerHTML = `
+  <style>
+    .wx-title{font-family:KaiTi,serif;font-size:16px;letter-spacing:4px;color:var(--azur-d);margin:14px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+    .wx-note{font-size:11px;line-height:1.8;letter-spacing:1px;color:var(--ink-mid);padding:8px 12px;border:1px dashed rgba(120,96,54,.3);background:rgba(245,238,218,.5);margin-top:6px}
+    .wx-row{display:flex;align-items:center;gap:8px;padding:2.5px 0}
+    .wx-nm{width:64px;font-size:13px;letter-spacing:1px;text-align:right;flex:none;cursor:pointer}
+    .wx-nm.fu{cursor:pointer}
+    .wx-track{flex:1;height:13px;background:rgba(90,72,44,.08);position:relative}
+    .wx-fill{height:100%;background:linear-gradient(90deg,#2f5d70,#3d7a72);border-radius:0 2px 2px 0;cursor:pointer}
+    .wx-val{width:110px;font-size:11.5px;color:var(--ink-mid);flex:none;font-variant-numeric:tabular-nums}
+    .wx-chip{display:inline-block;padding:3px 10px;margin:2px 3px 2px 0;font-size:12.5px;letter-spacing:2px;
+      font-family:KaiTi,serif;border:1px solid var(--line);background:var(--silk-3);cursor:pointer;color:var(--ink-mid)}
+    .wx-chip.on{background:rgba(178,58,46,.08);border-color:rgba(178,58,46,.5);color:var(--cinnabar-d)}
+    .wx-prog{font-size:12px;letter-spacing:2px;color:var(--ink-faint);padding:4px 0;font-family:KaiTi,serif}
+  </style>
+  <div class="p-kicker">读史方舆纪要 · 文本计量</div>
+  <div class="wx-prog" id="wxProg">正在准备全书原文…</div>`;
+
+  ensureTextAll((key, done, total) => {
+    const el = document.getElementById("wxProg");
+    if (el) el.textContent = `载入原文 ${done} / ${total} …`;
+  }, () => {
+    wxCompute();
+  });
+}
+
+/* ── 计算（分块，UI 不冻结） ─────────────────────────── */
+function wxCompute(){
+  /* 省级语料 + 字数 */
+  const provChars = [], provText = {};
+  let extraChars = 0;
+  FY.provinces.forEach(p => {
+    const bag = FYTEXT[p.id] || {};
+    const parts = [];
+    if (bag.xu){ parts.push(bag.xu); }
+    Object.keys(bag.fu || {}).forEach(nm => parts.push(bag.fu[nm]));
+    const txt = parts.join("");
+    provText[p.id] = txt;
+    provChars.push({ prov: p.name, chars: txt.length });
+  });
+  ["juanshou","xingshi","chuandu"].forEach(k => {
+    const v = FYTEXT[k];
+    if (Array.isArray(v)) v.forEach(it => { extraChars += (typeof it === "string" ? it : it.x || "").length; });
+  });
+  provChars.sort((a,b) => b.chars - a.chars);
+  const totalChars = provChars.reduce((s,x) => s + x.chars, 0);
+
+  /* 战略词汇分省密度 */
+  const vocab = {};
+  WX_VOCAB.forEach(w => {
+    vocab[w] = FY.provinces.map(p => {
+      const n = countHits(provText[p.id] || "", w);
+      return { prov: p.name, n, dens: provChars.find(x => x.prov === p.name).chars ?
+        n * 10000 / provChars.find(x => x.prov === p.name).chars : 0 };
+    }).sort((a,b) => b.n - a.n);
+  });
+
+  /* 府名被引：全书语料（省+卷首+形势+川渎）连缀一次 */
+  const allParts = FY.provinces.map(p => provText[p.id] || "");
+  ["juanshou","xingshi","chuandu"].forEach(k => {
+    const v = FYTEXT[k];
+    if (Array.isArray(v)) v.forEach(it => allParts.push(typeof it === "string" ? it : it.x || ""));
+  });
+  const bigText = allParts.join("");
+
+  const names = [], seen = new Set();
+  const provNms = new Set(FY.provinces.map(p => p.name));
+  FY.provinces.forEach(p => p.fu.forEach(u => {
+    let term = u.n.replace(/(军民府|军民卫|州府|府|州|卫)$/, "");
+    /* 单字简名（徐州→徐）与省名撞车（河南府→河南）都退回全名检索 */
+    if (term.length < 2 || provNms.has(term)) term = u.n;
+    if (seen.has(term)) return;
+    seen.add(term);
+    names.push({ bare: term, fu: u.n, prov: p.name });
+  }));
+
+  const prog = document.getElementById("wxProg");
+  const fuAll = [];
+  const CH = 24;                                  // 每块 24 名，让出主线程
+  const step = i0 => {
+    const el = prog || document.getElementById("wxProg");
+    if (el) el.textContent = `掂量府名 ${Math.min(i0 + CH, names.length)} / ${names.length} …`;
+    for (let i = i0; i < Math.min(i0 + CH, names.length); i++){
+      fuAll.push({ ...names[i], n: countHits(bigText, names[i].bare) });
+    }
+    if (i0 + CH < names.length){ setTimeout(() => step(i0 + CH), 0); return; }
+    fuAll.sort((a,b) => b.n - a.n);
+    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll };
+    _wxBusy = false;
+    wxRender(_wxCache);
+  };
+  step(0);
+}
+
+/* ── 渲染 ───────────────────────────────────────────── */
+let _wxWord = "形胜";
+function wxRender(c){
+  const maxChars = c.provChars[0].chars;
+  const charBars = c.provChars.map(x => `
+    <div class="wx-row"><span class="wx-nm">${x.prov}</span>
+      <div class="wx-track"><div class="wx-fill" style="width:${(x.chars/maxChars*100).toFixed(1)}%"></div></div>
+      <span class="wx-val">${(x.chars/10000).toFixed(1)} 万字</span></div>`).join("");
+
+  const top20 = c.fuAll.slice(0, 20);
+  const maxN = top20[0] ? top20[0].n : 1;
+  const fuBars = top20.map((f,i) => `
+    <div class="wx-row"><span class="wx-nm fu" data-w="${f.bare}" title="点击全书检索「${f.bare}」">${i+1} ${f.bare}</span>
+      <div class="wx-track"><div class="wx-fill" data-w="${f.bare}" style="width:${(f.n/maxN*100).toFixed(1)}%;background:linear-gradient(90deg,#a0522d,#b23a2e)"></div></div>
+      <span class="wx-val">${f.n} 次 · ${f.prov}</span></div>`).join("");
+
+  const chips = WX_VOCAB.map(w =>
+    `<span class="wx-chip${w===_wxWord?" on":""}" data-w="${w}">${w}</span>`).join("");
+
+  pbody.innerHTML = `
+  <style>
+    .wx-title{font-family:KaiTi,serif;font-size:16px;letter-spacing:4px;color:var(--azur-d);margin:14px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+    .wx-note{font-size:11px;line-height:1.8;letter-spacing:1px;color:var(--ink-mid);padding:8px 12px;border:1px dashed rgba(120,96,54,.3);background:rgba(245,238,218,.5);margin-top:6px}
+    .wx-row{display:flex;align-items:center;gap:8px;padding:2.5px 0}
+    .wx-nm{width:64px;font-size:13px;letter-spacing:1px;text-align:right;flex:none}
+    .wx-nm.fu,.wx-fill[data-w]{cursor:pointer}
+    .wx-track{flex:1;height:13px;background:rgba(90,72,44,.08);position:relative}
+    .wx-fill{height:100%;background:linear-gradient(90deg,#2f5d70,#3d7a72);border-radius:0 2px 2px 0}
+    .wx-val{width:110px;font-size:11.5px;color:var(--ink-mid);flex:none;font-variant-numeric:tabular-nums}
+    .wx-chip{display:inline-block;padding:3px 10px;margin:2px 3px 2px 0;font-size:12.5px;letter-spacing:2px;
+      font-family:KaiTi,serif;border:1px solid var(--line);background:var(--silk-3);cursor:pointer;color:var(--ink-mid)}
+    .wx-chip.on{background:rgba(178,58,46,.08);border-color:rgba(178,58,46,.5);color:var(--cinnabar-d)}
+    .wx-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 12px}
+    .wx-stat{text-align:center;padding:9px 4px;background:rgba(47,93,112,.05);border:1px solid var(--line)}
+    .wx-stat b{display:block;font-family:KaiTi,serif;font-size:22px;color:var(--azur-d)}
+    .wx-stat span{font-size:10px;letter-spacing:2px;color:var(--ink-faint)}
+  </style>
+  <div class="p-kicker">读史方舆纪要 · 文本计量</div>
+
+  <div class="wx-stats">
+    <div class="wx-stat"><b>${(c.totalChars/10000).toFixed(0)}</b><span>省卷万字</span></div>
+    <div class="wx-stat"><b>${(c.extraChars/10000).toFixed(0)}</b><span>形势川渎卷首</span></div>
+    <div class="wx-stat"><b>${c.fuAll.length}</b><span>府名受掂量</span></div>
+    <div class="wx-stat"><b>${c.fuAll[0] ? c.fuAll[0].bare : "—"}</b><span>最被引地名</span></div>
+  </div>
+
+  <div class="wx-title">卷帙分布 · 各省方舆字数</div>
+  ${charBars}
+  <div class="wx-note">北密南疏的笔墨本身就是判断——边疆诸省卷帙虽简，形势论列反重；江南赋重之地，纪载尤繁。</div>
+
+  <div class="wx-title">府名被引 TOP 20 · 全书掂量次数</div>
+  ${fuBars}
+  <div class="wx-note">以简名计（去「府／州／卫」尾），遍检全书 260 万字——被引次数即顾祖禹反复掂量的战略权重。点行可全书检索。个别同名词目（如「太平」）计为合计。</div>
+
+  <div class="wx-title">战略词汇 · 分省浓淡</div>
+  <div>${chips}</div>
+  <div id="wxVocab" style="margin-top:8px"></div>
+  <div class="wx-note">军事地理语汇每万字出现次数之排序——边镇（屯戍/烽堠/堡寨）与腹里（漕运/形胜）的用词差，即明代国防地理的心图。点词切换。</div>
+
+  <div class="readrow" style="margin-top:14px;display:flex;gap:8px">
+    <button class="readfull" id="wxCsv">⤓ 导出 CSV</button>
+    <button class="readfull" id="wxBack">⟨ 返回舆图</button>
+  </div>`;
+
+  const drawVocab = () => {
+    const rows = c.vocab[_wxWord] || [];
+    const mx = rows[0] ? rows[0].n : 1;
+    document.getElementById("wxVocab").innerHTML = rows.map(r => `
+      <div class="wx-row"><span class="wx-nm">${r.prov}</span>
+        <div class="wx-track"><div class="wx-fill" style="width:${mx?(r.n/mx*100).toFixed(1):0}%"></div></div>
+        <span class="wx-val">${r.n} 次 · 万字 ${r.dens.toFixed(2)}</span></div>`).join("");
+  };
+  drawVocab();
+  pbody.querySelectorAll(".wx-chip").forEach(ch => ch.onclick = () => {
+    _wxWord = ch.dataset.w;
+    pbody.querySelectorAll(".wx-chip").forEach(x => x.classList.toggle("on", x === ch));
+    drawVocab();
+  });
+  pbody.querySelectorAll(".wx-nm.fu,[data-w].wx-fill").forEach(el => {
+    if (el.classList.contains("fu") || el.classList.contains("wx-fill"))
+      el.onclick = () => ftRun(el.dataset.w);
+  });
+
+  document.getElementById("wxCsv").onclick = () => {
+    const NL = String.fromCharCode(10);
+    let csv = String.fromCharCode(0xFEFF) + "类别,名称,省份,指标,数值" + NL;
+    c.provChars.forEach(x => { csv += "省卷字数," + x.prov + ",," + "字数," + x.chars + NL; });
+    WX_VOCAB.forEach(w => (c.vocab[w] || []).forEach(r => {
+      csv += "战略词汇," + w + "," + r.prov + ",次数," + r.n + NL; }));
+    c.fuAll.forEach(f => { csv += "府名被引," + f.fu + "," + f.prov + ",次数," + f.n + NL; });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+    a.download = "方舆经纬-文心计量.csv";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  };
+  document.getElementById("wxBack").onclick = () => {
+    panel.style.width = ""; panel.style.top = ""; panel.style.bottom = "";
+    openIntro();
+  };
+}

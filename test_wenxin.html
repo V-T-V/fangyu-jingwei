@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><title>自动验证 · 文心计量</title>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<script src="vendor/leaflet.js"></script>
+<link rel="stylesheet" href="css/main.css?v=77">
+</head>
+<body class="m-舆图 nopanel">
+<div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
+<header><div class="brand"><div class="seal">方</div><div><h1>方舆经纬</h1><p>读史方舆纪要</p></div></div>
+<nav id="modes"><button data-m="舆图" class="on"><b>舆　图</b></button></nav>
+<div id="searchwrap"><input id="search"><div id="sresults"></div></div></header>
+<aside id="rail"><div class="rt" id="railtitle"></div><div id="raillist"></div></aside>
+<section id="panel"><button id="pclose">✕</button><div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div><div id="pbody"></div></section>
+<footer><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<div id="tl"></div><div id="tlPlay"></div><div id="boot"></div>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap"></pre>
+<script src="data/site_data.js" defer></script>
+<script src="js/config.js?v=77" defer></script>
+<script src="js/map.js?v=77" defer></script>
+<script src="js/panels.js?v=77" defer></script>
+<script src="js/rail.js?v=77" defer></script>
+<script src="js/search.js?v=77" defer></script>
+<script src="js/reader.js?v=77" defer></script>
+<script src="js/bookmarks.js?v=77" defer></script>
+<script src="js/fulltext.js?v=77" defer></script>
+<script src="js/app.js?v=77" defer></script>
+<script src="js/modes.js?v=77" defer></script>
+<script src="js/analytics.js?v=77" defer></script>
+<script src="js/wenxin.js?v=77" defer></script>
+<script defer>
+var NL=String.fromCharCode(10),log=[];
+function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
+function done(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
+  document.title=log.every(function(l){return l.indexOf("PASS")>=0})?"ALL-PASS":"HAS-FAIL";}
+window.addEventListener("load",function(){
+  setTimeout(function(){
+    try{
+      openWenxin();
+      /* 轮询等待：18 文本载入 + 分块统计（每块 24 府名）完成 → 渲染结果 */
+      var waited=0;
+      var iv=setInterval(function(){
+        waited+=300;
+        var fuRows=document.querySelectorAll(".wx-nm.fu").length;
+        if (fuRows>=20 || waited>13000){
+          clearInterval(iv);
+          try{
+            P("RENDER",fuRows>=20);
+            P("CHIPS",document.querySelectorAll(".wx-chip").length===16);
+            P("CHARS-BARS",document.querySelectorAll(".wx-row").length>=40);       // 15 省 + 20 府 + 15 词省
+            var top1=document.querySelector(".wx-nm.fu");
+            P("TOP1",!!top1&&top1.textContent.replace(/^\d+\s*/,"").length>=2);
+            P("CSV-BTN",!!document.getElementById("wxCsv"));
+            done();
+          }catch(e){log.push("ERR "+e);done();}
+        }
+      },300);
+    }catch(e){log.push("ERR0 "+e);done();}
+  },2000);
+});
+</script>
+</body>
+</html>
