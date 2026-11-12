@@ -139,6 +139,12 @@ function openFu(p,u){
     <div class="chips">${u.fg?`<span class="chip fg" title="府郭附县">${u.fg} · 附郭</span>`:""}${zchips}</div>
     <div class="chips" style="margin-top:7px">${xchips||'<span class="chip small">无直领县</span>'}</div>
     ${u.zx.map(z=>`<div class="chips" style="margin-top:6px"><span class="chip zhou">${z.n}</span>${z.x.map(x=>`<span class="chip small">${x}</span>`).join("")}</div>`).join("")}
+    ${(typeof wxFuStat === "function")
+      ? (()=>{ const st = wxFuStat(p,u);
+          return st
+            ? `<div class="p-cap">文心 · 掂量</div><div class="chips"><span class="chip jschip" id="wxjump" title="点开文心观全书排名">全书被引 ${st.n} 次 · 第 ${st.rank} 位 ➤</span></div>`
+            : `<div class="p-cap">文心 · 掂量</div><div class="chips"><span class="chip small" id="wxcalc" style="cursor:pointer" title="载入全书原文后统计此府被引次数">🖋 掂量此府（载入原文约数秒）…</span></div>`; })()
+      : ""}
     <div class="p-cap">出处</div>
     <div class="hint">《读史方舆纪要》${p.name}方舆纪要 · ${p.vols.join("、")}。县名后〔今废〕〔新改〕等注记皆原书自注。</div>`;
   const fb = pbody.querySelector("[data-ft]");
@@ -148,6 +154,21 @@ function openFu(p,u){
     const added = BM.toggle(p,u);
     sb.classList.toggle("on", added);
     sb.textContent = (added?"★":"☆") + " 书签";
+  };
+  /* 地→文：被引名次直跳文心；未计量则载入原文掂量后回填本卡 */
+  const wj = pbody.querySelector("#wxjump");
+  if (wj) wj.onclick = ()=>{ if (typeof openWenxin === "function") openWenxin(); };
+  const wc = pbody.querySelector("#wxcalc");
+  if (wc) wc.onclick = ()=>{
+    if (typeof ensureTextAll !== "function" || typeof wxCompute !== "function") return;
+    wc.textContent = "载入全书原文…";
+    ensureTextAll((k, d, t) => {
+      if (wc.isConnected) wc.textContent = `载入原文 ${d} / ${t} …`;
+    }, () => {
+      if (!wc.isConnected) return;
+      wc.id = "wxProg";                       // 计算进度写入此 chip
+      wxCompute(() => openFu(p, u));          // 完成 → 重开本卡（已有统计）
+    });
   };
   if(u.c) safeFlyTo(u.c,7,{duration:1.1});
   if (typeof showJurisdiction === "function") showJurisdiction(p, u);

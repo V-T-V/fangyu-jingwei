@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><title>自动验证 · 文心计量</title>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=78">
+<link rel="stylesheet" href="css/main.css?v=79">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
@@ -17,18 +17,18 @@
 <div id="tl"></div><div id="tlPlay"></div><div id="boot"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap"></pre>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=78" defer></script>
-<script src="js/map.js?v=78" defer></script>
-<script src="js/panels.js?v=78" defer></script>
-<script src="js/rail.js?v=78" defer></script>
-<script src="js/search.js?v=78" defer></script>
-<script src="js/reader.js?v=78" defer></script>
-<script src="js/bookmarks.js?v=78" defer></script>
-<script src="js/fulltext.js?v=78" defer></script>
-<script src="js/app.js?v=78" defer></script>
-<script src="js/modes.js?v=78" defer></script>
-<script src="js/analytics.js?v=78" defer></script>
-<script src="js/wenxin.js?v=78" defer></script>
+<script src="js/config.js?v=79" defer></script>
+<script src="js/map.js?v=79" defer></script>
+<script src="js/panels.js?v=79" defer></script>
+<script src="js/rail.js?v=79" defer></script>
+<script src="js/search.js?v=79" defer></script>
+<script src="js/reader.js?v=79" defer></script>
+<script src="js/bookmarks.js?v=79" defer></script>
+<script src="js/fulltext.js?v=79" defer></script>
+<script src="js/app.js?v=79" defer></script>
+<script src="js/modes.js?v=79" defer></script>
+<script src="js/analytics.js?v=79" defer></script>
+<script src="js/wenxin.js?v=79" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
@@ -58,6 +58,11 @@ window.addEventListener("load",function(){
             var pv=document.querySelector(".wx-nm[data-pid]");
             if(pv)pv.click();
             P("LINK-GO",document.body.classList.contains("selprov")&&selPid===pv.dataset.pid);
+            /* 地→文：计量就绪后 openFu 应直显被引名次 */
+            var p0=FY.provinces[0],u0=p0.fu[0];
+            openFu(p0,u0);
+            var wj=document.getElementById("wxjump");
+            P("FU-STAT",!!wj&&/被引 \d+ 次/.test(wj.textContent));
             done();
           }catch(e){log.push("ERR "+e);done();}
         }

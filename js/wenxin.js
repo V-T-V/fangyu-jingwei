@@ -20,7 +20,6 @@ function openWenxin(){
 
   if (_wxCache){ wxRender(_wxCache); return; }
   if (_wxBusy) return;
-  _wxBusy = true;
 
   pbody.innerHTML = `
   <style>
@@ -48,8 +47,17 @@ function openWenxin(){
   });
 }
 
-/* ── 计算（分块，UI 不冻结） ─────────────────────────── */
-function wxCompute(){
+/* 地→文：府详情卡取此府的被引次数与名次（未计量时返回 null） */
+function wxFuStat(p, u){
+  if (!_wxCache) return null;
+  const f = _wxCache.fuAll.find(x => x.pid === p.id && x.fu === u.n);
+  if (!f) return null;
+  return { n: f.n, rank: _wxCache.fuAll.indexOf(f) + 1 };
+}
+
+/* ── 计算（分块，UI 不冻结；then=完成回调，缺省渲染文心面板） ── */
+function wxCompute(then){
+  _wxBusy = true;
   /* 省级语料 + 字数 */
   const provChars = [], provText = {};
   let extraChars = 0;
@@ -111,7 +119,7 @@ function wxCompute(){
     fuAll.sort((a,b) => b.n - a.n);
     _wxCache = { provChars, extraChars, totalChars, vocab, fuAll };
     _wxBusy = false;
-    wxRender(_wxCache);
+    if (typeof then === "function") then(_wxCache); else wxRender(_wxCache);
   };
   step(0);
 }
