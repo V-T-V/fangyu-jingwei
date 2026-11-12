@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><title>自动验证 · 文心计量</title>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=77">
+<link rel="stylesheet" href="css/main.css?v=78">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
@@ -17,18 +17,18 @@
 <div id="tl"></div><div id="tlPlay"></div><div id="boot"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap"></pre>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=77" defer></script>
-<script src="js/map.js?v=77" defer></script>
-<script src="js/panels.js?v=77" defer></script>
-<script src="js/rail.js?v=77" defer></script>
-<script src="js/search.js?v=77" defer></script>
-<script src="js/reader.js?v=77" defer></script>
-<script src="js/bookmarks.js?v=77" defer></script>
-<script src="js/fulltext.js?v=77" defer></script>
-<script src="js/app.js?v=77" defer></script>
-<script src="js/modes.js?v=77" defer></script>
-<script src="js/analytics.js?v=77" defer></script>
-<script src="js/wenxin.js?v=77" defer></script>
+<script src="js/config.js?v=78" defer></script>
+<script src="js/map.js?v=78" defer></script>
+<script src="js/panels.js?v=78" defer></script>
+<script src="js/rail.js?v=78" defer></script>
+<script src="js/search.js?v=78" defer></script>
+<script src="js/reader.js?v=78" defer></script>
+<script src="js/bookmarks.js?v=78" defer></script>
+<script src="js/fulltext.js?v=78" defer></script>
+<script src="js/app.js?v=78" defer></script>
+<script src="js/modes.js?v=78" defer></script>
+<script src="js/analytics.js?v=78" defer></script>
+<script src="js/wenxin.js?v=78" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
@@ -52,6 +52,12 @@ window.addEventListener("load",function(){
             var top1=document.querySelector(".wx-nm.fu");
             P("TOP1",!!top1&&top1.textContent.replace(/^\d+\s*/,"").length>=2);
             P("CSV-BTN",!!document.getElementById("wxCsv"));
+            /* 文→地联动：省名可点入舆图，府行 ➤ 直飞 */
+            P("LINK-PROV",document.querySelectorAll(".wx-nm[data-pid]").length>=30);
+            P("LINK-FU",document.querySelectorAll(".wxgo").length>=20);
+            var pv=document.querySelector(".wx-nm[data-pid]");
+            if(pv)pv.click();
+            P("LINK-GO",document.body.classList.contains("selprov")&&selPid===pv.dataset.pid);
             done();
           }catch(e){log.push("ERR "+e);done();}
         }

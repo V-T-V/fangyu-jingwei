@@ -60,7 +60,7 @@ function wxCompute(){
     Object.keys(bag.fu || {}).forEach(nm => parts.push(bag.fu[nm]));
     const txt = parts.join("");
     provText[p.id] = txt;
-    provChars.push({ prov: p.name, chars: txt.length });
+    provChars.push({ prov: p.name, pid: p.id, chars: txt.length });
   });
   ["juanshou","xingshi","chuandu"].forEach(k => {
     const v = FYTEXT[k];
@@ -74,8 +74,8 @@ function wxCompute(){
   WX_VOCAB.forEach(w => {
     vocab[w] = FY.provinces.map(p => {
       const n = countHits(provText[p.id] || "", w);
-      return { prov: p.name, n, dens: provChars.find(x => x.prov === p.name).chars ?
-        n * 10000 / provChars.find(x => x.prov === p.name).chars : 0 };
+      const ch = provChars.find(x => x.prov === p.name).chars;
+      return { prov: p.name, pid: p.id, n, dens: ch ? n * 10000 / ch : 0 };
     }).sort((a,b) => b.n - a.n);
   });
 
@@ -95,7 +95,7 @@ function wxCompute(){
     if (term.length < 2 || provNms.has(term)) term = u.n;
     if (seen.has(term)) return;
     seen.add(term);
-    names.push({ bare: term, fu: u.n, prov: p.name });
+    names.push({ bare: term, fu: u.n, prov: p.name, pid: p.id });
   }));
 
   const prog = document.getElementById("wxProg");
@@ -121,7 +121,7 @@ let _wxWord = "形胜";
 function wxRender(c){
   const maxChars = c.provChars[0].chars;
   const charBars = c.provChars.map(x => `
-    <div class="wx-row"><span class="wx-nm">${x.prov}</span>
+    <div class="wx-row"><span class="wx-nm" data-pid="${x.pid}" title="点击入舆图观其省域">${x.prov}</span>
       <div class="wx-track"><div class="wx-fill" style="width:${(x.chars/maxChars*100).toFixed(1)}%"></div></div>
       <span class="wx-val">${(x.chars/10000).toFixed(1)} 万字</span></div>`).join("");
 
@@ -130,7 +130,7 @@ function wxRender(c){
   const fuBars = top20.map((f,i) => `
     <div class="wx-row"><span class="wx-nm fu" data-w="${f.bare}" title="点击全书检索「${f.bare}」">${i+1} ${f.bare}</span>
       <div class="wx-track"><div class="wx-fill" data-w="${f.bare}" style="width:${(f.n/maxN*100).toFixed(1)}%;background:linear-gradient(90deg,#a0522d,#b23a2e)"></div></div>
-      <span class="wx-val">${f.n} 次 · ${f.prov}</span></div>`).join("");
+      <span class="wx-val">${f.n} 次 · ${f.prov}<i class="wxgo" data-pid="${f.pid}" data-fu="${f.fu}" title="入舆图观此府"> ➤</i></span></div>`).join("");
 
   const chips = WX_VOCAB.map(w =>
     `<span class="wx-chip${w===_wxWord?" on":""}" data-w="${w}">${w}</span>`).join("");
@@ -142,6 +142,10 @@ function wxRender(c){
     .wx-row{display:flex;align-items:center;gap:8px;padding:2.5px 0}
     .wx-nm{width:64px;font-size:13px;letter-spacing:1px;text-align:right;flex:none}
     .wx-nm.fu,.wx-fill[data-w]{cursor:pointer}
+    .wx-nm[data-pid]{cursor:pointer}
+    .wx-nm[data-pid]:hover{color:var(--cinnabar-d)}
+    .wxgo{font-style:normal;cursor:pointer;color:var(--cinnabar);letter-spacing:0}
+    .wxgo:hover{color:var(--cinnabar-d);text-shadow:0 0 6px rgba(178,58,46,.4)}
     .wx-track{flex:1;height:13px;background:rgba(90,72,44,.08);position:relative}
     .wx-fill{height:100%;background:linear-gradient(90deg,#2f5d70,#3d7a72);border-radius:0 2px 2px 0}
     .wx-val{width:110px;font-size:11.5px;color:var(--ink-mid);flex:none;font-variant-numeric:tabular-nums}
@@ -184,7 +188,7 @@ function wxRender(c){
     const rows = c.vocab[_wxWord] || [];
     const mx = rows[0] ? rows[0].n : 1;
     document.getElementById("wxVocab").innerHTML = rows.map(r => `
-      <div class="wx-row"><span class="wx-nm">${r.prov}</span>
+      <div class="wx-row"><span class="wx-nm" data-pid="${r.pid}" title="点击入舆图观其省域">${r.prov}</span>
         <div class="wx-track"><div class="wx-fill" style="width:${mx?(r.n/mx*100).toFixed(1):0}%"></div></div>
         <span class="wx-val">${r.n} 次 · 万字 ${r.dens.toFixed(2)}</span></div>`).join("");
   };
@@ -197,6 +201,22 @@ function wxRender(c){
   pbody.querySelectorAll(".wx-nm.fu,[data-w].wx-fill").forEach(el => {
     if (el.classList.contains("fu") || el.classList.contains("wx-fill"))
       el.onclick = () => ftRun(el.dataset.w);
+  });
+  /* 文→地联动：省名入舆图观省域；府行 ➤ 直飞该府 */
+  const wxReset = () => { panel.style.width=""; panel.style.top=""; panel.style.bottom=""; };
+  pbody.querySelectorAll(".wx-nm[data-pid]").forEach(el => el.onclick = () => {
+    const p = FY.provinces.find(x => x.id === el.dataset.pid);
+    if (!p) return;
+    wxReset();
+    setMode("舆图"); selectProv(p.id);
+  });
+  pbody.querySelectorAll(".wxgo").forEach(el => el.onclick = ev => {
+    ev.stopPropagation();
+    const p = FY.provinces.find(x => x.id === el.dataset.pid);
+    const u = p && p.fu.find(x => x.n === el.dataset.fu);
+    if (!u) return;
+    wxReset();
+    setMode("舆图"); selectProv(p.id); openFu(p, u);
   });
 
   document.getElementById("wxCsv").onclick = () => {
