@@ -9,6 +9,54 @@ const WX_VOCAB = ["形胜","险要","要害","咽喉","锁钥","门户","屏蔽"
 let _wxCache = null;          // 计算结果缓存（重开面板即时呈现）
 let _wxBusy = false;
 
+/* ── 被引着色：全书掂量次数画上舆图 ─────────────────────
+   圆径与色温随 log(次数) 缩放——顾祖禹战略注意力的地图化。 */
+let fuHeatLayer = null, fuHeatLegend = null;
+function clearFuHeat(){
+  if (fuHeatLayer){ map.removeLayer(fuHeatLayer); fuHeatLayer = null; }
+  if (fuHeatLegend){ fuHeatLegend.remove(); fuHeatLegend = null; }
+  const btn = document.getElementById("wxheat");
+  if (btn){ btn.textContent = "🗺 被引着色"; btn.title = "在舆图上以圆径色温呈现各府被引次数"; }
+}
+function toggleFuHeat(){
+  if (fuHeatLayer){ clearFuHeat(); return; }
+  if (!_wxCache) return;
+  if (mode !== "舆图") setMode("舆图");
+  const f = _wxCache.fuAll;
+  const ns = f.map(x => x.n);
+  const lo = Math.log(Math.max(1, Math.min(...ns))), hi = Math.log(Math.max(...ns));
+  const lerp = (a, b, t) => Math.round(a + (b - a) * t);
+  const colAt = t => `rgb(${lerp(160,178,t)},${lerp(119,58,t)},${lerp(47,46,t)})`;   // 赭→朱
+  fuHeatLayer = L.layerGroup().addTo(map);
+  f.forEach(x => {
+    const p = FY.provinces.find(pp => pp.id === x.pid);
+    const u = p && p.fu.find(uu => uu.n === x.fu);
+    if (!u || !u.c) return;
+    const t = hi > lo ? (Math.log(x.n) - lo) / (hi - lo) : .5;
+    L.circleMarker(u.c, {
+      radius: 7 + 11 * t, color: "#7a4a1f", weight: 1,
+      fillColor: colAt(t), fillOpacity: .5,
+      className: "fuheat", interactive: true
+    }).addTo(fuHeatLayer)
+      .bindTooltip(`<b style="font-family:KaiTi,serif;font-size:13.5px">${x.fu}</b><br>
+        <span style="font-size:10px;color:#57503f">全书被引 ${x.n} 次 · 第 ${f.indexOf(x)+1} 位</span>`,
+        {direction:"top",offset:[0,-4],opacity:.95,className:"ftip"})
+      .on("click", () => { if (mode !== "舆图") setMode("舆图"); selectProv(p.id); openFu(p, u); });
+  });
+  const maxN = f[0].n, minN = f[f.length-1].n;
+  fuHeatLegend = L.control({position: "topright"});
+  fuHeatLegend.onAdd = function(){
+    const d = L.DomUtil.create("div", "fuheat-legend");
+    d.innerHTML = `<b>被引着色</b><i>${minN} 次</i>
+      <span style="background:linear-gradient(90deg,${colAt(0)},${colAt(1)})"></span>
+      <i>${maxN} 次</i>`;
+    return d;
+  };
+  fuHeatLegend.addTo(map);
+  const btn = document.getElementById("wxheat");
+  if (btn){ btn.textContent = "✓ 已着色 · 关闭"; btn.title = "点此关闭被引着色"; }
+}
+
 function openWenxin(){
   vset("文心", "计量");
   vseal.textContent = "笔墨";
@@ -188,6 +236,7 @@ function wxRender(c){
   <div class="wx-note">军事地理语汇每万字出现次数之排序——边镇（屯戍/烽堠/堡寨）与腹里（漕运/形胜）的用词差，即明代国防地理的心图。点词切换。</div>
 
   <div class="readrow" style="margin-top:14px;display:flex;gap:8px">
+    <button class="readfull" id="wxheat" title="在舆图上以圆径色温呈现各府被引次数">🗺 被引着色</button>
     <button class="readfull" id="wxCsv">⤓ 导出 CSV</button>
     <button class="readfull" id="wxBack">⟨ 返回舆图</button>
   </div>`;
@@ -227,6 +276,8 @@ function wxRender(c){
     setMode("舆图"); selectProv(p.id); openFu(p, u);
   });
 
+  const wh = document.getElementById("wxheat");
+  if (wh) wh.onclick = () => toggleFuHeat();
   document.getElementById("wxCsv").onclick = () => {
     const NL = String.fromCharCode(10);
     let csv = String.fromCharCode(0xFEFF) + "类别,名称,省份,指标,数值" + NL;

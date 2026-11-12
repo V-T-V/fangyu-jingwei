@@ -701,3 +701,15 @@ body.imgbasemap .zseal{box-shadow:0 0 0 1.5px rgba(246,239,220,.95)}
 body.imgbasemap .fuseal{box-shadow:inset 0 0 0 1.5px rgba(246,239,220,.55),0 0 5px rgba(0,0,0,.45)}
 body.imgbasemap .passmark{box-shadow:0 0 0 1.5px rgba(246,239,220,.9)}
 body.imgbasemap .grain{opacity:.25}
+
+/* ── 被引着色图例 ─────────────────────────────────────── */
+.fuheat-legend{
+  background:rgba(245,238,218,.94);border:1px solid var(--line);padding:6px 10px;
+  font:11px/1.9 KaiTi,serif;letter-spacing:1px;color:var(--ink-mid);
+  box-shadow:0 2px 8px rgba(60,45,20,.15);
+}
+.fuheat-legend b{display:block;color:var(--cinnabar-d);letter-spacing:3px;font-size:11.5px}
+.fuheat-legend i{font-style:normal;font-size:10px;color:var(--ink-faint)}
+.fuheat-legend span{display:inline-block;width:86px;height:8px;vertical-align:middle;margin:0 5px;
+  border:1px solid rgba(60,45,20,.25)}
+.leaflet-marker-shadow~.fuheat,.fuheat{cursor:pointer}
