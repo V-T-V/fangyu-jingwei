@@ -30,6 +30,16 @@ check(len(vols) == 154, f"分卷文本 154（实得 {len(vols)}）")
 check(os.path.exists("data/site_data.js"), "data/site_data.js")
 texts = glob.glob("data/text/*.js")
 check(len(texts) >= 18, f"data/text/*.js ≥18（实得 {len(texts)}）")
+# PWA / 自托管基建
+check(all(os.path.exists(p) for p in
+          ["sw.js", "manifest.json", "vendor/leaflet.js", "vendor/leaflet.css",
+           "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"]),
+      "PWA 基建（sw/manifest/vendor/icons）")
+sw = open("sw.js", encoding="utf-8").read()
+idx = open("index.html", encoding="utf-8").read()
+m = re.search(r"\?v=(\d+)", idx)
+check(bool(m) and sw.count("?v=" + m.group(1)) >= 10 and "VERSION = \"v" + m.group(1) + "\"" in sw,
+      "sw.js 缓存清单与 index.html ?v= 同步")
 
 print("── 2. site_data 计数与坐标域")
 raw = open("data/site_data.js", encoding="utf-8").read()

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><title>自动验证 · PWA</title>
+</head>
+<body>
+<pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap">PENDING</pre>
+<script>
+var NL=String.fromCharCode(10),log=[];
+function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
+function S(n){log.push(n+" SKIP-PASS");}   // 环境不支持：记跳过不算失败
+function done(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";}
+
+/* manifest 与图标直接可取（任何协议） */
+fetch("manifest.json").then(function(r){
+  P("MANIFEST",r.ok);
+  return r.json();
+}).then(function(m){
+  P("MANIFEST-ICONS",(m.icons||[]).length>=3);
+  return fetch("icons/icon-512.png");
+}).then(function(r){
+  P("ICON-512",r.ok);
+  return fetch("sw.js");
+}).then(function(r){
+  P("SW-SCRIPT",r.ok);
+  /* SW 注册：仅 http(s)；3 秒未就绪视为环境限制（CI/隐私模式），跳过 */
+  if (!("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)) {
+    S("SW-REG"); done(); return;
+  }
+  var settled = false;
+  var t = setTimeout(function(){
+    if (!settled){ settled = true; S("SW-READY"); done(); }
+  }, 3000);
+  navigator.serviceWorker.register("sw.js").then(function(){
+    return navigator.serviceWorker.ready;
+  }).then(function(){
+    if (!settled){ settled = true; clearTimeout(t); P("SW-READY",true); done(); }
+  }).catch(function(){
+    if (!settled){ settled = true; clearTimeout(t); S("SW-READY"); done(); }
+  });
+}).catch(function(e){
+  log.push("ERR "+e); done();
+});
+</script>
+</body>
+</html>

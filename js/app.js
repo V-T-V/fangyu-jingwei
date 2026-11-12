@@ -131,3 +131,20 @@ function toggleEraPlay(){
 
 var _ep = document.getElementById("eraPlay");
 if (_ep) _ep.onclick = toggleEraPlay;
+
+/* ── PWA 离线徽标：SW 接管即点亮，断网时实时提示 ── */
+(function(){
+  const el = document.getElementById("swstate");
+  if (!el || !("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)) return;
+  const paint = ok => {
+    if (!ok){ el.style.display = "none"; return; }
+    el.style.display = "";
+    const upd = () => { el.textContent = navigator.onLine ? "◼ 离线可用" : "◼ 离线中 · 全书可读"; };
+    upd();
+    addEventListener("online", upd);
+    addEventListener("offline", upd);
+  };
+  navigator.serviceWorker.ready
+    .then(() => paint(true))
+    .catch(() => paint(false));
+})();
