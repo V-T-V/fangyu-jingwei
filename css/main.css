@@ -673,3 +673,24 @@ body.z4 .passmark.bian,body.z5 .passmark.bian{opacity:1;border-bottom-width:14px
 .bz-nm{font-family:KaiTi,serif;font-size:15px;letter-spacing:2px;color:var(--ink);flex:none;width:58px;padding-top:2px}
 .bz-nm i{display:block;font-style:normal;font-size:9px;letter-spacing:1px;color:var(--ink-faint);margin-top:2px}
 .bz-chips{flex:1;display:flex;flex-wrap:wrap;gap:4px}
+
+/* ── 底图切换按钮 ─────────────────────────────────────── */
+#bmtoggle{
+  position:fixed;left:12px;top:152px;z-index:800;
+  font:12px/1 KaiTi,serif;letter-spacing:3px;color:var(--ink-mid);
+  background:rgba(245,238,218,.92);border:1px solid var(--line);
+  padding:7px 9px;cursor:pointer;transition:all .2s;
+}
+#bmtoggle:hover{color:var(--cinnabar-d);border-color:rgba(178,58,46,.5)}
+
+/* 影像模式：绢纱罩 + 印章光环增强，保绢本气质与标记可读 */
+body.imgbasemap .paper-wash{
+  background:
+    radial-gradient(ellipse 140% 110% at 50% 40%,rgba(239,230,207,.10) 52%,rgba(60,45,20,.38) 100%),
+    linear-gradient(rgba(239,230,207,.12),rgba(239,230,207,.12));
+}
+body.imgbasemap .xseal{box-shadow:0 0 0 1.5px rgba(246,239,220,.95)}
+body.imgbasemap .zseal{box-shadow:0 0 0 1.5px rgba(246,239,220,.95)}
+body.imgbasemap .fuseal{box-shadow:inset 0 0 0 1.5px rgba(246,239,220,.55),0 0 5px rgba(0,0,0,.45)}
+body.imgbasemap .passmark{box-shadow:0 0 0 1.5px rgba(246,239,220,.9)}
+body.imgbasemap .grain{opacity:.25}

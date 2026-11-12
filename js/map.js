@@ -4,24 +4,46 @@
 var map = L.map("map",{zoomControl:true,minZoom:4,maxZoom:12,
   attributionControl:false,maxBounds:[[15,88],[47,140]],maxBoundsViscosity:.6});
 map.fitBounds([[17,96],[44,129]]);
-const tileLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}",{
-  maxZoom:12,maxNativeZoom:8}).addTo(map);
-/* 瓦片断供兜底：>5 张 404 → 隐瓦片层，绢底自足（矢量数据不受影响） */
-let tileErrs = 0;
-tileLayer.on("tileerror", ()=>{
-  tileErrs++;
-  if (tileErrs === 6){
-    map.removeLayer(tileLayer);
-    document.getElementById("map").style.background =
-      "radial-gradient(ellipse 130% 100% at 50% 30%, #efe6cf 0%, #e7dcbc 50%, #ddd0ae 100%)";
-    const note = document.createElement("div");
-    note.style.cssText = "position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:500;" +
-      "background:rgba(245,238,218,.95);border:1px solid var(--line,#8b765a);padding:4px 14px;" +
-      "font:11px KaiTi,serif;letter-spacing:3px;color:#8b8069;pointer-events:none";
-    note.textContent = "底图离线 · 标记与数据不受影响";
-    document.getElementById("map").appendChild(note);
-  }
-});
+
+/* ── 底图：绢本地形 ↔ 卫星影像（观山川形胜），选择持久化 ── */
+const BASEMAPS = {
+  physical:{ url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}",
+             maxNative:8, cls:null, btn:"影像" },
+  imagery:{ url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            maxNative:12, cls:"imgbasemap", btn:"地形" },
+};
+var tileLayer = null, tileErrs = 0;
+function setBasemap(kind){
+  const bm = BASEMAPS[kind] ? kind : "physical";
+  const conf = BASEMAPS[bm];
+  if (tileLayer) map.removeLayer(tileLayer);
+  tileErrs = 0;
+  tileLayer = L.tileLayer(conf.url,{maxZoom:12,maxNativeZoom:conf.maxNative}).addTo(map);
+  document.body.classList.toggle("imgbasemap", !!conf.cls);
+  try{ localStorage.setItem("fybasemap", bm); }catch(e){}
+  const btn = document.getElementById("bmtoggle");
+  if (btn) btn.textContent = conf.btn;
+  /* 瓦片断供兜底：>5 张 404 → 隐瓦片层，绢底自足（矢量数据不受影响） */
+  tileLayer.on("tileerror", ()=>{
+    tileErrs++;
+    if (tileErrs === 6){
+      map.removeLayer(tileLayer);
+      document.getElementById("map").style.background =
+        "radial-gradient(ellipse 130% 100% at 50% 30%, #efe6cf 0%, #e7dcbc 50%, #ddd0ae 100%)";
+      const note = document.createElement("div");
+      note.style.cssText = "position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:500;" +
+        "background:rgba(245,238,218,.95);border:1px solid var(--line,#8b765a);padding:4px 14px;" +
+        "font:11px KaiTi,serif;letter-spacing:3px;color:#8b8069;pointer-events:none";
+      note.textContent = "底图离线 · 标记与数据不受影响";
+      document.getElementById("map").appendChild(note);
+    }
+  });
+}
+(function(){
+  let saved = "physical";
+  try{ saved = localStorage.getItem("fybasemap") || "physical"; }catch(e){}
+  setBasemap(saved);
+})();
 
 const fuLayer = L.layerGroup().addTo(map);      // 舆图：府治印章（常驻）
 const zhouLayer = L.layerGroup();               // 属州方章（zoom≥6 挂载，省 DOM）
