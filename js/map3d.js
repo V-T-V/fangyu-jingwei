@@ -278,16 +278,47 @@ m3.on("load", () => {
   initEraLayers();
   showEra3(-1, false);
   window.__m3ready = true;
-  /* 开场长镜头：自西域疾掠而至晋陕黄河大峡谷（用户一动即断） */
-  m3.flyTo({ center: [110.4, 37.4], zoom: 5.5, pitch: 64, bearing: -16,
-    duration: 5200, curve: 1.45, essential: true });
-  m3.once("dragstart", () => m3.stop());
+  const hadHash = applyDeepLink3(location.hash);
+  window.__m3deeplinked = hadHash;
+  /* 开场长镜头：自西域疾掠而至晋陕黄河大峡谷（用户一动即断；深链时让路） */
+  if (!hadHash){
+    m3.flyTo({ center: [110.4, 37.4], zoom: 5.5, pitch: 64, bearing: -16,
+      duration: 5200, curve: 1.45, essential: true });
+    m3.once("dragstart", () => m3.stop());
+  }
   /* 高程懒探测：可达才挂地形（4s 超时降平面 + 提示） */
   fetch("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/32/15.png",
         { method: "GET", signal: AbortSignal.timeout(4000) })
     .then(r => { if (r.ok){ m3.setTerrain({ source: "dem", exaggeration: 1.4 }); window.__m3terrain = true; } })
     .catch(() => { const chip = document.getElementById("demnote"); if (chip) chip.style.display = "block"; });
 });
+
+
+/* ── 深链：#era=N | #p=pid&fu=府名（2D ⛰ 形胜 带上下文进入） ── */
+function applyDeepLink3(h){
+  const q = new URLSearchParams(String(h || "").replace(/^#/, ""));
+  if (![...q.keys()].length) return false;
+  if (q.get("era") !== null){
+    const i = Math.min(Math.max(+q.get("era") || 0, 0), ERAS.length - 1);
+    if (eraRange){ eraRange.value = i; }
+    showEra3(i, true);
+    return true;
+  }
+  const pid = q.get("p"), fuN = q.get("fu");
+  if (pid){
+    const p = FY.provinces.find(x => x.id === pid);
+    const u = p && (fuN ? p.fu.find(x => x.n === fuN) : p.fu.find(x => x.c));
+    if (u && u.c){
+      stopTour(); stopEraPlay();
+      m3.flyTo({ center: [u.c[1], u.c[0] - .12], zoom: 9.4, pitch: 68,
+        bearing: -14, duration: 2600, essential: true });
+      setTimeout(() => openFu3(p, u), 1400);
+      return true;
+    }
+  }
+  return false;
+}
+window.applyDeepLink3 = applyDeepLink3;
 
 /* ── 形胜视角 ── */
 const SCENES = [
@@ -426,6 +457,24 @@ function showEra3(i, fly){
   }
   const es = m3.getSource("era");
   if (es) es.setData({ type: "FeatureCollection", features: feats });
+  /* 疆域自地而起：墙与柱高度 0 → 定值，9 步升起（约 1.1s） */
+  if (e && es){
+    let st = 0;
+    const steps = 9;
+    const grow = () => {
+      st++;
+      const t = st / steps;
+      try{
+        m3.setPaintProperty("eraWall", "fill-extrusion-height", Math.round(22000 * t));
+        m3.setPaintProperty("eraCap", "fill-extrusion-height",
+          ["interpolate", ["linear"], ["get", "h"], 0, 0, 90000, Math.round(90000 * t)]);
+        m3.setPaintProperty("eraPlc", "fill-extrusion-height",
+          ["interpolate", ["linear"], ["get", "h"], 0, 0, 30000, Math.round(30000 * t)]);
+      }catch(_){}
+      if (st < steps) setTimeout(grow, 120);
+    };
+    grow();
+  }
   else window.__m3era = i;
   window.__m3era = i;
 }

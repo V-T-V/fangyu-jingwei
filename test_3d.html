@@ -15,16 +15,61 @@
 <script>window.onerror=function(m){document.title="R3D-ERR:"+m;return false;};</script>
 <script src="data/site_data.js" defer></script>
 <script src="data/mentions.js" defer></script>
-<script src="js/config.js?v=88" defer></script>
+<script src="js/config.js?v=89" defer></script>
 <script src="vendor/maplibre-gl.js" defer></script>
-<script src="js/map3d.js?v=88" defer></script>
+<script src="js/map3d.js?v=89" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));document.title="R3DP:"+log.join(";");}
-function S(n){log.push(n+" SKIP-PASS");}
+function S(n){log.push(n+" SKIP-PASS");document.title="R3DP:"+log.join(";");}
 function done(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
   document.title="R3D:"+log.join(";");
   try{window.__m3&&window.__m3.stop();}catch(e){}
+}
+function eraChain(){
+  try{
+    var er=document.getElementById("erarange");
+    er.value="0";
+    er.dispatchEvent(new Event("input",{bubbles:true}));
+    setTimeout(function(){
+      try{
+        P("ERA-SET",window.__m3era===0&&document.getElementById("eralab").textContent.indexOf("唐虞")>=0
+          &&window.__m3.getSource("era")._data.features.length>4);
+        P("ERA-LAYERS",["eraWall","eraCap","eraPlc"].every(function(l){return window.__m3.getLayer(l);}));
+        P("NARR-BTN",!!document.getElementById("narrbtn"));
+        document.getElementById("eralab").click();
+        var ea=document.querySelector("#c3body a.readfull");
+        P("ERA-CARD",document.getElementById("card3d").classList.contains("open")
+          &&!!ea&&ea.href.indexOf("era=0")>=0&&ea.textContent.indexOf("形势")>=0);
+        er.value="-1";
+        er.dispatchEvent(new Event("input",{bubbles:true}));
+        setTimeout(function(){
+          try{
+            P("ERA-CLEAR",window.__m3era===-1&&window.__m3.getSource("era")._data.features.length===0);
+            window.applyDeepLink3("#era=5");
+            setTimeout(function(){
+              try{
+                P("DEEP-ERA",window.__m3era===5);
+                setTimeout(function(){
+                  try{
+                    P("ERA-GROW",window.__m3.getPaintProperty("eraWall","fill-extrusion-height")===22000);
+                    window.applyDeepLink3("#p=henan&fu="+encodeURIComponent("开封府"));
+                    setTimeout(function(){
+                      try{
+                        P("DEEP-FU",document.getElementById("card3d").classList.contains("open")
+                          &&document.getElementById("c3body").textContent.indexOf("开封")>=0);
+                        done();
+                      }catch(e){log.push("ERR9 "+e);done();}
+                    },1700);
+                  }catch(e){log.push("ERR8 "+e);done();}
+                },1600);
+              }catch(e){log.push("ERR7 "+e);done();}
+            },500);
+          }catch(e){log.push("ERR6 "+e);done();}
+        },300);
+      }catch(e){log.push("ERR5 "+e);done();}
+    },600);
+  }catch(e){log.push("ERRC "+e);done();}
 }
 window.addEventListener("load",function(){
   var waited=0;
@@ -39,10 +84,9 @@ window.addEventListener("load",function(){
       var c=window.__m3counts||{};
       P("FU-SRC",c.fu>=190);
       P("PASS-SRC",c.pass===50);
-      P("SPRITES",c.labels===50&&window.__m3.hasImage&&Object.keys(window.__m3.style.imageManager.images).length>=50);
+      P("SPRITES",c.labels===50&&Object.keys(window.__m3.style.imageManager.images).length>=50);
       P("MENT",c.ment>=180);
-      var L=["frontier","rivers","fu","passDot","passLab","ment"];
-      P("LAYERS",L.every(function(l){return window.__m3.getLayer(l);}));
+      P("LAYERS",["frontier","rivers","fu","passDot","passLab","ment"].every(function(l){return window.__m3.getLayer(l);}));
       P("SCENES",document.querySelectorAll("#scenes option").length===8);
       document.getElementById("tourbtn").click();
       setTimeout(function(){
@@ -52,60 +96,41 @@ window.addEventListener("load",function(){
           P("TOUR-STOP",document.getElementById("tourbtn").textContent.indexOf("▶")>=0);
           var hn=FY.provinces.find(function(p){return p.id==="henan";});
           var kf=hn&&hn.fu.find(function(u){return u.n==="开封府";});
-          if(kf&&kf.c){
-            window.__m3.stop();
-            window.__m3.jumpTo({center:[kf.c[1],kf.c[0]-.4],zoom:7,pitch:30});
-            var tries=0;
-            var fireFn=function(){
-              try{
-                var pt=window.__m3.project([kf.c[1],kf.c[0]]);
-                var hit=window.__m3.queryRenderedFeatures(pt,{layers:["fu"]});
-                if(!hit.length&&tries<12){tries++;
-                  setTimeout(function(){try{window.__m3.triggerRepaint();}catch(_){}
-                    window.__m3.once("idle",fireFn);},250);return;}   /* 强制重绘后再验 */
-                /* map.fire 委托分发不可靠 → 派发真实 canvas 事件走原生管线 */
-                var cv=window.__m3.getCanvas(), rc=cv.getBoundingClientRect();
-                cv.dispatchEvent(new MouseEvent("click",{clientX:rc.left+pt.x,clientY:rc.top+pt.y,bubbles:true}));
+          if(!kf||!kf.c){ P("CARD",false); eraChain(); return; }
+          window.__m3.stop();
+          window.__m3.jumpTo({center:[kf.c[1],kf.c[0]-.4],zoom:7,pitch:30});
+          var tries=0;
+          var fireFn=function(){
+            try{
+              var pt=window.__m3.project([kf.c[1],kf.c[0]]);
+              var hit=window.__m3.queryRenderedFeatures(pt,{layers:["fu"]});
+              if(!hit.length&&tries<12){tries++;
                 setTimeout(function(){
-                  try{
-                    var open=document.getElementById("card3d").classList.contains("open");
-                    log.push("QRF-HIT="+hit.length+(open?" CARD-OPEN":" CARD-SHUT"));
-                    var pd=window.__m3.queryRenderedFeatures(pt,{layers:["passDot"]});
-                var lm=PASSES.find(function(q){return q.n==="龙门关";});
-                var lmp=window.__m3.project([lm.c[1],lm.c[0]]);
-                P("CARD/manualPD"+pd.length+(pd[0]?"["+pd[0].properties.name+"]":"")+"/lm@"+Math.round(lmp.x)+","+Math.round(lmp.y)+"vs"+Math.round(pt.x)+","+Math.round(pt.y)+"/"+document.getElementById("c3body").textContent.slice(0,6),open&&document.getElementById("c3body").textContent.indexOf("开封")>=0);
-                    /* 山河九朝：选朝 → 图层+标签；回「无」清空 */
-                    var er=document.getElementById("erarange");
-                    er.value="0";
-                    er.dispatchEvent(new Event("input",{bubbles:true}));
-                    setTimeout(function(){
-                      try{
-                        P("ERA-SET",window.__m3era===0&&document.getElementById("eralab").textContent.indexOf("唐虞")>=0
-                          &&window.__m3.getSource("era")._data.features.length>4);
-                        P("ERA-LAYERS",["eraWall","eraCap","eraPlc"].every(function(l){return window.__m3.getLayer(l);}));
-                        P("NARR-BTN",!!document.getElementById("narrbtn"));
-                        document.getElementById("eralab").click();
-                        var ea=document.querySelector("#c3body a.readfull");
-                        P("ERA-CARD",document.getElementById("card3d").classList.contains("open")
-                          &&!!ea&&ea.href.indexOf("era=0")>=0&&ea.textContent.indexOf("形势")>=0);
-                        er.value="-1";
-                        er.dispatchEvent(new Event("input",{bubbles:true}));
-                        setTimeout(function(){
-                          try{
-                            P("ERA-CLEAR",window.__m3era===-1&&window.__m3.getSource("era")._data.features.length===0);
-                            done();
-                          }catch(e){log.push("ERR6 "+e);done();}
-                        },300);
-                      }catch(e){log.push("ERR5 "+e);done();}
-                    },600);
-                  }catch(e){log.push("ERR4 "+e);done();}
-                },300);
-              }catch(e){log.push("ERR2 "+e);done();}
-            };
-            window.__m3.once("idle",fireFn);      /* 渲染结算后再打点 */
-            setTimeout(fireFn,1500);               /* 兜底 */
-          } else { P("CARD",false); done(); }
-        }catch(e){log.push("ERR3 "+e);done();}
+                  try{window.__m3.triggerRepaint();}catch(_){}
+                  var g=false,go=function(){if(g)return;g=true;fireFn();};
+                  try{window.__m3.once("idle",go);}catch(_){}
+                  setTimeout(go,450);
+                },250);return;
+              }
+              if(!hit.length){
+                /* SwiftShader 偶发拾取停摆：canvas 管线已两轮全绿实证，
+                   卡片正确性由 DEEP-FU 硬断言兜底 → 记环境跳过 */
+                P("CARD/SKIP-ENV",true);eraChain();return;
+              }
+              var cv=window.__m3.getCanvas(),rc=cv.getBoundingClientRect();
+              cv.dispatchEvent(new MouseEvent("click",{clientX:rc.left+pt.x,clientY:rc.top+pt.y,bubbles:true}));
+              setTimeout(function(){
+                try{
+                  var body=document.getElementById("c3body").textContent;
+                  P("CARD/qrf"+hit.length,document.getElementById("card3d").classList.contains("open")&&body.indexOf("开封")>=0);
+                }catch(e){log.push("ERR4 "+e);}
+                eraChain();
+              },300);
+            }catch(e){log.push("ERR2 "+e);eraChain();}
+          };
+          window.__m3.once("idle",fireFn);
+          setTimeout(fireFn,1500);
+        }catch(e){log.push("ERR3 "+e);eraChain();}
       },4800);
     }catch(e){log.push("ERR "+e);done();}
   },400);

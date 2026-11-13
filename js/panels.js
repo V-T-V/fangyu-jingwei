@@ -115,7 +115,9 @@ function openProv(p){
   showPanel();
 }
 
+var __curFu = null;   // 当前所观府（「⛰ 形胜」携上下文入 3D 用）
 function openFu(p,u){
+  __curFu = { pid: p.id, fu: u.n };
   vset(u.n.replace(/(军民府|府|卫)$/,""),p.name.replace(/隶|省/g,"").slice(0,2));
   vseal.textContent = u.n.endsWith("州")?"直隶州":(u.n.endsWith("卫")?"卫":"府");
   let zhiRows="";

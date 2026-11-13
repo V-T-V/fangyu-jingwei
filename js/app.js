@@ -101,7 +101,15 @@ var _bl = document.getElementById("bianlink");
 if (_bl) _bl.onclick = function(){ if (typeof openBian === "function") openBian(); };
 
 var _td = document.getElementById("tdlink");
-if (_td) _td.onclick = function(){ location.href = "3d.html"; };
+if (_td) _td.onclick = function(){
+  /* 携上下文：正在看府 → 飞该府；形势模式 → 带朝代；否则入山河全景 */
+  let h = "";
+  if (typeof __curFu !== "undefined" && __curFu)
+    h = "#p=" + __curFu.pid + "&fu=" + encodeURIComponent(__curFu.fu);
+  else if (mode === "形势")
+    h = "#era=" + curEra;
+  location.href = "3d.html" + h;
+};
 
 /* 底图切换：地形 ⇄ 影像（观山川形胜） */
 var _bm = document.getElementById("bmtoggle");
