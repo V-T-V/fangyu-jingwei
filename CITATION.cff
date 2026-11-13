@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "若本项目对您的研究有所帮助，请如此引用。"
+title: "方舆经纬——《读史方舆纪要》全书数字舆图与空间·文本计量数据"
+type: dataset
+authors:
+  - name: "方舆经纬项目组"
+version: 3.8.0
+date-released: "2026-11-13"
+repository-code: "https://github.com/V-T-V/fangyu-jingwei"
+abstract: >-
+    顾祖禹《读史方舆纪要》一百三十卷的数字人文平台：1,476 治所坐标
+    （380 处整编 + 1,096 县治三角化推算）、260 万字全文语料、
+    192 府地名被引与 16 军事语汇分省密度数据集；含交互站点
+    （2D 研究主场 + 3D 形胜沙盘）与论文《〈读史方舆纪要〉的空间与文本计量研究》。
+keywords:
+  - 读史方舆纪要
+  - 历史地理
+  - 数字人文
+  - 明代军事地理
+  - 文本计量
+license: CC-BY-NC-SA-4.0
