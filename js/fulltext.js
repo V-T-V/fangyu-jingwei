@@ -14,6 +14,7 @@ function ensureTextAll(onProg, cb){
   if (!total) { cb(); return; }
   FT_KEYS.forEach(key=>{
     const fin = ()=>{
+      if (done >= total) return;            /* 防御重复回调（进度超计） */
       done++;
       onProg && onProg(key, done, total);
       if (done === total) cb();

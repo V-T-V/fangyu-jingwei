@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 cd /d %~dp0
-echo ·½Óß¾­Î³ ¡¤ ¶ÁÊ··½Óß¼ÍÒª ¡ª¡ª http://127.0.0.1:8613
-start "" http://127.0.0.1:8613/index.html
-python -m http.server 8613 --bind 127.0.0.1
+rem ç«¯å£ 9200ï¼šWindows ä¿ç•™æ®µ 8115-9140 ä¼šåæ‰æ—§é»˜è®¤ 8613
+echo æ–¹èˆ†ç»çº¬ Â· è¯»å²æ–¹èˆ†çºªè¦ â€”â€” http://127.0.0.1:9200
+start "" http://127.0.0.1:9200/index.html
+python -m http.server 9200 --bind 127.0.0.1
