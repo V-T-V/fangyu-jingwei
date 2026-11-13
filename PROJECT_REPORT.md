@@ -84,12 +84,15 @@ site_data.js 160KB 首屏 · mentions.js 3KB · config.js（九朝/七水/50 关
 8. **Windows 保留端口段会漂移吞口**（8115–9140 段吞 8613 连环"服务被杀"假案）——`netsh excludedportrange` 查证，FY_BASE 可覆盖
 9. **僵尸进程连坐**——测试套件收尸闭环（PowerShell 清 headless）
 10. **PATCH 脚本的 `if old in t` 漏执行替换**——era 断言从未写入却"通过"过一轮
+11. **本地默认值改动必须全链路 grep 消费方**——BASE 改 9200 漏改 ci.yml 的 8613，
+    CI 连挂三轮无人知；修复验证看 CI 实跑日志，不看旧条目
+12. **平台专属命令先问 sys.platform**——powershell 收尸在 Linux 直接崩
 
 ## 七、开发统计（终态）
 
 | 指标 | 值 |
 |---|---|
-| git 提交 | 110 |
+| git 提交 | 120+ |
 | 版本标签 | 13（v1.0.0 → v3.5.0） |
 | 代码行数 | ~6,000（js 3,348 + css/py/html） |
 | 测试文件 | 23（14 断言页 + 6 pose + 3 兼容位） |

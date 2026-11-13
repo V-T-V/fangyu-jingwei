@@ -121,3 +121,17 @@
 - 十条工程教训入档 PROJECT_REPORT §六
 
 **终态**：110 提交 · 13 标签 · 13 页回归全绿 · CI 全绿
+
+---
+
+## 第六纪：定卷之后（v3.5.1 → CI 复绿，2026-11-13）
+
+- 文案追平（首页/关于/启动器告别 v1 时代）· ensureTextAll 防重
+- 形胜书签（🔖/☰签/⧉链接 + #cam= 深链）；CDP rAF 节流定性（isMoving 位冻结案）
+- ANALYSIS 论文化：**数据纠偏**（视觉幻觉 55.5 万 → 实为南直隶 35.5 万），
+  语汇地理「帝国三面之缘」；paper_stats.js 入库
+- README 全景画廊（pose 截图 ×4）· RESEARCH_GUIDE 五用例 · Release v3.7.0
+- 论文 PDF 定本（Release v3.8.0 附档）· 跋·三日后记
+- 仓库理整：tests/ tools/ 归位（base href 一层修复）· CITATION.cff + SHA256SUMS(181)
+- CI 连环双雷排除：端口错配 + powershell 跨平台 → **14 页 CI 全绿**
+- 工程定律增至 12 条
