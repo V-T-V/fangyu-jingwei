@@ -250,7 +250,8 @@ function openAbout(){
     <div class="p-cap">校勘约定</div>
     <div class="hint">损坏句淡显点线而不删原文；句内外来字符代以 □；县名〔今废〕〔新改〕等注皆原书自注；同地异写（军民府／州府）归一匹配。</div>
     <div class="p-cap">已知之阙</div>
-    <div class="hint">向武、思陵二州未独立成篇（附见统辖州叙事）；土州坐标为近似；源站缺字以 □ 存疑。本地静态站点，管线 build_data / build_text / build_mentions，校验 verify.py（本地服务默认 127.0.0.1:9200）。</div>`;
+    <div class="hint">向武、思陵二州未独立成篇（附见统辖州叙事）；土州坐标为近似；源站缺字以 □ 存疑。本地静态站点，管线 build_data / build_text / build_mentions，校验 verify.py（本地服务默认 127.0.0.1:9200）。
+    研究定本见仓库 docs/（论文 PDF · 全部数字脚本可复核）；引用本项目可用仓库页「Cite this repository」。</div>`;
   showPanel();
 }
 
