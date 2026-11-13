@@ -53,7 +53,7 @@ print(f"  {'✓' if synced else '△'} {n:12s}       {r.stdout.strip().split(chr
 js = sum(1 for f in os.listdir("js") if f.endswith(".js"))
 txt = sum(1 for f in os.listdir("data/volumes") if f.endswith(".txt"))
 tjs = sum(1 for f in os.listdir("data/text") if f.endswith(".js"))
-tests = sum(1 for f in os.listdir(".") if f.startswith("test_") and (f.endswith(".html") or f.endswith(".py")))
+tests = sum(1 for f in os.listdir(os.path.join(ROOT, "tests")) if f.startswith("test_") and (f.endswith(".html") or f.endswith(".py")))
 print(f"\n  代码 {js} 个 js · 数据 {txt} 卷 / {tjs} 全文 · 测试 {tests} 页")
 print("═" * 56)
 
