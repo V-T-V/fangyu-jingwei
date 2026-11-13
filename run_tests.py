@@ -23,7 +23,8 @@ PAGES = ["test_auto.html", "test_filter.html", "test_events.html",
          "test_night.html", "test_tts.html", "test_counties.html",
          "test_journey.html", "test_gating.html", "test_sw.html",
          "test_wenxin.html", "test_bian.html", "test_basemap.html"]
-BASE = "http://127.0.0.1:8613/"
+# 本地端口可被环境变量覆盖（Windows 保留端口段会吞掉 8613；CI 用默认）
+BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
 
 fails = []
 
@@ -105,7 +106,9 @@ def run_cdp_test(page):
     for l in bad: print("    FAIL  " + l)
     if bad: fails.append((page, bad))
 
-run_cdp_test("test_3d.html")
+CDP_PAGES = ("test_3d.html", "test_ft_worker.html")   # 真实时间通道（MapLibre/Worker 与虚拟时钟不合）
+for _pg in CDP_PAGES:
+    run_cdp_test(_pg)
 
 # CLI 测试
 import importlib.util
@@ -121,4 +124,4 @@ print()
 if fails:
     print("回归未过：%d 个失败项" % sum(len(f[1]) for f in fails))
     sys.exit(1)
-print("回归通过：%d 页 × 全部断言（%d 无头 + 1 CDP 三维）" % (len(PAGES)+1, len(PAGES)))
+print("回归通过：%d 页 × 全部断言（%d 无头 + %d CDP 真实时间）" % (len(PAGES)+len(CDP_PAGES), len(PAGES), len(CDP_PAGES)))

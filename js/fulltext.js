@@ -23,6 +23,48 @@ function ensureTextAll(onProg, cb){
   });
 }
 
+/* ── 检索 Worker：扫描移出主线程（file:// 或不可用时自动回退主线程） ── */
+let _ftw = null, _ftwReady = false, _ftwFailed = false;
+window.__ftwUsed = false;
+function ftWorkerReady(){
+  if (_ftwReady) return Promise.resolve(true);
+  if (_ftwFailed) return Promise.resolve(false);
+  /* 无头自动化（虚拟时钟与 worker 网络加载不相容，会冻结 dump）→ 直接走主线程
+     __FY_NO_WORKER__：测试页显式声明；navigator.webdriver：CDP 驱动场景 */
+  if (window.__FY_NO_WORKER__ || navigator.webdriver){ _ftwFailed = true; return Promise.resolve(false); }
+  return new Promise(res => {
+    try{
+      _ftw = new Worker("js/ftworker.js");
+      /* 6s 未就绪即回退主线程（SW/HTTP 缓存已暖，现实 <2s；虚拟时钟不等 worker 网络） */
+      const okTimer = setTimeout(() => { if (!_ftwReady){ _ftwFailed = true; res(false); } }, 6000);
+      _ftw.onmessage = e => {
+        const m = e.data || {};
+        if (m.ready){ _ftwReady = true; clearTimeout(okTimer); res(true); }
+        else if (m.type === "rows" && _ftw._handler){
+          const h = _ftw._handler; _ftw._handler = null; h(m.rows);
+        }
+        else if (m.error){ _ftwFailed = true; clearTimeout(okTimer); res(false); }
+      };
+      _ftw.onerror = () => { _ftwFailed = true; clearTimeout(okTimer); res(false); };
+      _ftw.postMessage({
+        init: true,
+        keys: FT_KEYS,
+        meta: {
+          keys: FT_KEYS,
+          provNames: FY.provinces.reduce((o, p) => (o[p.id] = p.name, o), {}),
+          xsTitles: FY.xingshi.map(x => x.title.replace(/　/g, "")),
+          cdTitles: FY.chuandu.map(x => x.title.replace(/　/g, " · ")),
+        }
+      });
+    }catch(e){ _ftwFailed = true; res(false); }
+  });
+}
+function ftWorkerSearch(q, cb){
+  if (!_ftwReady){ cb(null); return; }
+  _ftw._handler = rows => { window.__ftwUsed = true; cb(rows); };
+  _ftw.postMessage({ q });
+}
+
 /* 转义 + 片段：命中处前后各 18 字 */
 function ftSnippet(text, q){
   const i = text.indexOf(q);
@@ -109,13 +151,13 @@ function ftRun(q){
     keepOpen();
     sres.innerHTML = `<div class="ftprog">检索中 · ${name}（${i+1}/${total}）</div>`;
   }, ()=>{
-    const results = ftSearch(q);
-    if (!results.length){
-      sres.innerHTML = `<div class="none">全书原文未见「${escQ}」</div>`;
-      return;
-    }
-    keepOpen();
-    const total = results.reduce((s,r)=>s+r.n,0);
+    const render = results => {
+      if (!results.length){
+        sres.innerHTML = `<div class="none">全书原文未见「${escQ}」</div>`;
+        return;
+      }
+      keepOpen();
+      const total = results.reduce((s,r)=>s+r.n,0);
     const rows = results.slice(0, 30).map((r,i)=>
       `<div class="sr ftr" data-i="${i}">
         <span class="tag t全">全</span>
@@ -129,9 +171,18 @@ function ftRun(q){
       `<div class="fthead">全书「${escQ}」 — ${total} 处 / ${results.length} 篇</div>` +
       rows +
       (results.length>30?`<div class="fttail">已列前 30 篇 · 共 ${results.length} 篇命中</div>`:"");
-    sres.querySelectorAll(".ftr").forEach(el=>el.onclick=()=>{
-      sres.classList.remove("open");
-      ftJump(results[+el.dataset.i], q);
+      sres.querySelectorAll(".ftr").forEach(el=>el.onclick=()=>{
+        sres.classList.remove("open");
+        ftJump(results[+el.dataset.i], q);
+      });
+    };
+    /* Worker 优先（文本已入缓存，importScripts 即取即扫，主线程零阻塞）；
+       初始化失败/超时回退主线程 ftSearch */
+    ftWorkerReady().then(() => {
+      ftWorkerSearch(q, rows => {
+        if (rows){ render(rows); return; }
+        render(ftSearch(q));
+      });
     });
   });
 }

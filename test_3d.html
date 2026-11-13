@@ -15,9 +15,9 @@
 <script>window.onerror=function(m){document.title="R3D-ERR:"+m;return false;};</script>
 <script src="data/site_data.js" defer></script>
 <script src="data/mentions.js" defer></script>
-<script src="js/config.js?v=89" defer></script>
+<script src="js/config.js?v=90" defer></script>
 <script src="vendor/maplibre-gl.js" defer></script>
-<script src="js/map3d.js?v=89" defer></script>
+<script src="js/map3d.js?v=90" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));document.title="R3DP:"+log.join(";");}
@@ -50,9 +50,12 @@ function eraChain(){
             setTimeout(function(){
               try{
                 P("DEEP-ERA",window.__m3era===5);
-                setTimeout(function(){
+                var gw=0;
+                var gwait=function(){
+                  var hh=window.__m3.getPaintProperty("eraWall","fill-extrusion-height");
+                  if(hh!==22000&&gw<20){gw++;setTimeout(gwait,200);return;}
                   try{
-                    P("ERA-GROW",window.__m3.getPaintProperty("eraWall","fill-extrusion-height")===22000);
+                    P("ERA-GROW",hh===22000);
                     window.applyDeepLink3("#p=henan&fu="+encodeURIComponent("开封府"));
                     setTimeout(function(){
                       try{
@@ -62,7 +65,8 @@ function eraChain(){
                       }catch(e){log.push("ERR9 "+e);done();}
                     },1700);
                   }catch(e){log.push("ERR8 "+e);done();}
-                },1600);
+                };
+                gwait();
               }catch(e){log.push("ERR7 "+e);done();}
             },500);
           }catch(e){log.push("ERR6 "+e);done();}

@@ -29,6 +29,7 @@
 <script src="js/modes.js?v=51" defer></script>
 <script defer>
 window.addEventListener("error",function(e){window.__err=e.message});
+window.__FY_NO_WORKER__ = true;   /* 虚拟时钟页禁 Worker，走主线程回退 */
 window.addEventListener("load",function(){
   var NL=String.fromCharCode(10),log=[];
   var done=function(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
