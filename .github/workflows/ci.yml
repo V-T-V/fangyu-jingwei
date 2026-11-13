@@ -18,10 +18,11 @@ jobs:
         run: python verify.py
       - name: 起本地服务
         run: |
-          python -m http.server 8613 --bind 127.0.0.1 &
+          python -m http.server 9200 --bind 127.0.0.1 &
           sleep 2
-          curl -sf http://127.0.0.1:8613/index.html -o /dev/null && echo server-up
+          curl -sf http://127.0.0.1:9200/index.html -o /dev/null && echo server-up
       - name: 无头回归 run_tests.py
         env:
           FY_BROWSER: /usr/bin/chromium-browser
+          FY_BASE: http://127.0.0.1:9200/
         run: python run_tests.py

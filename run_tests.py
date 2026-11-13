@@ -34,7 +34,7 @@ import urllib.request as _u0
 try:
     _u0.urlopen(BASE + "index.html", timeout=3).read()
 except Exception as _e:
-    print("✗ 本地服务不可达：%s —— 请先 python -m http.server 8613" % BASE); sys.exit(1)
+    print("✗ 本地服务不可达：%s —— 请先起服务（如 python -m http.server 9200，或设 FY_BASE）" % BASE); sys.exit(1)
 
 for page in PAGES:
     out = os.path.join(tempfile.gettempdir(), "fytest_%s.html" % page)
