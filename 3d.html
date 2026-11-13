@@ -53,7 +53,24 @@
   #tourlab{font:13px/1 KaiTi,serif;letter-spacing:2px;color:var(--ink-mid);min-width:96px;text-align:center}
   #mentbtn{appearance:none;cursor:pointer;font:12.5px/1 KaiTi,serif;letter-spacing:2px;
     color:var(--ink-mid);background:var(--silk-3);border:1px solid var(--line);padding:6px 10px}
-  #mentbtn:hover{color:var(--cinnabar-d);border-color:rgba(178,58,46,.5)}
+  #mentbtn:hover,#cambmk:hover,#camsave:hover{color:var(--cinnabar-d);border-color:rgba(178,58,46,.5)}
+  #mentbtn,#cambmk,#camsave{appearance:none;cursor:pointer;font:12.5px/1 KaiTi,serif;letter-spacing:2px;
+    color:var(--ink-mid);background:var(--silk-3);border:1px solid var(--line);padding:6px 10px}
+  #camlist{position:fixed;right:14px;top:60px;z-index:12;width:210px;display:none;
+    background:rgba(239,230,207,.97);border:1px solid var(--line);
+    box-shadow:0 4px 16px rgba(60,45,20,.3);font-family:KaiTi,serif}
+  #camlist.open{display:block}
+  .cam-head{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;
+    border-bottom:1px solid var(--line);font-size:13px;letter-spacing:3px;color:var(--cinnabar-d)}
+  .cam-head a{font-size:11px;letter-spacing:1px;color:var(--azur-d);cursor:pointer}
+  .cam-item{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;
+    border-bottom:1px dashed rgba(120,96,54,.2)}
+  .cam-item:hover{background:rgba(178,58,46,.06)}
+  .ci-nm{font-size:13px;letter-spacing:2px;color:var(--ink)}
+  .ci-meta{flex:1;font-size:9.5px;color:var(--ink-faint);letter-spacing:1px}
+  .ci-del{font-style:normal;color:var(--ink-faint);cursor:pointer;padding:0 3px}
+  .ci-del:hover{color:var(--cinnabar-d)}
+  .cam-none{padding:12px 10px;font-size:11px;letter-spacing:1px;color:var(--ink-faint)}
   #tourbig{position:fixed;left:50%;top:20%;transform:translateX(-50%);z-index:9;pointer-events:none;
     font:64px/1 KaiTi,serif;letter-spacing:14px;color:rgba(246,239,220,.96);
     text-shadow:0 0 14px rgba(178,58,46,.75),0 0 34px rgba(120,20,10,.6),0 2px 4px rgba(0,0,0,.8);
@@ -99,6 +116,8 @@
   <div><h1>方舆形胜</h1><p>读史方舆纪要 · 三维山河</p></div>
   <select id="scenes" title="形胜视角——立在关口，以顾祖禹之眼观之"></select>
   <button id="mentbtn" title="各府全书被引次数 → 高度（示意尺度）">◧ 文柱 ✓</button>
+  <button id="camsave" title="存当前视角为形胜书签">🔖</button>
+  <button id="cambmk" title="形胜书签列表">☰签</button>
   <a class="m3back" href="index.html">⟩ 返平面舆图</a>
 </header>
 
@@ -117,6 +136,7 @@
   <button id="tourbtn">▶ 飞览九边</button>
   <span id="tourlab"></span>
 </div>
+<div id="camlist"></div>
 <div id="demnote">高程数据不可用 · 已降为平面显示</div>
 <div id="tourbig"></div>
 

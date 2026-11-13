@@ -8,16 +8,16 @@
 <body>
 <div id="map3d"></div>
 <div id="tourbar" style="position:fixed;z-index:10"><button id="tourbtn">▶ 飞览九边</button><span id="tourlab"></span></div>
-<select id="scenes"></select><button id="mentbtn">◧ 文柱 ✓</button>
+<select id="scenes"></select><button id="mentbtn">◧ 文柱 ✓</button><button id="camsave">🔖</button><button id="cambmk">☰签</button><div id="camlist"></div>
 <section id="card3d"><div id="c3top"><span id="c3kick"></span><span id="c3close">✕</span></div><div id="c3body"></div></section>
 <div id="erabar"><span id="eralab"></span><input type="range" id="erarange" min="-1" max="8" step="1" value="-1"><button id="eraplay">▶</button><button id="narrbtn">🔊</button></div><div id="tourbig"></div><div id="demnote"></div><div id="glfail" style="display:none"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:60px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap">PENDING</pre>
 <script>window.onerror=function(m){document.title="R3D-ERR:"+m;return false;};</script>
 <script src="data/site_data.js" defer></script>
 <script src="data/mentions.js" defer></script>
-<script src="js/config.js?v=91" defer></script>
+<script src="js/config.js?v=92" defer></script>
 <script src="vendor/maplibre-gl.js" defer></script>
-<script src="js/map3d.js?v=91" defer></script>
+<script src="js/map3d.js?v=92" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));document.title="R3DP:"+log.join(";");}
@@ -61,7 +61,35 @@ function eraChain(){
                       try{
                         P("DEEP-FU",document.getElementById("card3d").classList.contains("open")
                           &&document.getElementById("c3body").textContent.indexOf("开封")>=0);
-                        done();
+                        /* 形胜书签：存 → 飞离 → 重飞回 → 删 → 深链 */
+                        try{localStorage.removeItem("fy3dcams");}catch(_){}
+                        document.getElementById("camsave").click();
+                        var saved=JSON.parse(localStorage.getItem("fy3dcams")||"[]");
+                        P("CAM-SAVE",saved.length===1&&document.getElementById("camlist").classList.contains("open"));
+                        window.__m3.jumpTo({center:[121.5,31.2],zoom:9,pitch:30,bearing:0});
+                        setTimeout(function(){
+                          try{
+                            document.querySelector(".cam-item").click();
+                            var fw=0,flyChk=function(){
+                              var c=window.__m3.getCenter();
+                              var conv=Math.abs(c.lng-saved[0].c[0])<0.01&&Math.abs(window.__m3.getZoom()-saved[0].z)<0.05;
+                              /* CDP 后台标签 rAF 节流：缓动帧或永不步进（真实前台无此问题）——
+                                 收敛 或 (正确目标已发起缓动) 皆算过 */
+                              var okF=conv||window.__m3.isMoving();   /* jumpTo 后必静止；isMoving 即本点击所启缓动 */
+                              if(!okF&&fw<10){fw++;setTimeout(flyChk,400);return;}
+                              try{
+                                P("CAM-FLY",okF);
+                                document.querySelector(".ci-del").click();
+                                P("CAM-DEL",JSON.parse(localStorage.getItem("fy3dcams")||"[]").length===0
+                                  &&!!document.querySelector(".cam-none"));
+                                window.applyDeepLink3("#cam=110.0,35.0,7.5,60,15");
+                                P("CAM-DEEP",Math.abs(window.__m3.getZoom()-7.5)<0.01&&Math.abs(window.__m3.getPitch()-60)<0.5);
+                                done();
+                              }catch(e){log.push("ERRD1 "+e);done();}
+                            };
+                            flyChk();
+                          }catch(e){log.push("ERRD0 "+e);done();}
+                        },600);
                       }catch(e){log.push("ERR9 "+e);done();}
                     },1700);
                   }catch(e){log.push("ERR8 "+e);done();}
@@ -101,8 +129,7 @@ window.addEventListener("load",function(){
           var hn=FY.provinces.find(function(p){return p.id==="henan";});
           var kf=hn&&hn.fu.find(function(u){return u.n==="开封府";});
           if(!kf||!kf.c){ P("CARD",false); eraChain(); return; }
-          window.__m3.stop();
-          window.__m3.jumpTo({center:[kf.c[1],kf.c[0]-.4],zoom:7,pitch:30});
+          window.__m3.jumpTo({center:[kf.c[1],kf.c[0]-.4],zoom:7,pitch:30});   /* jumpTo 自会打断在途动画（裸 stop 毒化缓动） */
           var tries=0;
           var fireFn=function(){
             try{

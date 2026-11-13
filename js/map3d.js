@@ -284,7 +284,7 @@ m3.on("load", () => {
   if (!hadHash){
     m3.flyTo({ center: [110.4, 37.4], zoom: 5.5, pitch: 64, bearing: -16,
       duration: 5200, curve: 1.45, essential: true });
-    m3.once("dragstart", () => m3.stop());
+    m3.once("dragstart", () => { if (m3.isMoving()) m3.stop(); });   /* 空闲时 stop() 会毒化后续缓动 */
   }
   /* 高程懒探测：可达才挂地形（4s 超时降平面 + 提示） */
   fetch("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/32/15.png",
@@ -293,6 +293,62 @@ m3.on("load", () => {
     .catch(() => { const chip = document.getElementById("demnote"); if (chip) chip.style.display = "block"; });
 });
 
+
+
+/* ── 形胜书签：存视角 · 重飞 · 分享链接 ────────────────── */
+const CAMKEY = "fy3dcams";
+function camLoad(){ try{ return JSON.parse(localStorage.getItem(CAMKEY) || "[]"); }catch(e){ return []; } }
+function camStore(a){ try{ localStorage.setItem(CAMKEY, JSON.stringify(a.slice(0, 12))); }catch(e){} }
+function camHash(){
+  const c = m3.getCenter();
+  return "cam=" + [c.lng.toFixed(4), c.lat.toFixed(4), m3.getZoom().toFixed(2),
+                  m3.getPitch().toFixed(1), m3.getBearing().toFixed(1)].join(",");
+}
+const camBtn = document.getElementById("cambmk");
+const camBox = document.getElementById("camlist");
+function renderCams(){
+  if (!camBox) return;
+  const a = camLoad();
+  camBox.innerHTML = `<div class="cam-head">形胜书签<a id="camlnk" title="把当前视角写入地址栏，复制网址即可分享">⧉ 链接</a></div>` +
+    (a.length ? a.map((x, i) =>
+      `<div class="cam-item" data-i="${i}">
+         <span class="ci-nm">${x.n}</span>
+         <span class="ci-meta">z${x.z} · ${Math.round(x.p)}°</span>
+         <i class="ci-del" data-d="${i}">✕</i></div>`).join("")
+    : `<div class="cam-none">尚无书签——调好一眼山河，点 🔖 存之</div>`);
+  camBox.querySelectorAll(".cam-item").forEach(it => it.onclick = e => {
+    if (e.target.classList.contains("ci-del")){
+      const a2 = camLoad(); a2.splice(+e.target.dataset.d, 1);
+      camStore(a2); renderCams(); return;
+    }
+    const x = camLoad()[+it.dataset.i];
+    if (x) m3.easeTo({ center: x.c, zoom: x.z, pitch: x.p, bearing: x.b,
+      duration: 2200, easing: t => t * t * (3 - 2 * t) });   /* smoothstep 缓动 */
+  });
+  const lnk = camBox.querySelector("#camlnk");
+  if (lnk) lnk.onclick = () => {
+    history.replaceState(null, "", location.pathname + "#" + camHash());
+    lnk.textContent = "✓ 已写入";
+    setTimeout(() => { lnk.textContent = "⧉ 链接"; }, 1600);
+  };
+}
+if (camBtn){
+  camBtn.onclick = () => {
+    const box = document.getElementById("camlist");
+    const open = box.classList.toggle("open");
+    if (open) renderCams();
+  };
+  /* 长按式主操作：直接存当前视角（在按钮上，与列表开合分离） */
+  const saveNow = document.getElementById("camsave");
+  if (saveNow) saveNow.onclick = () => {
+    const a = camLoad();
+    const names = ["一","二","三","四","五","六","七","八","九","十","十一","十二"];
+    a.unshift({ n: "视角" + (names[a.length] || a.length + 1), c: m3.getCenter().toArray(),
+      z: +m3.getZoom().toFixed(2), p: +m3.getPitch().toFixed(1), b: +m3.getBearing().toFixed(1) });
+    camStore(a); renderCams();
+    document.getElementById("camlist").classList.add("open");
+  };
+}
 
 /* ── 深链：#era=N | #p=pid&fu=府名（2D ⛰ 形胜 带上下文进入） ── */
 function applyDeepLink3(h){
@@ -303,6 +359,15 @@ function applyDeepLink3(h){
     if (eraRange){ eraRange.value = i; }
     showEra3(i, true);
     return true;
+  }
+  const camv = q.get("cam");
+  if (camv){
+    const v = camv.split(",").map(Number);
+    if (v.length === 5 && v.every(x => isFinite(x))){
+      stopTour(); stopEraPlay();
+      m3.jumpTo({ center: [v[0], v[1]], zoom: v[2], pitch: v[3], bearing: v[4] });
+      return true;
+    }
   }
   const pid = q.get("p"), fuN = q.get("fu");
   if (pid){
