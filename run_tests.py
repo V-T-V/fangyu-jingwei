@@ -95,12 +95,16 @@ def run_cdp_test(page):
             out = "CDP-TIMEOUT FAIL" + (" / PART:" + part[5:180] if part.startswith("R3DP:") else "")
     finally:
         proc.terminate()
-        # 收尸：无头 Edge 子进程（terminate 只杀主进程，尸体吃 CPU 会让下一轮 CDP 假超时）
-        _sp.run(["powershell", "-NoProfile", "-Command",
-          "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe'\" | "
-          "Where-Object {$_.CommandLine -like '*headless*'} | "
-          "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],
-          capture_output=True, timeout=30)
+        # 收尸：无头浏览器子进程（terminate 只杀主进程，尸体吃 CPU 会让下一轮 CDP 假超时）
+        if sys.platform == "win32":
+            _sp.run(["powershell", "-NoProfile", "-Command",
+              "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe'\" | "
+              "Where-Object {$_.CommandLine -like '*headless*'} | "
+              "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],
+              capture_output=True, timeout=30)
+        else:
+            _sp.run(["pkill", "-f", "remote-debugging-port=%d" % port],
+              capture_output=True, timeout=15)
     lines = [l.strip() for l in out.split(";") if l.strip()]
     bad = [l for l in lines if "FAIL" in l and "SKIP" not in l]
     print(("✓" if not bad else "✗") + " %-20s %d 项断言%s" % (page, len(lines), "" if not bad else "："))
