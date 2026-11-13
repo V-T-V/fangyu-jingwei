@@ -143,6 +143,14 @@ function wxCompute(then){
   });
   const bigText = allParts.join("");
 
+  /* 顾祖禹的书架：《》引书 TOP12（口径同 paper_stats.js） */
+  const LBk = String.fromCharCode(0x300a), RBk = String.fromCharCode(0x300b);
+  const bkRe = new RegExp("[" + LBk + "]([^" + LBk + RBk + "]{2,8})[" + RBk + "]", "g");
+  const bkCnt = {};
+  let bmm;
+  while ((bmm = bkRe.exec(bigText)) !== null) bkCnt[bmm[1]] = (bkCnt[bmm[1]] || 0) + 1;
+  const bookTop = Object.entries(bkCnt).sort((a, b) => b[1] - a[1]).slice(0, 12);
+
   const names = [], seen = new Set();
   const provNms = new Set(FY.provinces.map(p => p.name));
   FY.provinces.forEach(p => p.fu.forEach(u => {
@@ -165,7 +173,7 @@ function wxCompute(then){
     }
     if (i0 + CH < names.length){ setTimeout(() => step(i0 + CH), 0); return; }
     fuAll.sort((a,b) => b.n - a.n);
-    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll };
+    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop };
     _wxBusy = false;
     if (typeof then === "function") then(_wxCache); else wxRender(_wxCache);
   };
@@ -229,6 +237,13 @@ function wxRender(c){
   <div class="wx-title">府名被引 TOP 20 · 全书掂量次数</div>
   ${fuBars}
   <div class="wx-note">以简名计（去「府／州／卫」尾），遍检全书 260 万字——被引次数即顾祖禹反复掂量的战略权重。点行可全书检索。个别同名词目（如「太平」）计为合计。</div>
+
+  <div class="wx-title">顾祖禹的书架 · 引书 TOP 12</div>
+  ${c.bookTop.map(x => `
+    <div class="wx-row"><span class="wx-nm">${x[0]}</span>
+      <div class="wx-track"><div class="wx-fill" style="width:${(x[1]/c.bookTop[0][1]*100).toFixed(1)}%;background:linear-gradient(90deg,#6b5a3f,#8a6a3a)"></div></div>
+      <span class="wx-val">${x[1]} 次</span></div>`).join("")}
+  <div class="wx-note">书例引用近万处——水经注居首，正史地理志（汉/隋/唐/宋）成链；城邑考、舆程记当属顾氏自著或家学所辑。</div>
 
   <div class="wx-title">战略词汇 · 分省浓淡</div>
   <div>${chips}</div>

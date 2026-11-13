@@ -4,6 +4,7 @@
 const fs = require('fs');
 const VOCAB = ['形胜','险要','要害','咽喉','锁钥','门户','屏蔽','冲要','守御','屯戍','关隘','堡寨','烽堠','营垒','倭寇','盗贼'];
 const ids = {beizhi:'北直隶',nanzhi:'南直隶',shandong:'山东',shanxi:'山西',henan:'河南',shanxix:'陕西',sichuan:'四川',huguang:'湖广',jiangxi:'江西',zhejiang:'浙江',fujian:'福建',guangdong:'广东',guangxi:'广西',yunnan:'云南',guizhou:'贵州'};
+let corpusAll = '';
 const out = [];
 for (const id of Object.keys(ids)){
   const src = fs.readFileSync('data/text/' + id + '.js', 'utf8');
@@ -16,11 +17,29 @@ for (const id of Object.keys(ids)){
   const cnt = {};
   VOCAB.forEach(w => { cnt[w] = txt.split(w).length - 1; });
   const total = VOCAB.reduce((s, w) => s + cnt[w], 0);
+  corpusAll += txt;
   out.push({ p: ids[id], chars: txt.length, total, d: +(total * 10000 / txt.length).toFixed(2), cnt });
 }
 out.sort((a, b) => b.chars - a.chars);
 console.log('省 | 字数(万) | 16词合计 | 每万字');
 out.forEach(r => console.log(`${r.p} | ${(r.chars/10000).toFixed(1)} | ${r.total} | ${r.d}`));
+
+// ── 顾祖禹的书架（《》引书榜）与时代层（连称对）——ANALYSIS §4.4/4.5 之源 ──
+
+const bookCnt = {};
+let bm;
+const LB = String.fromCharCode(0x300a), RB = String.fromCharCode(0x300b);
+const BOOKS_RE = new RegExp('[' + LB + ']([^' + LB + RB + ']{2,8})[' + RB + ']', 'g');
+while ((bm = BOOKS_RE.exec(corpusAll)) !== null) bookCnt[bm[1]] = (bookCnt[bm[1]] || 0) + 1;
+const books = Object.entries(bookCnt).sort((a, b) => b[1] - a[1]).slice(0, 20);
+console.log('--- 《》引书 TOP20（全书合计 ' + Object.values(bookCnt).reduce((a,b)=>a+b,0) + ' 处） ---');
+books.forEach(([k, v]) => console.log(k + ': ' + v));
+const PAIRS = ['秦汉','汉魏','魏晋','两晋','南北朝','隋唐','唐宋','五代','宋金','金元','元明','明初'];
+const pairCnt = {};
+PAIRS.forEach(p => pairCnt[p] = corpusAll.split(p).length - 1);
+console.log('--- 时代连称合计 ---');
+console.log(PAIRS.slice().sort((a,b)=>pairCnt[b]-pairCnt[a]).map(p=>p+':'+pairCnt[p]).join(' '));
+
 console.log('--- 每词之冠（每万字） ---');
 VOCAB.forEach(w => {
   const best = out.reduce((m, r) => (r.cnt[w]*10000/r.chars > m.cnt[w]*10000/m.chars ? r : m), out[0]);

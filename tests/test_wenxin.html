@@ -49,6 +49,7 @@ window.addEventListener("load",function(){
           try{
             P("RENDER",fuRows>=20);
             P("CHIPS",document.querySelectorAll(".wx-chip").length===16);
+            P("BOOKS",document.body.textContent.indexOf("顾祖禹的书架")>=0&&document.body.textContent.indexOf("水经注")>=0);
             P("CHARS-BARS",document.querySelectorAll(".wx-row").length>=40);       // 15 省 + 20 府 + 15 词省
             var top1=document.querySelector(".wx-nm.fu");
             P("TOP1",!!top1&&top1.textContent.replace(/^\d+\s*/,"").length>=2);
