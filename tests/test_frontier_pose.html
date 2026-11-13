@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<base href="../">
 <meta charset="UTF-8">
 <title>自动验证 · 县治</title>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=43">
+<link rel="stylesheet" href="css/main.css?v=55">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div>
@@ -26,28 +27,25 @@
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:460px;white-space:pre-wrap"></pre>
 
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=43" defer></script>
-<script src="js/map.js?v=43" defer></script>
-<script src="js/panels.js?v=43" defer></script>
-<script src="js/rail.js?v=43" defer></script>
-<script src="js/search.js?v=43" defer></script>
-<script src="js/reader.js?v=43" defer></script>
-<script src="js/bookmarks.js?v=43" defer></script>
-<script src="js/fulltext.js?v=43" defer></script>
-<script src="js/app.js?v=43" defer></script>
-<script src="js/modes.js?v=43" defer></script>
+<script src="js/config.js?v=55" defer></script>
+<script src="js/map.js?v=55" defer></script>
+<script src="js/panels.js?v=55" defer></script>
+<script src="js/rail.js?v=55" defer></script>
+<script src="js/search.js?v=55" defer></script>
+<script src="js/reader.js?v=55" defer></script>
+<script src="js/bookmarks.js?v=55" defer></script>
+<script src="js/fulltext.js?v=55" defer></script>
+<script src="js/app.js?v=55" defer></script>
+<script src="js/modes.js?v=55" defer></script>
 <script defer>
-window.addEventListener("error", function(e){ document.title = "ERR " + (e.message||""); });
 window.addEventListener("load", function(){
   try {
     dismissBoot();
-    selectProv("beizhi");
-    setTimeout(function(){
-      map.setView([39.9, 116.55], 8, {animate:false});
-      var guard = setInterval(function(){ map.setView([39.9, 116.55], 8, {animate:false}); }, 400);
-      setTimeout(function(){ clearInterval(guard); }, 8000);
-    }, 1200);
-  } catch(e){ document.title = "ERR2 " + e; }
+    // 居中于九边中段（大同），zoom 4 可见嘉峪关→山海关全段
+    map.setView([40.5, 111.5], 4, {animate:false});
+    var guard = setInterval(function(){ map.setView([40.5, 111.5], 4, {animate:false}); }, 400);
+    setTimeout(function(){ clearInterval(guard); }, 8000);
+  } catch(e){}
 });
 </script>
 </body>

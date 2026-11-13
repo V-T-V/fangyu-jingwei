@@ -1,6 +1,6 @@
 """CLI query.py 测试：python test_cli.py"""
 import subprocess, sys, os
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 Q = os.path.join(ROOT, "query.py")
 
 CASES = [

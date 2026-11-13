@@ -8,6 +8,8 @@
 """
 import json, re, math
 
+import os as _os
+_os.chdir(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
 raw = open("data/site_data.js", encoding="utf-8").read()
 data = json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
 

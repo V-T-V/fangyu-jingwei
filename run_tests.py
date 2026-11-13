@@ -19,10 +19,11 @@ if not EDGE:
     print("✗ 未找到浏览器（可用环境变量 FY_BROWSER 指定）"); sys.exit(1)
 print("浏览器:", EDGE)
 
-PAGES = ["test_auto.html", "test_filter.html", "test_events.html",
+PAGES = ["tests/" + p for p in (
+         "test_auto.html", "test_filter.html", "test_events.html",
          "test_night.html", "test_tts.html", "test_counties.html",
          "test_journey.html", "test_gating.html", "test_sw.html",
-         "test_wenxin.html", "test_bian.html", "test_basemap.html"]
+         "test_wenxin.html", "test_bian.html", "test_basemap.html")]
 # 本地端口可被环境变量覆盖（Windows 保留端口段会吞掉 8613；CI 用默认）
 BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
 
@@ -106,13 +107,13 @@ def run_cdp_test(page):
     for l in bad: print("    FAIL  " + l)
     if bad: fails.append((page, bad))
 
-CDP_PAGES = ("test_3d.html", "test_ft_worker.html")   # 真实时间通道（MapLibre/Worker 与虚拟时钟不合）
+CDP_PAGES = ("tests/test_3d.html", "tests/test_ft_worker.html")   # 真实时间通道（MapLibre/Worker 与虚拟时钟不合）
 for _pg in CDP_PAGES:
     run_cdp_test(_pg)
 
 # CLI 测试
 import importlib.util
-cli_test = os.path.join(os.path.dirname(__file__), "test_cli.py")
+cli_test = os.path.join(os.path.dirname(__file__), "tests", "test_cli.py")
 if os.path.exists(cli_test):
     r = subprocess.run([sys.executable, cli_test], capture_output=True, text=True, timeout=60)
     cli_ok = "全过" in r.stdout

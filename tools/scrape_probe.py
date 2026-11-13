@@ -9,7 +9,7 @@ import os
 
 BASE = "http://www.guoxue123.com/biji/qing/dsfjy"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-OUT = os.path.join(os.path.dirname(__file__), "data")
+OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 os.makedirs(OUT, exist_ok=True)
 
 # 1. 拿目录页
