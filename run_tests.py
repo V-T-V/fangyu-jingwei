@@ -86,9 +86,19 @@ def run_cdp_test(page):
             if title.startswith("R3D:") or title.startswith("R3D-ERR"):
                 out = title.split(":",1)[1] if title.startswith("R3D-ERR") else title[4:]; break
         if out is None:
-            out = "CDP-TIMEOUT FAIL"
+            # 超时也带出部分进度（R3DP 前缀），不再伪装成纯超时
+            tabs2 = _json.loads(_ur.urlopen(base + "/json/list", timeout=5).read())
+            tab2 = next((t for t in tabs2 if t.get("id") == tabinfo["id"]), None)
+            part = (tab2 or {}).get("title", "")
+            out = "CDP-TIMEOUT FAIL" + (" / PART:" + part[5:180] if part.startswith("R3DP:") else "")
     finally:
         proc.terminate()
+        # 收尸：无头 Edge 子进程（terminate 只杀主进程，尸体吃 CPU 会让下一轮 CDP 假超时）
+        _sp.run(["powershell", "-NoProfile", "-Command",
+          "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe'\" | "
+          "Where-Object {$_.CommandLine -like '*headless*'} | "
+          "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],
+          capture_output=True, timeout=30)
     lines = [l.strip() for l in out.split(";") if l.strip()]
     bad = [l for l in lines if "FAIL" in l and "SKIP" not in l]
     print(("✓" if not bad else "✗") + " %-20s %d 项断言%s" % (page, len(lines), "" if not bad else "："))

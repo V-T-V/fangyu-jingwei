@@ -198,7 +198,7 @@ function buildOverlays(){
       "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 4, 1.2, 10, 2.4],
       "circle-stroke-color": "#f6efdc",
     }});
-  m3.addLayer({ id: "passLab", type: "symbol", source: "passes",
+  m3.addLayer({ id: "passLab", type: "symbol", source: "passes", minzoom: 5,
     layout: {
       "icon-image": ["get", "img"],
       "icon-size": ["interpolate", ["linear"], ["zoom"], 4, .72, 10, 1.05],
@@ -315,6 +315,35 @@ sel.onchange = () => {
 };
 
 
+
+/* ── 九朝旁白（TTS）：推演时读朝代与首二大事 ──────────── */
+let eraVoice = null, narrOn = true;
+function pickVoice3(){
+  const vs = speechSynthesis.getVoices();
+  eraVoice = vs.find(v => /zh[-_]CN/i.test(v.lang) && /female|Huihui|Yaoyao/i.test(v.name))
+          || vs.find(v => /^zh/i.test(v.lang)) || null;
+}
+if ("speechSynthesis" in window){
+  pickVoice3();
+  speechSynthesis.onvoiceschanged = pickVoice3;
+}
+function narrateEra(e){
+  if (!narrOn || !("speechSynthesis" in window) || !e) return;
+  try{ speechSynthesis.cancel(); }catch(_){}
+  const txt = e.label + "。" + e.time.replace("—", "至") + "。" +
+    e.evs.slice(0, 2).map(v => v[1]).join("。");
+  const u = new SpeechSynthesisUtterance(txt);
+  if (eraVoice) u.voice = eraVoice;
+  u.lang = "zh-CN"; u.rate = 0.95;
+  speechSynthesis.speak(u);
+}
+const narrBtn = document.getElementById("narrbtn");
+if (narrBtn) narrBtn.onclick = () => {
+  narrOn = !narrOn;
+  narrBtn.textContent = narrOn ? "🔊" : "🔇";
+  if (!narrOn){ try{ speechSynthesis.cancel(); }catch(_){} }
+};
+
 /* ── 山河九朝：疆域低墙 + 王都擎柱 + 时间轴推演 ─────────── */
 function hullLngLat(points, pad){
   const pts = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
@@ -374,7 +403,27 @@ function showEra3(i, fly){
       m3.fitBounds(b, { padding: 120, pitch: 52, bearing: 0, duration: 2100, maxZoom: 5.4 });
     }
     if (eraLab) eraLab.innerHTML = `<b>${e.label}</b><i>${e.time}</i>`;
-  } else if (eraLab) eraLab.innerHTML = "<b>山河九朝</b><i>拖动推演历朝疆域</i>";
+    if (fly && eraPlaying) narrateEra(e);
+    if (eraLab) eraLab.onclick = () => {
+      if (curEra3 < 0) return;
+      const ev = ERAS[curEra3].evs.map(v =>
+        `<div class="ev"><span class="y">${v[0]}</span><span class="t">${v[1]}</span></div>`).join("");
+      openCard3(ERAS[curEra3].label + "纪", `
+        <div class="p-ju">${e.label}<span style="font-size:12px;color:var(--ink-faint)"> ${e.time}</span></div>
+        <div class="p-cap">都城</div>
+        <div class="chips">${e.caps.map(c => `<span class="chip fg">${c[0]}</span>`).join("")}</div>
+        <div class="p-cap">要地</div>
+        <div class="chips">${e.plcs.map(c => `<span class="chip">${c[0]}</span>`).join("")}</div>
+        <div class="p-cap">大事</div>${ev}
+        <div class="readrow" style="margin-top:8px">
+          <a class="readfull" style="text-decoration:none"
+             href="index.html#mode=形势&era=${curEra3}">⟨ 入 2D 形势卷（原文全文）</a>
+        </div>`);
+    };
+  } else if (eraLab){
+    eraLab.innerHTML = "<b>山河九朝</b><i>拖动推演历朝疆域</i>";
+    eraLab.onclick = null;
+  }
   const es = m3.getSource("era");
   if (es) es.setData({ type: "FeatureCollection", features: feats });
   else window.__m3era = i;

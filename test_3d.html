@@ -10,14 +10,14 @@
 <div id="tourbar" style="position:fixed;z-index:10"><button id="tourbtn">▶ 飞览九边</button><span id="tourlab"></span></div>
 <select id="scenes"></select><button id="mentbtn">◧ 文柱 ✓</button>
 <section id="card3d"><div id="c3top"><span id="c3kick"></span><span id="c3close">✕</span></div><div id="c3body"></div></section>
-<div id="erabar"><span id="eralab"></span><input type="range" id="erarange" min="-1" max="8" step="1" value="-1"><button id="eraplay">▶</button></div><div id="tourbig"></div><div id="demnote"></div><div id="glfail" style="display:none"></div>
+<div id="erabar"><span id="eralab"></span><input type="range" id="erarange" min="-1" max="8" step="1" value="-1"><button id="eraplay">▶</button><button id="narrbtn">🔊</button></div><div id="tourbig"></div><div id="demnote"></div><div id="glfail" style="display:none"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:60px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap">PENDING</pre>
 <script>window.onerror=function(m){document.title="R3D-ERR:"+m;return false;};</script>
 <script src="data/site_data.js" defer></script>
 <script src="data/mentions.js" defer></script>
-<script src="js/config.js?v=87" defer></script>
+<script src="js/config.js?v=88" defer></script>
 <script src="vendor/maplibre-gl.js" defer></script>
-<script src="js/map3d.js?v=87" defer></script>
+<script src="js/map3d.js?v=88" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));document.title="R3DP:"+log.join(";");}
@@ -55,11 +55,14 @@ window.addEventListener("load",function(){
           if(kf&&kf.c){
             window.__m3.stop();
             window.__m3.jumpTo({center:[kf.c[1],kf.c[0]-.4],zoom:7,pitch:30});
-            var fired=false;
-            var fireFn=function(){ if(fired)return; fired=true;
+            var tries=0;
+            var fireFn=function(){
               try{
                 var pt=window.__m3.project([kf.c[1],kf.c[0]]);
                 var hit=window.__m3.queryRenderedFeatures(pt,{layers:["fu"]});
+                if(!hit.length&&tries<12){tries++;
+                  setTimeout(function(){try{window.__m3.triggerRepaint();}catch(_){}
+                    window.__m3.once("idle",fireFn);},250);return;}   /* 强制重绘后再验 */
                 /* map.fire 委托分发不可靠 → 派发真实 canvas 事件走原生管线 */
                 var cv=window.__m3.getCanvas(), rc=cv.getBoundingClientRect();
                 cv.dispatchEvent(new MouseEvent("click",{clientX:rc.left+pt.x,clientY:rc.top+pt.y,bubbles:true}));
@@ -80,6 +83,11 @@ window.addEventListener("load",function(){
                         P("ERA-SET",window.__m3era===0&&document.getElementById("eralab").textContent.indexOf("唐虞")>=0
                           &&window.__m3.getSource("era")._data.features.length>4);
                         P("ERA-LAYERS",["eraWall","eraCap","eraPlc"].every(function(l){return window.__m3.getLayer(l);}));
+                        P("NARR-BTN",!!document.getElementById("narrbtn"));
+                        document.getElementById("eralab").click();
+                        var ea=document.querySelector("#c3body a.readfull");
+                        P("ERA-CARD",document.getElementById("card3d").classList.contains("open")
+                          &&!!ea&&ea.href.indexOf("era=0")>=0&&ea.textContent.indexOf("形势")>=0);
                         er.value="-1";
                         er.dispatchEvent(new Event("input",{bubbles:true}));
                         setTimeout(function(){

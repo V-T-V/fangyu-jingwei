@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>方舆形胜 · 三维 · 读史方舆纪要</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23b23a2e'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23f6efdc' font-family='KaiTi,serif'%3E方%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="css/main.css?v=87">
+<link rel="stylesheet" href="css/main.css?v=88">
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
 <style>
   html,body{margin:0;height:100%;overflow:hidden;background:var(--silk-1,#efe6cf)}
@@ -67,7 +67,7 @@
   #eralab b{font-size:14px;letter-spacing:3px;color:var(--cinnabar-d)}
   #eralab i{font-style:normal;font-size:9.5px;letter-spacing:1px;color:var(--ink-faint)}
   #erarange{width:130px;accent-color:#b23a2e;cursor:pointer}
-  #eraplay{appearance:none;cursor:pointer;font:13px/1 KaiTi,serif;color:var(--cinnabar-d);
+  #eraplay,#narrbtn{appearance:none;cursor:pointer;font:13px/1 KaiTi,serif;color:var(--cinnabar-d);
     background:var(--silk-3);border:1px solid rgba(178,58,46,.45);padding:6px 9px}
   #demnote{display:none;position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:11;
     background:rgba(245,238,218,.95);border:1px solid var(--line);padding:4px 14px;
@@ -84,7 +84,7 @@
   @media (max-width:640px){
     #card3d{left:10px;right:10px;width:auto;top:auto;bottom:58px;height:52vh}
     #scenes{max-width:34vw}
-    #erabar{left:8px;bottom:96px;padding:6px 8px;gap:6px}
+    #erabar{left:8px;bottom:152px;padding:6px 8px;gap:6px}
     #erarange{width:88px}
     #eralab{min-width:60px}
   }
@@ -111,6 +111,7 @@
   <span id="eralab"><b>山河九朝</b><i>拖动推演历朝疆域</i></span>
   <input type="range" id="erarange" min="-1" max="8" step="1" value="-1" title="唐虞三代 → 明">
   <button id="eraplay" title="自动推演九朝">▶</button>
+  <button id="narrbtn" title="推演旁白">🔊</button>
 </div>
 <div id="tourbar">
   <button id="tourbtn">▶ 飞览九边</button>
@@ -132,8 +133,8 @@
 </div>
 
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=87" defer></script>
+<script src="js/config.js?v=88" defer></script>
 <script src="vendor/maplibre-gl.js" defer></script>
-<script src="js/map3d.js?v=87" defer></script>
+<script src="js/map3d.js?v=88" defer></script>
 </body>
 </html>
