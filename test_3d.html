@@ -10,17 +10,17 @@
 <div id="tourbar" style="position:fixed;z-index:10"><button id="tourbtn">▶ 飞览九边</button><span id="tourlab"></span></div>
 <select id="scenes"></select><button id="mentbtn">◧ 文柱 ✓</button>
 <section id="card3d"><div id="c3top"><span id="c3kick"></span><span id="c3close">✕</span></div><div id="c3body"></div></section>
-<div id="tourbig"></div><div id="demnote"></div><div id="glfail" style="display:none"></div>
+<div id="erabar"><span id="eralab"></span><input type="range" id="erarange" min="-1" max="8" step="1" value="-1"><button id="eraplay">▶</button></div><div id="tourbig"></div><div id="demnote"></div><div id="glfail" style="display:none"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:60px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap">PENDING</pre>
 <script>window.onerror=function(m){document.title="R3D-ERR:"+m;return false;};</script>
 <script src="data/site_data.js" defer></script>
 <script src="data/mentions.js" defer></script>
-<script src="js/config.js?v=86" defer></script>
+<script src="js/config.js?v=87" defer></script>
 <script src="vendor/maplibre-gl.js" defer></script>
-<script src="js/map3d.js?v=86" defer></script>
+<script src="js/map3d.js?v=87" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
-function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
+function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));document.title="R3DP:"+log.join(";");}
 function S(n){log.push(n+" SKIP-PASS");}
 function done(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
   document.title="R3D:"+log.join(";");
@@ -71,7 +71,25 @@ window.addEventListener("load",function(){
                 var lm=PASSES.find(function(q){return q.n==="龙门关";});
                 var lmp=window.__m3.project([lm.c[1],lm.c[0]]);
                 P("CARD/manualPD"+pd.length+(pd[0]?"["+pd[0].properties.name+"]":"")+"/lm@"+Math.round(lmp.x)+","+Math.round(lmp.y)+"vs"+Math.round(pt.x)+","+Math.round(pt.y)+"/"+document.getElementById("c3body").textContent.slice(0,6),open&&document.getElementById("c3body").textContent.indexOf("开封")>=0);
-                    done();
+                    /* 山河九朝：选朝 → 图层+标签；回「无」清空 */
+                    var er=document.getElementById("erarange");
+                    er.value="0";
+                    er.dispatchEvent(new Event("input",{bubbles:true}));
+                    setTimeout(function(){
+                      try{
+                        P("ERA-SET",window.__m3era===0&&document.getElementById("eralab").textContent.indexOf("唐虞")>=0
+                          &&window.__m3.getSource("era")._data.features.length>4);
+                        P("ERA-LAYERS",["eraWall","eraCap","eraPlc"].every(function(l){return window.__m3.getLayer(l);}));
+                        er.value="-1";
+                        er.dispatchEvent(new Event("input",{bubbles:true}));
+                        setTimeout(function(){
+                          try{
+                            P("ERA-CLEAR",window.__m3era===-1&&window.__m3.getSource("era")._data.features.length===0);
+                            done();
+                          }catch(e){log.push("ERR6 "+e);done();}
+                        },300);
+                      }catch(e){log.push("ERR5 "+e);done();}
+                    },600);
                   }catch(e){log.push("ERR4 "+e);done();}
                 },300);
               }catch(e){log.push("ERR2 "+e);done();}

@@ -26,6 +26,14 @@ PAGES = ["test_auto.html", "test_filter.html", "test_events.html",
 BASE = "http://127.0.0.1:8613/"
 
 fails = []
+
+# 本地服务健康检查：连不上直接报错（避免整套"无日志产出"假失败）
+import urllib.request as _u0
+try:
+    _u0.urlopen(BASE + "index.html", timeout=3).read()
+except Exception as _e:
+    print("✗ 本地服务不可达：%s —— 请先 python -m http.server 8613" % BASE); sys.exit(1)
+
 for page in PAGES:
     out = os.path.join(tempfile.gettempdir(), "fytest_%s.html" % page)
     prof = tempfile.mkdtemp(prefix="fyprof_")          # 每次全新 profile，杜绝 HTTP 缓存旧页

@@ -275,6 +275,8 @@ if (mentBtn) mentBtn.onclick = () => {
 
 m3.on("load", () => {
   buildOverlays();
+  initEraLayers();
+  showEra3(-1, false);
   window.__m3ready = true;
   /* 开场长镜头：自西域疾掠而至晋陕黄河大峡谷（用户一动即断） */
   m3.flyTo({ center: [110.4, 37.4], zoom: 5.5, pitch: 64, bearing: -16,
@@ -312,6 +314,101 @@ sel.onchange = () => {
     duration: 3200, curve: 1.5, essential: true });
 };
 
+
+/* ── 山河九朝：疆域低墙 + 王都擎柱 + 时间轴推演 ─────────── */
+function hullLngLat(points, pad){
+  const pts = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const p of pts){ while (lo.length > 1 && cross(lo[lo.length-2], lo[lo.length-1], p) <= 0) lo.pop(); lo.push(p); }
+  for (let i = pts.length - 1; i >= 0; i--){ const p = pts[i];
+    while (up.length > 1 && cross(up[up.length-2], up[up.length-1], p) <= 0) up.pop(); up.push(p); }
+  lo.pop(); up.pop();
+  const hull = lo.concat(up);
+  if (hull.length < 3) return null;
+  const n = hull.length;
+  const cLat = hull.reduce((s, p) => s + p[1], 0) / n, cLng = hull.reduce((s, p) => s + p[0], 0) / n;
+  return hull.map(p => [cLng + (p[0] - cLng) * pad, cLat + (p[1] - cLat) * pad]);
+}
+function initEraLayers(){
+  m3.addSource("era", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+  m3.addLayer({ id: "eraWall", type: "fill-extrusion", source: "era", filter: ["==", ["get", "k"], "wall"],
+    paint: { "fill-extrusion-height": 22000, "fill-extrusion-base": 0,
+      "fill-extrusion-color": "#b23a2e", "fill-extrusion-opacity": .22 } });
+  m3.addLayer({ id: "eraPlc", type: "fill-extrusion", source: "era", filter: ["==", ["get", "k"], "plc"],
+    paint: { "fill-extrusion-height": ["get", "h"], "fill-extrusion-base": 0,
+      "fill-extrusion-color": "#4a4034", "fill-extrusion-opacity": .8 } });
+  m3.addLayer({ id: "eraCap", type: "fill-extrusion", source: "era", filter: ["==", ["get", "k"], "cap"],
+    paint: { "fill-extrusion-height": ["get", "h"], "fill-extrusion-base": 0,
+      "fill-extrusion-color": "#c0392b", "fill-extrusion-opacity": .88 } });
+}
+
+function eraRingPts(lng, lat, rDeg){ return eraRingPoly(lng, lat, rDeg)[0]; }
+function eraRingPoly(lng, lat, rDeg){
+  const pts = [];
+  for (let i = 0; i <= 10; i++){
+    const a = i / 10 * Math.PI * 2;
+    pts.push([lng + Math.cos(a) * rDeg / Math.cos(lat * Math.PI / 180), lat + Math.sin(a) * rDeg]);
+  }
+  return [pts];
+}
+let curEra3 = -1;
+const eraLab = document.getElementById("eralab");
+const eraRange = document.getElementById("erarange");
+function showEra3(i, fly){
+  curEra3 = i;
+  const e = ERAS[i];
+  const feats = [];
+  if (e){
+    const pts = [...e.caps, ...e.plcs].map(c => [c[2], c[1]]);
+    const hull = hullLngLat(pts, 1.35);
+    if (hull) feats.push({ type: "Feature", properties: { k: "wall" },
+      geometry: { type: "Polygon", coordinates: [[...hull, hull[0]]] } });
+    e.caps.forEach(c => feats.push({ type: "Feature", properties: { k: "cap", h: 90000 },
+      geometry: { type: "Polygon", coordinates: eraRingPoly(c[2], c[1], .5) } }));
+    e.plcs.forEach(c => feats.push({ type: "Feature", properties: { k: "plc", h: 30000 },
+      geometry: { type: "Polygon", coordinates: eraRingPoly(c[2], c[1], .32) } }));
+    if (fly){
+      const b = [[Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1]))],
+                 [Math.max(...pts.map(p => p[0])), Math.max(...pts.map(p => p[1]))]];
+      m3.fitBounds(b, { padding: 120, pitch: 52, bearing: 0, duration: 2100, maxZoom: 5.4 });
+    }
+    if (eraLab) eraLab.innerHTML = `<b>${e.label}</b><i>${e.time}</i>`;
+  } else if (eraLab) eraLab.innerHTML = "<b>山河九朝</b><i>拖动推演历朝疆域</i>";
+  const es = m3.getSource("era");
+  if (es) es.setData({ type: "FeatureCollection", features: feats });
+  else window.__m3era = i;
+  window.__m3era = i;
+}
+if (eraRange){
+  eraRange.min = -1;
+  eraRange.max = ERAS.length - 1;
+  eraRange.value = -1;
+  eraRange.oninput = () => { stopEraPlay(); stopTour(); showEra3(+eraRange.value, true); };
+}
+/* 九朝自动推演 */
+let eraPlaying = false, eraTimer = null;
+const eraPlayBtn = document.getElementById("eraplay");
+function stopEraPlay(){
+  if (!eraPlaying) return;
+  eraPlaying = false;
+  clearTimeout(eraTimer);
+  if (eraPlayBtn) eraPlayBtn.textContent = "▶";
+}
+if (eraPlayBtn) eraPlayBtn.onclick = () => {
+  if (eraPlaying){ stopEraPlay(); return; }
+  stopTour();
+  eraPlaying = true;
+  eraPlayBtn.textContent = "⏸";
+  const step = () => {
+    if (!eraPlaying) return;
+    const nx = (curEra3 + 1) % ERAS.length;
+    eraRange.value = nx;
+    showEra3(nx, true);
+    eraTimer = setTimeout(step, 4300);
+  };
+  step();
+};
 /* ── 九边飞览 ── */
 const TOUR_NAMES = ["嘉峪关","凉州堡","宁夏镇","花马池","榆林镇","偏头关",
                     "雁门关","大同镇","宣府镇","古北口","山海关"];
@@ -349,6 +446,7 @@ function stopTour(){
 }
 tourBtn.onclick = () => {
   if (touring){ stopTour(); return; }
+  stopEraPlay();
   touring = true;
   tourBtn.textContent = "⏸ 停止";
   tourStep();
