@@ -40,6 +40,44 @@ PAIRS.forEach(p => pairCnt[p] = corpusAll.split(p).length - 1);
 console.log('--- 时代连称合计 ---');
 console.log(PAIRS.slice().sort((a,b)=>pairCnt[b]-pairCnt[a]).map(p=>p+':'+pairCnt[p]).join(' '));
 
+
+// ── 天下之X 意象 + 方位里程分布——ANALYSIS §4.6 之源 ──
+const txxCnt = {};
+let tm;
+const TXX_RE = /天下之([一-鿿]{1,3})/g;
+while ((tm = TXX_RE.exec(corpusAll)) !== null) txxCnt[tm[1]] = (txxCnt[tm[1]] || 0) + 1;
+const txx = Object.entries(txxCnt).sort((a, b) => b[1] - a[1]).slice(0, 10);
+console.log('--- 天下之X TOP10（人身喻天下） ---');
+txx.forEach(x => console.log('天下之' + x[0] + ': ' + x[1]));
+
+const CNd = { '零':0,'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9 };
+function cn2numJS(s){
+  let n = 0, cur = 0;
+  for (const ch of s){
+    if (ch === '百'){ n += (cur || 1) * 100; cur = 0; continue; }
+    if (ch === '十'){ n += (cur || 1) * 10; cur = 0; continue; }
+    const d = CNd[ch];
+    if (d === undefined) return null;
+    cur = d;
+  }
+  return n + cur;
+}
+const LI_RE = new RegExp('[东南西北]{1,2}[至距去]?[零一二两三四五六七八九十百]{1,6}里', 'g');
+const liMatches = corpusAll.match(LI_RE) || [];
+const liNums = [];
+for (const m of liMatches){
+  let t = m.slice(0, -1);
+  while (t && '东南西北至距去'.indexOf(t[0]) >= 0) t = t.slice(1);
+  const v = t ? cn2numJS(t) : null;
+  if (v && v >= 1 && v <= 900) liNums.push(v);
+}
+liNums.sort((a, b) => a - b);
+const LN = liNums.length;
+console.log('--- 方位里程分布（n=' + LN + '） ---');
+console.log('中位 ' + liNums[LN >> 1] + ' 里 · 均值 ' + (liNums.reduce((a, b) => a + b, 0) / LN).toFixed(1) +
+  ' · P25/P75 ' + liNums[Math.floor(LN * .25)] + '/' + liNums[Math.floor(LN * .75)] +
+  ' · P95 ' + liNums[Math.floor(LN * .95)]);
+
 console.log('--- 每词之冠（每万字） ---');
 VOCAB.forEach(w => {
   const best = out.reduce((m, r) => (r.cnt[w]*10000/r.chars > m.cnt[w]*10000/m.chars ? r : m), out[0]);

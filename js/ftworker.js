@@ -99,6 +99,13 @@ function wenxinCompute(){
   var bookTop = Object.keys(bkCnt).map(function(k){ return [k, bkCnt[k]]; })
                   .sort(function(a,b){ return b[1] - a[1]; }).slice(0, 12);
 
+  var CJK0 = String.fromCharCode(0x4e00), CJK1 = String.fromCharCode(0x9fff);
+  var txRe = new RegExp("天下之([" + CJK0 + "-" + CJK1 + "]{1,3})", "g");
+  var txCnt = {}, txm;
+  while ((txm = txRe.exec(bigText)) !== null) txCnt[txm[1]] = (txCnt[txm[1]] || 0) + 1;
+  var tianxiaTop = Object.keys(txCnt).map(function(k){ return [k, txCnt[k]]; })
+                    .sort(function(a,b){ return b[1] - a[1]; }).slice(0, 8);
+
   var names = [], seen = {};
   var provNms = {};
   Object.keys(META.provNames || {}).forEach(function(k){ provNms[META.provNames[k]] = 1; });
@@ -115,7 +122,7 @@ function wenxinCompute(){
   }).sort(function(a,b){ return b.n - a.n; });
 
   return { provChars: provChars, extraChars: extraChars, totalChars: totalChars,
-           vocab: vocab, fuAll: fuAll, bookTop: bookTop };
+           vocab: vocab, fuAll: fuAll, bookTop: bookTop, tianxiaTop: tianxiaTop };
 }
 
 self.onmessage = function(e){

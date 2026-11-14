@@ -158,6 +158,14 @@ function wxCompute(then){
   });
   const bigText = allParts.join("");
 
+  /* 天下之X 意象（口径同 paper_stats.js；守卫顺序教训：十/百分支在前） */
+  const CJK0 = String.fromCharCode(0x4e00), CJK1 = String.fromCharCode(0x9fff);
+  const txRe = new RegExp("天下之([" + CJK0 + "-" + CJK1 + "]{1,3})", "g");
+  const txCnt = {};
+  let txm;
+  while ((txm = txRe.exec(bigText)) !== null) txCnt[txm[1]] = (txCnt[txm[1]] || 0) + 1;
+  const tianxiaTop = Object.entries(txCnt).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
   /* 顾祖禹的书架：《》引书 TOP12（口径同 paper_stats.js） */
   const LBk = String.fromCharCode(0x300a), RBk = String.fromCharCode(0x300b);
   const bkRe = new RegExp("[" + LBk + "]([^" + LBk + RBk + "]{2,8})[" + RBk + "]", "g");
@@ -188,7 +196,7 @@ function wxCompute(then){
     }
     if (i0 + CH < names.length){ setTimeout(() => step(i0 + CH), 0); return; }
     fuAll.sort((a,b) => b.n - a.n);
-    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop };
+    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop, tianxiaTop };
     _wxBusy = false;
     if (typeof then === "function") then(_wxCache); else wxRender(_wxCache);
   };
@@ -259,6 +267,10 @@ function wxRender(c){
       <div class="wx-track"><div class="wx-fill" style="width:${(x[1]/c.bookTop[0][1]*100).toFixed(1)}%;background:linear-gradient(90deg,#6b5a3f,#8a6a3a)"></div></div>
       <span class="wx-val">${x[1]} 次</span></div>`).join("")}
   <div class="wx-note">书例引用近万处——水经注居首，正史地理志（汉/隋/唐/宋）成链；城邑考、舆程记当属顾氏自著或家学所辑。</div>
+
+  <div class="wx-title">天下之 X · 人身喻天下</div>
+  <div class="chips">${(c.tianxiaTop || []).map(x =>
+    `<span class="chip" title="${x[1]} 处">天下之${x[0]}</span>`).join("")}</div>
 
   <div class="wx-title">战略词汇 · 分省浓淡</div>
   <div>${chips}</div>
