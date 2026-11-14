@@ -41,6 +41,9 @@ function ftWorkerReady(){
       _ftw.onmessage = e => {
         const m = e.data || {};
         if (m.ready){ _ftwReady = true; clearTimeout(okTimer); res(true); }
+        else if (m.type === "wenxin" && _ftw._wxHandler){
+          const h = _ftw._wxHandler; _ftw._wxHandler = null; h(m.cache);
+        }
         else if (m.type === "rows" && _ftw._handler){
           const h = _ftw._handler; _ftw._handler = null; h(m.rows);
         }
@@ -53,6 +56,7 @@ function ftWorkerReady(){
         meta: {
           keys: FT_KEYS,
           provNames: FY.provinces.reduce((o, p) => (o[p.id] = p.name, o), {}),
+          fus: FY.provinces.reduce((a, p) => a.concat(p.fu.map(u => ({ n: u.n, prov: p.name, pid: p.id }))), []),
           xsTitles: FY.xingshi.map(x => x.title.replace(/　/g, "")),
           cdTitles: FY.chuandu.map(x => x.title.replace(/　/g, " · ")),
         }
@@ -64,6 +68,12 @@ function ftWorkerSearch(q, cb){
   if (!_ftwReady){ cb(null); return; }
   _ftw._handler = rows => { window.__ftwUsed = true; cb(rows); };
   _ftw.postMessage({ q });
+}
+
+function ftWorkerWenxin(cb){
+  if (!_ftwReady){ cb(null); return; }
+  _ftw._wxHandler = cache => cb(cache);
+  _ftw.postMessage({ wenxin: true });
 }
 
 /* 转义 + 片段：命中处前后各 18 字 */

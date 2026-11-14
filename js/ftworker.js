@@ -52,6 +52,72 @@ function scan(q){
   return out;
 }
 
+
+/* ── 文心计量（与 js/wenxin.js 口径逐行一致；改动须两处同步） ── */
+var WX_VOCAB = ["形胜","险要","要害","咽喉","锁钥","门户","屏蔽","冲要",
+                "守御","屯戍","关隘","堡寨","烽堠","营垒","倭寇","盗贼"];
+function wenxinCompute(){
+  var provChars = [], provText = {}, extraChars = 0;
+  (META.keys || []).forEach(function(pid){
+    var bag = FYTEXT[pid];
+    if (!bag) return;
+    var parts = [];
+    if (bag.xu) parts.push(bag.xu);
+    for (var nm in (bag.fu || {})) parts.push(bag.fu[nm]);
+    var txt = parts.join("");
+    provText[pid] = txt;
+    provChars.push({ prov: (META.provNames || {})[pid] || pid, pid: pid, chars: txt.length });
+  });
+  ["juanshou","xingshi","chuandu"].forEach(function(k){
+    var v = FYTEXT[k];
+    if (Array.isArray(v)) v.forEach(function(it){ extraChars += (typeof it === "string" ? it : it.x || "").length; });
+  });
+  provChars.sort(function(a,b){ return b.chars - a.chars; });
+  var totalChars = provChars.reduce(function(s,x){ return s + x.chars; }, 0);
+
+  var vocab = {};
+  WX_VOCAB.forEach(function(wd){
+    vocab[wd] = (META.keys || []).map(function(pid){
+      var n = countHits(provText[pid] || "", wd);
+      var ch = provChars.filter(function(x){ return x.pid === pid; })[0];
+      ch = ch ? ch.chars : 0;
+      return { prov: (META.provNames || {})[pid] || pid, pid: pid, n: n, dens: ch ? n*10000/ch : 0 };
+    }).sort(function(a,b){ return b.n - a.n; });
+  });
+
+  var allParts = (META.keys || []).map(function(pid){ return provText[pid] || ""; });
+  ["juanshou","xingshi","chuandu"].forEach(function(k){
+    var v = FYTEXT[k];
+    if (Array.isArray(v)) v.forEach(function(it){ allParts.push(typeof it === "string" ? it : it.x || ""); });
+  });
+  var bigText = allParts.join("");
+
+  var LB = String.fromCharCode(0x300a), RB = String.fromCharCode(0x300b);
+  var bkRe = new RegExp("[" + LB + "]([^" + LB + RB + "]{2,8})[" + RB + "]", "g");
+  var bkCnt = {}, bmm;
+  while ((bmm = bkRe.exec(bigText)) !== null) bkCnt[bmm[1]] = (bkCnt[bmm[1]] || 0) + 1;
+  var bookTop = Object.keys(bkCnt).map(function(k){ return [k, bkCnt[k]]; })
+                  .sort(function(a,b){ return b[1] - a[1]; }).slice(0, 12);
+
+  var names = [], seen = {};
+  var provNms = {};
+  Object.keys(META.provNames || {}).forEach(function(k){ provNms[META.provNames[k]] = 1; });
+  var fus = META.fus || [];
+  fus.forEach(function(one){
+    var term = one.n.replace(/(军民府|军民卫|州府|府|州|卫)$/, "");
+    if (term.length < 2 || provNms[term]) term = one.n;
+    if (seen[term]) return;
+    seen[term] = 1;
+    names.push({ bare: term, fu: one.n, prov: one.prov, pid: one.pid });
+  });
+  var fuAll = names.map(function(x){
+    return { bare: x.bare, fu: x.fu, prov: x.prov, pid: x.pid, n: countHits(bigText, x.bare) };
+  }).sort(function(a,b){ return b.n - a.n; });
+
+  return { provChars: provChars, extraChars: extraChars, totalChars: totalChars,
+           vocab: vocab, fuAll: fuAll, bookTop: bookTop };
+}
+
 self.onmessage = function(e){
   var m = e.data || {};
   if (m.init){
@@ -64,6 +130,11 @@ self.onmessage = function(e){
     }catch(err){
       self.postMessage({ error: String(err) });
     }
+    return;
+  }
+  if (m.wenxin){
+    try{ self.postMessage({ type: "wenxin", cache: wenxinCompute() }); }
+    catch(err){ self.postMessage({ error: String(err) }); }
     return;
   }
   if (m.q != null){

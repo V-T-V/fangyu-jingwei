@@ -91,6 +91,21 @@ function openWenxin(){
     const el = document.getElementById("wxProg");
     if (el) el.textContent = `载入原文 ${done} / ${total} …`;
   }, () => {
+    /* 深度优化：计量入 Worker（文本已在后台线程，主线程零阻塞）；
+       无头/无 Worker 环境自动回退主线程分块路径 */
+    if (typeof ftWorkerWenxin === "function"){
+      ftWorkerWenxin(cache => {
+        if (cache && Array.isArray(cache.fuAll) && cache.fuAll.length){
+          window.__wxwUsed = true;
+          _wxCache = cache;
+          _wxBusy = false;
+          wxRender(_wxCache);
+          return;
+        }
+        wxCompute();
+      });
+      return;
+    }
     wxCompute();
   });
 }
