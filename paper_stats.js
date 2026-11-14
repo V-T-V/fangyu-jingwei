@@ -78,6 +78,27 @@ console.log('中位 ' + liNums[LN >> 1] + ' 里 · 均值 ' + (liNums.reduce((a,
   ' · P25/P75 ' + liNums[Math.floor(LN * .25)] + '/' + liNums[Math.floor(LN * .75)] +
   ' · P95 ' + liNums[Math.floor(LN * .95)]);
 
+
+// ── 山河名录 + 城周金字塔——ANALYSIS §4.7 之源 ──
+const RIVERS = ['黄河','大河','大江','长江','运河','汉水','江水','漳水','滹沱','淮水','洛水','漕河','汾水','泗水','渭水','汴水'];
+const MOUNTS = ['太行','荆山','阴山','恒山','陇山','剑门','碣石','积石','桐柏','巫山','峨眉','武当'];
+console.log('--- 山河名录 TOP ---');
+RIVERS.map(r => [r, corpusAll.split(r).length - 1]).sort((a, b) => b[1] - a[1]).slice(0, 8)
+  .forEach(x => console.log('水·' + x[0] + ': ' + x[1]));
+MOUNTS.map(m => [m, corpusAll.split(m).length - 1]).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  .forEach(x => console.log('山·' + x[0] + ': ' + x[1]));
+const ZH_RE = new RegExp('[城池][周围][零一二两三四五六七八九十百]{1,5}里', 'g');
+const zhNums = [];
+for (const m of (corpusAll.match(ZH_RE) || [])){
+  const t = m.slice(2, -1);
+  const v = cn2numJS(t);
+  if (v && v >= 1 && v <= 120) zhNums.push(v);
+}
+zhNums.sort((a, b) => a - b);
+const ZN = zhNums.length;
+console.log('--- 城周金字塔（n=' + ZN + '） ---');
+console.log('中位 ' + zhNums[ZN >> 1] + ' 里 · P25/P75 ' + zhNums[Math.floor(ZN * .25)] + '/' + zhNums[Math.floor(ZN * .75)] + ' · 最大 ' + zhNums[ZN - 1]);
+
 console.log('--- 每词之冠（每万字） ---');
 VOCAB.forEach(w => {
   const best = out.reduce((m, r) => (r.cnt[w]*10000/r.chars > m.cnt[w]*10000/m.chars ? r : m), out[0]);

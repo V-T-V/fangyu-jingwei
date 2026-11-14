@@ -99,6 +99,13 @@ function wenxinCompute(){
   var bookTop = Object.keys(bkCnt).map(function(k){ return [k, bkCnt[k]]; })
                   .sort(function(a,b){ return b[1] - a[1]; }).slice(0, 12);
 
+  var WX_RIVERS = ["黄河","大河","大江","长江","运河","汉水","江水","漳水","滹沱","淮水"];
+  var WX_MOUNTS = ["太行","荆山","阴山","恒山","陇山","剑门"];
+  var shanheTop = []
+    .concat(WX_RIVERS.map(function(r){ return ["水·" + r, countHits(bigText, r)]; }))
+    .concat(WX_MOUNTS.map(function(m){ return ["山·" + m, countHits(bigText, m)]; }))
+    .sort(function(a, b){ return b[1] - a[1]; }).slice(0, 8);
+
   var CJK0 = String.fromCharCode(0x4e00), CJK1 = String.fromCharCode(0x9fff);
   var txRe = new RegExp("天下之([" + CJK0 + "-" + CJK1 + "]{1,3})", "g");
   var txCnt = {}, txm;
@@ -122,7 +129,7 @@ function wenxinCompute(){
   }).sort(function(a,b){ return b.n - a.n; });
 
   return { provChars: provChars, extraChars: extraChars, totalChars: totalChars,
-           vocab: vocab, fuAll: fuAll, bookTop: bookTop, tianxiaTop: tianxiaTop };
+           vocab: vocab, fuAll: fuAll, bookTop: bookTop, tianxiaTop: tianxiaTop, shanheTop: shanheTop };
 }
 
 self.onmessage = function(e){

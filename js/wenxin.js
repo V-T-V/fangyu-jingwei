@@ -158,6 +158,14 @@ function wxCompute(then){
   });
   const bigText = allParts.join("");
 
+  /* 山河名录（口径同 paper_stats.js） */
+  const WX_RIVERS = ["黄河","大河","大江","长江","运河","汉水","江水","漳水","滹沱","淮水"];
+  const WX_MOUNTS = ["太行","荆山","阴山","恒山","陇山","剑门"];
+  const shanheTop = []
+    .concat(WX_RIVERS.map(r => ["水·" + r, countHits(bigText, r)]))
+    .concat(WX_MOUNTS.map(m => ["山·" + m, countHits(bigText, m)]))
+    .sort((a, b) => b[1] - a[1]).slice(0, 8);
+
   /* 天下之X 意象（口径同 paper_stats.js；守卫顺序教训：十/百分支在前） */
   const CJK0 = String.fromCharCode(0x4e00), CJK1 = String.fromCharCode(0x9fff);
   const txRe = new RegExp("天下之([" + CJK0 + "-" + CJK1 + "]{1,3})", "g");
@@ -196,7 +204,7 @@ function wxCompute(then){
     }
     if (i0 + CH < names.length){ setTimeout(() => step(i0 + CH), 0); return; }
     fuAll.sort((a,b) => b.n - a.n);
-    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop, tianxiaTop };
+    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop, tianxiaTop, shanheTop };
     _wxBusy = false;
     if (typeof then === "function") then(_wxCache); else wxRender(_wxCache);
   };
@@ -271,6 +279,10 @@ function wxRender(c){
   <div class="wx-title">天下之 X · 人身喻天下</div>
   <div class="chips">${(c.tianxiaTop || []).map(x =>
     `<span class="chip" title="${x[1]} 处">天下之${x[0]}</span>`).join("")}</div>
+
+  <div class="wx-title">山河名录 · 言及最多</div>
+  <div class="chips">${(c.shanheTop || []).map(x =>
+    `<span class="chip" title="${x[1]} 处">${x[0]} ${x[1]}</span>`).join("")}</div>
 
   <div class="wx-title">战略词汇 · 分省浓淡</div>
   <div>${chips}</div>
