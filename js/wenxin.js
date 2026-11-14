@@ -158,6 +158,19 @@ function wxCompute(then){
   });
   const bigText = allParts.join("");
 
+  /* 战争的动词（口径同 paper_stats.js v5） */
+  const WX_VERBS = ["攻","围","拔","陷","克","破","守","据","降","战","败","屠","焚","掠"];
+  const verbRows = provChars.map(x => {
+    const pid = x.pid;
+    let txt = "";
+    { const bag = FYTEXT[pid] || {};
+      if (bag.xu) txt += bag.xu;
+      for (const k in (bag.fu || {})) txt += bag.fu[k]; }
+    const total = WX_VERBS.reduce((s2, v) => s2 + txt.split(v).length - 1, 0);
+    return { prov: x.prov, d: +(total * 10000 / x.chars).toFixed(1) };
+  }).sort((a, b) => b.d - a.d);
+  const verbTop = verbRows.slice(0, 6);
+
   /* 山河名录（口径同 paper_stats.js） */
   const WX_RIVERS = ["黄河","大河","大江","长江","运河","汉水","江水","漳水","滹沱","淮水"];
   const WX_MOUNTS = ["太行","荆山","阴山","恒山","陇山","剑门"];
@@ -204,7 +217,7 @@ function wxCompute(then){
     }
     if (i0 + CH < names.length){ setTimeout(() => step(i0 + CH), 0); return; }
     fuAll.sort((a,b) => b.n - a.n);
-    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop, tianxiaTop, shanheTop };
+    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop, tianxiaTop, shanheTop, verbTop };
     _wxBusy = false;
     if (typeof then === "function") then(_wxCache); else wxRender(_wxCache);
   };
@@ -283,6 +296,11 @@ function wxRender(c){
   <div class="wx-title">山河名录 · 言及最多</div>
   <div class="chips">${(c.shanheTop || []).map(x =>
     `<span class="chip" title="${x[1]} 处">${x[0]} ${x[1]}</span>`).join("")}</div>
+
+  <div class="wx-title">战争的动词 · 史与论的错位</div>
+  <div class="chips">${(c.verbTop || []).map(x =>
+    `<span class="chip" title="每万字 ${x.d} 处攻守动词">${x.prov} ${x.d}</span>`).join("")}</div>
+  <div class="wx-note">动词之冠河南（语汇垫底）——中原写「发生过什么」（史）；语汇前四的广东、福建动词垫底——边缘写「需要防什么」（论）。</div>
 
   <div class="wx-title">战略词汇 · 分省浓淡</div>
   <div>${chips}</div>

@@ -53,6 +53,7 @@ window.addEventListener("load",function(){
             P("BOOKS",document.body.textContent.indexOf("顾祖禹的书架")>=0&&document.body.textContent.indexOf("水经注")>=0);
             P("TIANXIA",document.body.textContent.indexOf("天下之")>=0&&document.querySelectorAll(".chip[title]").length>=8);
             P("SHANHE",document.body.textContent.indexOf("山河名录")>=0&&document.body.textContent.indexOf("太行")>=0);
+            P("VERBS",document.body.textContent.indexOf("战争的动词")>=0&&document.body.textContent.indexOf("河南")>=0);
             P("CHARS-BARS",document.querySelectorAll(".wx-row").length>=40);       // 15 省 + 20 府 + 15 词省
             var top1=document.querySelector(".wx-nm.fu");
             P("TOP1",!!top1&&top1.textContent.replace(/^\d+\s*/,"").length>=2);

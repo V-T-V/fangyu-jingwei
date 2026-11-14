@@ -99,6 +99,14 @@ function wenxinCompute(){
   var bookTop = Object.keys(bkCnt).map(function(k){ return [k, bkCnt[k]]; })
                   .sort(function(a,b){ return b[1] - a[1]; }).slice(0, 12);
 
+  var WX_VERBS = ["攻","围","拔","陷","克","破","守","据","降","战","败","屠","焚","掠"];
+  var verbRows = provChars.map(function(x){
+    var txt = provText[x.pid] || "";
+    var total = WX_VERBS.reduce(function(s2, v){ return s2 + txt.split(v).length - 1; }, 0);
+    return { prov: x.prov, d: +(total * 10000 / x.chars).toFixed(1) };
+  }).sort(function(a, b){ return b.d - a.d; });
+  var verbTop = verbRows.slice(0, 6);
+
   var WX_RIVERS = ["黄河","大河","大江","长江","运河","汉水","江水","漳水","滹沱","淮水"];
   var WX_MOUNTS = ["太行","荆山","阴山","恒山","陇山","剑门"];
   var shanheTop = []
@@ -129,7 +137,7 @@ function wenxinCompute(){
   }).sort(function(a,b){ return b.n - a.n; });
 
   return { provChars: provChars, extraChars: extraChars, totalChars: totalChars,
-           vocab: vocab, fuAll: fuAll, bookTop: bookTop, tianxiaTop: tianxiaTop, shanheTop: shanheTop };
+           vocab: vocab, fuAll: fuAll, bookTop: bookTop, tianxiaTop: tianxiaTop, shanheTop: shanheTop, verbTop: verbTop };
 }
 
 self.onmessage = function(e){

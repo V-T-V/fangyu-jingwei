@@ -5,6 +5,7 @@ const fs = require('fs');
 const VOCAB = ['形胜','险要','要害','咽喉','锁钥','门户','屏蔽','冲要','守御','屯戍','关隘','堡寨','烽堠','营垒','倭寇','盗贼'];
 const ids = {beizhi:'北直隶',nanzhi:'南直隶',shandong:'山东',shanxi:'山西',henan:'河南',shanxix:'陕西',sichuan:'四川',huguang:'湖广',jiangxi:'江西',zhejiang:'浙江',fujian:'福建',guangdong:'广东',guangxi:'广西',yunnan:'云南',guizhou:'贵州'};
 let corpusAll = '';
+const provTextById = {};
 const out = [];
 for (const id of Object.keys(ids)){
   const src = fs.readFileSync('data/text/' + id + '.js', 'utf8');
@@ -18,6 +19,7 @@ for (const id of Object.keys(ids)){
   VOCAB.forEach(w => { cnt[w] = txt.split(w).length - 1; });
   const total = VOCAB.reduce((s, w) => s + cnt[w], 0);
   corpusAll += txt;
+  provTextById[ids[id]] = txt;
   out.push({ p: ids[id], chars: txt.length, total, d: +(total * 10000 / txt.length).toFixed(2), cnt });
 }
 out.sort((a, b) => b.chars - a.chars);
@@ -98,6 +100,21 @@ zhNums.sort((a, b) => a - b);
 const ZN = zhNums.length;
 console.log('--- 城周金字塔（n=' + ZN + '） ---');
 console.log('中位 ' + zhNums[ZN >> 1] + ' 里 · P25/P75 ' + zhNums[Math.floor(ZN * .25)] + '/' + zhNums[Math.floor(ZN * .75)] + ' · 最大 ' + zhNums[ZN - 1]);
+
+
+// ── 战争的动词地理——ANALYSIS §4.8 之源 ──
+const WVERBS = ['攻','围','拔','陷','克','破','守','据','降','战','败','屠','焚','掠'];
+const verbRows = out.map(function(r){
+  const txt = provTextById[r.p] || '';
+  const cnt = {};
+  WVERBS.forEach(v => cnt[v] = txt.split(v).length - 1);
+  const total = WVERBS.reduce((a, v) => a + cnt[v], 0);
+  return { prov: r.p, total: total, d: +(total * 10000 / r.chars).toFixed(2) };
+}).sort((a, b) => b.d - a.d);
+console.log('--- 攻守动词密度 TOP6 / 垫底3 ---');
+verbRows.slice(0, 6).forEach(r => console.log(r.prov + ' ' + r.d));
+console.log('…');
+verbRows.slice(-3).forEach(r => console.log(r.prov + ' ' + r.d));
 
 console.log('--- 每词之冠（每万字） ---');
 VOCAB.forEach(w => {
