@@ -145,7 +145,9 @@ self.onmessage = function(e){
   if (m.init){
     try{
       META = m.meta || {};
-      (m.keys || []).forEach(function(k){
+      var ks = m.keys || [];
+      ks.forEach(function(k, i){
+        self.postMessage({ type: "wprog", i: i + 1, total: ks.length });
         importScripts("../data/text/" + k + ".js");
       });
       self.postMessage({ ready: true });

@@ -2,7 +2,7 @@
 <base href="../"><meta charset="UTF-8"><title>自动验证 · 检索 Worker</title>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=98"></head>
+<link rel="stylesheet" href="css/main.css?v=99"></head>
 <body class="m-舆图 nopanel">
 <div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
 <header><div class="brand"><div class="seal">方</div><div><h1>方舆经纬</h1><p>读史方舆纪要</p></div></div>
@@ -15,19 +15,19 @@
 <pre id="testlog" style="position:fixed;z-index:999;background:#fff;font:12px/1.6 monospace">PENDING</pre>
 <script>window.onerror=function(m){document.title="R3D-ERR:"+m;return false;};</script>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=98" defer></script>
-<script src="js/map.js?v=98" defer></script>
-<script src="js/panels.js?v=98" defer></script>
-<script src="js/rail.js?v=98" defer></script>
-<script src="js/search.js?v=98" defer></script>
-<script src="js/reader.js?v=98" defer></script>
-<script src="js/bookmarks.js?v=98" defer></script>
-<script src="js/fulltext.js?v=98" defer></script>
-<script src="js/app.js?v=98" defer></script>
-<script src="js/modes.js?v=98" defer></script>
-<script src="js/analytics.js?v=98" defer></script>
-<script src="js/wenxin.js?v=98" defer></script>
-<script src="js/bian.js?v=98" defer></script>
+<script src="js/config.js?v=99" defer></script>
+<script src="js/map.js?v=99" defer></script>
+<script src="js/panels.js?v=99" defer></script>
+<script src="js/rail.js?v=99" defer></script>
+<script src="js/search.js?v=99" defer></script>
+<script src="js/reader.js?v=99" defer></script>
+<script src="js/bookmarks.js?v=99" defer></script>
+<script src="js/fulltext.js?v=99" defer></script>
+<script src="js/app.js?v=99" defer></script>
+<script src="js/modes.js?v=99" defer></script>
+<script src="js/analytics.js?v=99" defer></script>
+<script src="js/wenxin.js?v=99" defer></script>
+<script src="js/bian.js?v=99" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));document.title="R3DP:"+log.join(";");}
@@ -48,7 +48,8 @@ window.addEventListener("load",function(){
           P("RESULTS",h.indexOf("fthead")>=0);
           P("WORKER-PATH",window.__ftwUsed===true);
           /* 文心 Worker 路径：面板数字由后台线程产出 */
-          var __wxT0=performance.now();
+          var __wxT0=performance.now();try{window._ftw&&window._ftw.addEventListener||1;}catch(_){}
+if(window._ftw){var _om=window._ftw.onmessage;}
           openWenxin();
           var w2=0;
           var wxChk=function(){
@@ -56,7 +57,8 @@ window.addEventListener("load",function(){
             var shelf=(document.getElementById("pbody").textContent||"").indexOf("水经注")>=0;
             if(!(rows>=20&&window.__wxwUsed===true)&&w2<50){w2++;setTimeout(wxChk,500);return;}
             try{
-              P("WX-WORKER",window.__wxwUsed===true&&rows>=20&&shelf);
+              P("WX-WORKER/used"+window.__wxwUsed+"/rows"+rows+"/failed"+(window._ftwFailed===true)+"/prog"+(document.getElementById("wxProg")?document.getElementById("wxProg").textContent.slice(0,14):"-")+"/pbody"+document.getElementById("pbody").textContent.slice(0,10).trim(),window.__wxwUsed===true&&rows>=20&&shelf);
+              P("MAIN-CLEAN",(typeof FYTEXT.beizhi==="undefined")&&(typeof FYTEXT.henan==="undefined"));
               log.push("WX-DT="+Math.round(performance.now()-__wxT0)+"ms(fu"+rows+")");
               done();
             }catch(e){P("WX-ERR "+e,false);done();}

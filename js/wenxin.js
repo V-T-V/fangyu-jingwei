@@ -87,26 +87,34 @@ function openWenxin(){
   <div class="p-kicker">读史方舆纪要 · 文本计量</div>
   <div class="wx-prog" id="wxProg">正在准备全书原文…</div>`;
 
-  ensureTextAll((key, done, total) => {
-    const el = document.getElementById("wxProg");
-    if (el) el.textContent = `载入原文 ${done} / ${total} …`;
-  }, () => {
-    /* 深度优化：计量入 Worker（文本已在后台线程，主线程零阻塞）；
-       无头/无 Worker 环境自动回退主线程分块路径 */
-    if (typeof ftWorkerWenxin === "function"){
-      ftWorkerWenxin(cache => {
-        if (cache && Array.isArray(cache.fuAll) && cache.fuAll.length){
-          window.__wxwUsed = true;
-          _wxCache = cache;
-          _wxBusy = false;
-          wxRender(_wxCache);
-          return;
-        }
-        wxCompute();
-      });
-      return;
-    }
-    wxCompute();
+  const mainPath = () => {
+    ensureTextAll((key, done, total) => {
+      const el = document.getElementById("wxProg");
+      if (el) el.textContent = `载入原文 ${done} / ${total} …`;
+    }, () => wxCompute());
+  };
+  /* Worker 优先（自带逐文件进度，主线程零装载零解析）；
+     无 Worker 环境 / 初始化失败 → 回退主线程分块路径 */
+  if (window.__FY_NO_WORKER__ || typeof ftWorkerReady !== "function"){
+    mainPath(); return;
+  }
+  ftWorkerReady().then(ok => {
+    if (!ok){ mainPath(); return; }
+    const progEl = document.getElementById("wxProg");
+    ftWorkerProgress((i, total) => {
+      if (progEl) progEl.textContent = `后台装载全书 · ${i}/${total}（主线程空闲）`;
+    });
+    ftWorkerWenxin(cache => {
+      ftWorkerProgressClear();
+      if (cache && Array.isArray(cache.fuAll) && cache.fuAll.length){
+        window.__wxwUsed = true;
+        _wxCache = cache;
+        _wxBusy = false;
+        wxRender(_wxCache);
+        return;
+      }
+      mainPath();
+    });
   });
 }
 

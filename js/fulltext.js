@@ -47,7 +47,12 @@ function ftWorkerReady(){
         else if (m.type === "rows" && _ftw._handler){
           const h = _ftw._handler; _ftw._handler = null; h(m.rows);
         }
-        else if (m.error){ _ftwFailed = true; clearTimeout(okTimer); res(false); }
+        else if (m.error){
+          _ftwFailed = true; clearTimeout(okTimer); res(false);
+          /* 错误也要唤醒挂起回调，让上层走回退而非永等 */
+          if (_ftw._wxHandler){ const h = _ftw._wxHandler; _ftw._wxHandler = null; h(null); }
+          if (_ftw._handler){ const h = _ftw._handler; _ftw._handler = null; h(null); }
+        }
       };
       _ftw.onerror = () => { _ftwFailed = true; clearTimeout(okTimer); res(false); };
       _ftw.postMessage({
@@ -69,6 +74,10 @@ function ftWorkerSearch(q, cb){
   _ftw._handler = rows => { window.__ftwUsed = true; cb(rows); };
   _ftw.postMessage({ q });
 }
+
+/* 进度挂接（闭包安全）：外部（文心等）经此设置/清除 worker 装载进度回调 */
+function ftWorkerProgress(cb){ if (_ftw) _ftw._prog = cb; }
+function ftWorkerProgressClear(){ if (_ftw) _ftw._prog = null; }
 
 function ftWorkerWenxin(cb){
   if (!_ftwReady){ cb(null); return; }
@@ -157,12 +166,7 @@ function ftRun(q){
   const escQ = q.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   sres.innerHTML = `<div class="ftprog">正在加载全书原文…</div>`;
   const keepOpen = ()=>sres.classList.add("open");
-  ensureTextAll((key, i, total)=>{
-    const name = (FY.provinces.find(p=>p.id===key)||{name:key}).name || (key==="xingshi"?"历代州域形势":"川渎");
-    keepOpen();
-    sres.innerHTML = `<div class="ftprog">检索中 · ${name}（${i+1}/${total}）</div>`;
-  }, ()=>{
-    const render = results => {
+  const render = results => {
       if (!results.length){
         sres.innerHTML = `<div class="none">全书原文未见「${escQ}」</div>`;
         return;
@@ -187,13 +191,36 @@ function ftRun(q){
         ftJump(results[+el.dataset.i], q);
       });
     };
-    /* Worker 优先（文本已入缓存，importScripts 即取即扫，主线程零阻塞）；
-       初始化失败/超时回退主线程 ftSearch */
-    ftWorkerReady().then(() => {
-      ftWorkerSearch(q, rows => {
-        if (rows){ render(rows); return; }
-        render(ftSearch(q));
+  /* 深度优化：Worker 自行装载并逐文件报进度——主线程零解析（8.2MB 全下后台）；
+     Worker 不可用/超时 → 回退主线程 ensureTextAll + ftSearch（file:// 等场景） */
+  if (window.__FY_NO_WORKER__){
+    ensureTextAll((key, i, total)=>{
+      const name = (FY.provinces.find(p=>p.id===key)||{name:key}).name || (key==="xingshi"?"历代州域形势":"川渎");
+      keepOpen();
+      sres.innerHTML = `<div class="ftprog">检索中 · ${name}（${i+1}/${total}）</div>`;
+    }, ()=>{
+      ftWorkerReady().then(() => {
+        ftWorkerSearch(q, rows => render(rows || ftSearch(q)));
       });
+    });
+    return;
+  }
+  ftWorkerReady().then(ok => {
+    if (!ok){
+      ensureTextAll((key, i, total)=>{
+        const name = (FY.provinces.find(p=>p.id===key)||{name:key}).name || (key==="xingshi"?"历代州域形势":"川渎");
+        keepOpen();
+        sres.innerHTML = `<div class="ftprog">检索中 · ${name}（${i+1}/${total}）</div>`;
+      }, ()=> render(ftSearch(q)));
+      return;
+    }
+    _ftw._prog = (i, total) => {
+      keepOpen();
+      sres.innerHTML = `<div class="ftprog">后台装载全书 · ${i}/${total}（主线程空闲）</div>`;
+    };
+    ftWorkerSearch(q, rows => {
+      _ftw._prog = null;
+      render(rows || ftSearch(q));
     });
   });
 }
