@@ -115,6 +115,15 @@ CDP_PAGES = ("tests/test_3d.html", "tests/test_ft_worker.html")   # 真实时间
 for _pg in CDP_PAGES:
     run_cdp_test(_pg)
 
+# 数字哨兵：论文数字 CI 守护
+import subprocess as _sp2
+r2 = _sp2.run([sys.executable, "tools/check_stats.py"], capture_output=True, text=True, timeout=180)
+ok2 = "全部一致" in r2.stdout
+print(("✓" if ok2 else "✗") + " tools/check_stats.py  数字哨兵" + ("" if ok2 else "（数字漂移）"))
+if not ok2:
+    bad2 = [l for l in r2.stdout.splitlines() if l.startswith("✗")][:3]
+    fails.append(("check_stats", bad2))
+
 # CLI 测试
 import importlib.util
 cli_test = os.path.join(os.path.dirname(__file__), "tests", "test_cli.py")
