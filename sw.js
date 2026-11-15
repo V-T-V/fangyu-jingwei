@@ -3,24 +3,24 @@
              TILES 瓦片限额存（stale-while-revalidate）
    VERSION 与 index.html 的 ?v= 同步递增（当前 v75）。 */
 
-const VERSION = "v101";
+const VERSION = "v102";
 const SHELL = `fy-${VERSION}-shell`;
 const TEXTS = `fy-${VERSION}-texts`;
 const TILES = `fy-${VERSION}-tiles`;
 const TILE_CAP = 1200;          // 瓦片上限（约 40MB），超限整体重置
 const SHELL_FILES = [
   "./", "./index.html", "./manifest.json",
-  "./css/main.css?v=101",
+  "./css/main.css?v=102",
   "./vendor/leaflet.js", "./vendor/leaflet.css",
   "./data/site_data.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png",
-  "./js/config.js?v=101", "./js/map.js?v=101", "./js/panels.js?v=101",
-  "./js/rail.js?v=101", "./js/search.js?v=101", "./js/reader.js?v=101",
-  "./js/bookmarks.js?v=101", "./js/fulltext.js?v=101", "./js/app.js?v=101",
-  "./js/modes.js?v=101", "./js/analytics.js?v=101",
-  "./js/wenxin.js?v=101",
+  "./js/config.js?v=102", "./js/map.js?v=102", "./js/panels.js?v=102",
+  "./js/rail.js?v=102", "./js/search.js?v=102", "./js/reader.js?v=102",
+  "./js/bookmarks.js?v=102", "./js/fulltext.js?v=102", "./js/app.js?v=102",
+  "./js/modes.js?v=102", "./js/analytics.js?v=102",
+  "./js/wenxin.js?v=102",
   "./js/ftworker.js",
-  "./js/bian.js?v=101",
+  "./js/bian.js?v=102",
 ];
 
 self.addEventListener("install", e => {

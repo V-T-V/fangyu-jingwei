@@ -43,6 +43,12 @@ CHECKS = [
 assert "水之冠 南直隶 26.5" in out, "水之冠漂移"
 print("  ✓ 水之冠 南直隶 26.5")
 assert "山之冠 河南 7.9" in out, "山之冠漂移"
+assert "洪武: 1678" in out, "年号漂移"
+print("  ✓ 洪武 1678")
+assert "嘉靖: 1450" in out, "年号漂移"
+print("  ✓ 嘉靖 1450")
+assert "水经注: 山东 8.9" in out, "引书×地域漂移"
+print("  ✓ 水经注·山东 8.9")
 print("  ✓ 山之冠 河南 7.9")
 
 fails = []

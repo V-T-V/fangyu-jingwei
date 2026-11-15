@@ -130,6 +130,23 @@ verbRows.slice(0, 6).forEach(r => console.log(r.prov + ' ' + r.d));
 console.log('…');
 verbRows.slice(-3).forEach(r => console.log(r.prov + ' ' + r.d));
 
+
+// ── 年号层 + 引书×地域——ANALYSIS §4.9 之源 ──
+const REIGNS = ['洪武','嘉靖','万历','永乐','武帝','曹操'];
+console.log('--- 年号/人物 ---');
+REIGNS.forEach(r => console.log(r + ': ' + (corpusAll.split(r).length - 1)));
+const BOOKS_X = ['水经注','括地志','寰宇记','元志','一统志'];
+console.log('--- 引书×地域之冠（每万字） ---');
+BOOKS_X.forEach(b => {
+  let best = ['', 0];
+  out.forEach(function(r){
+    const txt = provTextById[r.p] || '';
+    const d = txt.split(b).length - 1;
+    if (d * 10000 / r.chars > best[1]) best = [r.p, +(d * 10000 / r.chars).toFixed(2)];
+  });
+  console.log(b + ': ' + best[0] + ' ' + best[1]);
+});
+
 console.log('--- 每词之冠（每万字） ---');
 VOCAB.forEach(w => {
   const best = out.reduce((m, r) => (r.cnt[w]*10000/r.chars > m.cnt[w]*10000/m.chars ? r : m), out[0]);
