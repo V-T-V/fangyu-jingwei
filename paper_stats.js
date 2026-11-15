@@ -98,6 +98,20 @@ for (const m of (corpusAll.match(ZH_RE) || [])){
 }
 zhNums.sort((a, b) => a - b);
 const ZN = zhNums.length;
+const rivD = {}, mntD = {};
+out.forEach(function(r){
+  const txt = provTextById[r.p] || '';
+  let rv = 0, mt = 0;
+  RIVERS.forEach(x => rv += txt.split(x).length - 1);
+  MOUNTS.forEach(x => mt += txt.split(x).length - 1);
+  rivD[r.p] = +(rv * 10000 / r.chars).toFixed(1);
+  mntD[r.p] = +(mt * 10000 / r.chars).toFixed(1);
+});
+const rTop = Object.entries(rivD).sort((a, b) => b[1] - a[1]);
+const mTop = Object.entries(mntD).sort((a, b) => b[1] - a[1]);
+console.log('--- 山河密度（水/山 每万字） ---');
+console.log('水之冠 ' + rTop[0][0] + ' ' + rTop[0][1] + ' · 水之末 ' + rTop[rTop.length-1][0] + ' ' + rTop[rTop.length-1][1]);
+console.log('山之冠 ' + mTop[0][0] + ' ' + mTop[0][1] + ' · 山之末 ' + mTop[mTop.length-1][0] + ' ' + mTop[mTop.length-1][1]);
 console.log('--- 城周金字塔（n=' + ZN + '） ---');
 console.log('中位 ' + zhNums[ZN >> 1] + ' 里 · P25/P75 ' + zhNums[Math.floor(ZN * .25)] + '/' + zhNums[Math.floor(ZN * .75)] + ' · 最大 ' + zhNums[ZN - 1]);
 

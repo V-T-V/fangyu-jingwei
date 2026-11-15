@@ -12,15 +12,20 @@ let _wxBusy = false;
 
 /* ── 密度着色：省域晕按 语汇/动词 密度上色——帝国三面之缘的地图化身 ── */
 let densLayer = null, densMode = "vocab";
+const DENS_MODES = [["vocab", "语汇"], ["verb", "动词"], ["riv", "水名"], ["mnt", "山名"]];
 function clearDensHeat(){
   if (densLayer){ map.removeLayer(densLayer); densLayer = null; }
   const b = document.getElementById("densbtn");
   if (b) b.textContent = "🗺 密度着色";
 }
 function densColor(t, mode){
-  /* t∈[0,1]：语汇 青蓝系；动词 赭红系（切换即见反转） */
+  /* t∈[0,1]：语汇 青 · 动词 赭 · 水名 蓝绿 · 山名 棕褐 */
   if (mode === "vocab")
     return `rgb(${Math.round(232 - 170 * t)},${Math.round(226 - 130 * t)},${Math.round(205 - 90 * t)})`;
+  if (mode === "riv")
+    return `rgb(${Math.round(225 - 60 * t)},${Math.round(230 - 60 * t)},${Math.round(215 - 130 * t)})`;
+  if (mode === "mnt")
+    return `rgb(${Math.round(228 - 20 * t)},${Math.round(216 - 90 * t)},${Math.round(196 - 120 * t)})`;
   return `rgb(${Math.round(225 - 40 * t)},${Math.round(214 - 120 * t)},${Math.round(190 - 150 * t)})`;
 }
 function toggleDensHeat(){
@@ -33,8 +38,10 @@ function toggleDensHeat(){
     const vocabRow = (_wxCache.vocab["险要"] || []).find(x => x.prov === p.name);
     const verbRow = (_wxCache._verbRows || []).find(x => x.prov === p.name);
     metrics[p.id] = {
-      vocab: vocabRow ? _wxCache._vocabDens[p.id] : 0,
-      verb: verbRow ? verbRow.d : 0
+      vocab: _wxCache._vocabDens[p.id] || 0,
+      verb: (_wxCache._verbRows || []).find(x => x.prov === p.name)?.d || 0,
+      riv: _wxCache._rivDens[p.id] || 0,
+      mnt: _wxCache._mntDens[p.id] || 0
     };
   });
   const vals = Object.values(metrics).map(m => m[densMode]);
@@ -51,14 +58,17 @@ function toggleDensHeat(){
       color: "#6b5a3f", weight: 1, opacity: .5,
       fillColor: densColor(t, densMode), fillOpacity: .55, interactive: true
     }).addTo(densLayer).bindTooltip(
-      `<b>${p.name}</b><br><span style="font-size:10px;color:#57503f">语汇 ${metrics[p.id].vocab.toFixed(1)} · 动词 ${metrics[p.id].verb.toFixed(1)} /万字</span>`,
+      `<b>${p.name}</b><br><span style="font-size:10px;color:#57503f">语汇 ${metrics[p.id].vocab.toFixed(1)} · 动词 ${metrics[p.id].verb.toFixed(1)} · 水 ${metrics[p.id].riv.toFixed(1)} · 山 ${metrics[p.id].mnt.toFixed(1)}</span>`,
       {sticky: true, className: "ftip"});
   });
   const b = document.getElementById("densbtn");
-  if (b) b.textContent = densMode === "vocab" ? "✓ 语汇着色 · 切动词" : "✓ 动词着色 · 切语汇";
+  const nm = (DENS_MODES.find(m => m[0] === densMode) || [, "?"])[1];
+  const nx = (DENS_MODES[(DENS_MODES.findIndex(m => m[0] === densMode) + 1) % DENS_MODES.length] || [, "?"])[1];
+  if (b) b.textContent = `✓ ${nm}着色 · 切${nx}`;
 }
 function flipDensMode(){
-  densMode = densMode === "vocab" ? "verb" : "vocab";
+  const i = DENS_MODES.findIndex(m => m[0] === densMode);
+  densMode = DENS_MODES[(i + 1) % DENS_MODES.length][0];
   if (densLayer){ clearDensHeat(); toggleDensHeat(); }
 }
 
@@ -281,8 +291,16 @@ function wxCompute(then){
     const vocabDens = {};
     provChars.forEach(x => vocabDens[x.pid] = 0);
     WX_VOCAB.forEach(wd => (vocab[wd] || []).forEach(r => { vocabDens[r.pid] += r.dens; }));
+    const rivDens = {}, mntDens = {};
+    provChars.forEach(x => {
+      const bag = FYTEXT[x.pid] || {};
+      let txt = bag.xu || "";
+      for (const k in (bag.fu || {})) txt += bag.fu[k];
+      rivDens[x.pid] = WX_RIVERS.reduce((s, r) => s + txt.split(r).length - 1, 0) * 10000 / Math.max(1, x.chars);
+      mntDens[x.pid] = WX_MOUNTS.reduce((s, m) => s + txt.split(m).length - 1, 0) * 10000 / Math.max(1, x.chars);
+    });
     _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop, tianxiaTop, shanheTop, verbTop,
-                 _verbRows: verbRows, _vocabDens: vocabDens };
+                 _verbRows: verbRows, _vocabDens: vocabDens, _rivDens: rivDens, _mntDens: mntDens };
     _wxBusy = false;
     if (typeof then === "function") then(_wxCache); else wxRender(_wxCache);
   };

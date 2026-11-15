@@ -139,9 +139,18 @@ function wenxinCompute(){
   var vocabDens = {};
   provChars.forEach(function(x){ vocabDens[x.pid] = 0; });
   WX_VOCAB.forEach(function(wd){ (vocab[wd] || []).forEach(function(r){ vocabDens[r.pid] += r.dens; }); });
+  var rivDens = {}, mntDens = {};
+  provChars.forEach(function(x){
+    var txt = provText[x.pid] || "";
+    var rv = 0, mt = 0;
+    WX_RIVERS.forEach(function(r){ rv += txt.split(r).length - 1; });
+    WX_MOUNTS.forEach(function(m){ mt += txt.split(m).length - 1; });
+    rivDens[x.pid] = rv * 10000 / Math.max(1, x.chars);
+    mntDens[x.pid] = mt * 10000 / Math.max(1, x.chars);
+  });
   return { provChars: provChars, extraChars: extraChars, totalChars: totalChars,
            vocab: vocab, fuAll: fuAll, bookTop: bookTop, tianxiaTop: tianxiaTop, shanheTop: shanheTop, verbTop: verbTop,
-           _verbRows: verbRows, _vocabDens: vocabDens };
+           _verbRows: verbRows, _vocabDens: vocabDens, _rivDens: rivDens, _mntDens: mntDens };
 }
 
 self.onmessage = function(e){
