@@ -56,6 +56,10 @@ print("  ✓ 金人 31")
 assert "陷·台城: 21" in out, "围城漂移"
 print("  ✓ 台城 21")
 assert "旱: 201" in out, "灾害漂移"
+assert "马: 3410" in out, "战略资源漂移"
+print("  ✓ 马 3410")
+assert "鼓角: 858" in out, "声景漂移"
+print("  ✓ 鼓角 858")
 print("  ✓ 旱 201")
 print("  ✓ 三门 100")
 print("  ✓ 水经注·山东 8.9")
