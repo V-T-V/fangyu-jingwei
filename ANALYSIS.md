@@ -242,3 +242,5 @@ P25/P75 = 3/7 里；3–9 里占 67%——明代城市的标准规模带；15 �
    （卷帙/语汇密度）、`build_mentions.py`（地名被引）；交互验证：
    📊 透视（空间）· 🖋 文心（文本）·
    站点 https://v-t-v.github.io/fangyu-jingwei/
+   配套数据（supplementary）：S1 分省全量度量（12 列 × 15 省）·
+   S2 府级被引（193 行）· S3 引书榜（20 书）——docs/supplementary/*.csv
