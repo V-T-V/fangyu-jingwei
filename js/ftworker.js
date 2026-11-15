@@ -136,8 +136,12 @@ function wenxinCompute(){
     return { bare: x.bare, fu: x.fu, prov: x.prov, pid: x.pid, n: countHits(bigText, x.bare) };
   }).sort(function(a,b){ return b.n - a.n; });
 
+  var vocabDens = {};
+  provChars.forEach(function(x){ vocabDens[x.pid] = 0; });
+  WX_VOCAB.forEach(function(wd){ (vocab[wd] || []).forEach(function(r){ vocabDens[r.pid] += r.dens; }); });
   return { provChars: provChars, extraChars: extraChars, totalChars: totalChars,
-           vocab: vocab, fuAll: fuAll, bookTop: bookTop, tianxiaTop: tianxiaTop, shanheTop: shanheTop, verbTop: verbTop };
+           vocab: vocab, fuAll: fuAll, bookTop: bookTop, tianxiaTop: tianxiaTop, shanheTop: shanheTop, verbTop: verbTop,
+           _verbRows: verbRows, _vocabDens: vocabDens };
 }
 
 self.onmessage = function(e){

@@ -9,6 +9,59 @@ const WX_VOCAB = ["形胜","险要","要害","咽喉","锁钥","门户","屏蔽"
 let _wxCache = null;          // 计算结果缓存（重开面板即时呈现）
 let _wxBusy = false;
 
+
+/* ── 密度着色：省域晕按 语汇/动词 密度上色——帝国三面之缘的地图化身 ── */
+let densLayer = null, densMode = "vocab";
+function clearDensHeat(){
+  if (densLayer){ map.removeLayer(densLayer); densLayer = null; }
+  const b = document.getElementById("densbtn");
+  if (b) b.textContent = "🗺 密度着色";
+}
+function densColor(t, mode){
+  /* t∈[0,1]：语汇 青蓝系；动词 赭红系（切换即见反转） */
+  if (mode === "vocab")
+    return `rgb(${Math.round(232 - 170 * t)},${Math.round(226 - 130 * t)},${Math.round(205 - 90 * t)})`;
+  return `rgb(${Math.round(225 - 40 * t)},${Math.round(214 - 120 * t)},${Math.round(190 - 150 * t)})`;
+}
+function toggleDensHeat(){
+  if (densLayer){ clearDensHeat(); return; }
+  if (!_wxCache) return;
+  if (mode !== "舆图") setMode("舆图");
+  /* 每省度量值：语汇=16词总密度；动词=攻守动词密度 */
+  const metrics = {};
+  FY.provinces.forEach(p => {
+    const vocabRow = (_wxCache.vocab["险要"] || []).find(x => x.prov === p.name);
+    const verbRow = (_wxCache._verbRows || []).find(x => x.prov === p.name);
+    metrics[p.id] = {
+      vocab: vocabRow ? _wxCache._vocabDens[p.id] : 0,
+      verb: verbRow ? verbRow.d : 0
+    };
+  });
+  const vals = Object.values(metrics).map(m => m[densMode]);
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  densLayer = L.layerGroup().addTo(map);
+  FY.provinces.forEach(p => {
+    const pts = [];
+    p.fu.forEach(u => { if (u.c) pts.push(u.c); (u.zx || []).forEach(z => { if (z.c) pts.push(z.c); }); });
+    if (pts.length < 3) return;
+    const hull = hullLatLngs(pts, 1.18);
+    if (!hull) return;
+    const t = hi > lo ? (metrics[p.id][densMode] - lo) / (hi - lo) : .5;
+    L.polygon(hull, {
+      color: "#6b5a3f", weight: 1, opacity: .5,
+      fillColor: densColor(t, densMode), fillOpacity: .55, interactive: true
+    }).addTo(densLayer).bindTooltip(
+      `<b>${p.name}</b><br><span style="font-size:10px;color:#57503f">语汇 ${metrics[p.id].vocab.toFixed(1)} · 动词 ${metrics[p.id].verb.toFixed(1)} /万字</span>`,
+      {sticky: true, className: "ftip"});
+  });
+  const b = document.getElementById("densbtn");
+  if (b) b.textContent = densMode === "vocab" ? "✓ 语汇着色 · 切动词" : "✓ 动词着色 · 切语汇";
+}
+function flipDensMode(){
+  densMode = densMode === "vocab" ? "verb" : "vocab";
+  if (densLayer){ clearDensHeat(); toggleDensHeat(); }
+}
+
 /* ── 被引着色：全书掂量次数画上舆图 ─────────────────────
    圆径与色温随 log(次数) 缩放——顾祖禹战略注意力的地图化。 */
 let fuHeatLayer = null, fuHeatLegend = null;
@@ -225,7 +278,11 @@ function wxCompute(then){
     }
     if (i0 + CH < names.length){ setTimeout(() => step(i0 + CH), 0); return; }
     fuAll.sort((a,b) => b.n - a.n);
-    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop, tianxiaTop, shanheTop, verbTop };
+    const vocabDens = {};
+    provChars.forEach(x => vocabDens[x.pid] = 0);
+    WX_VOCAB.forEach(wd => (vocab[wd] || []).forEach(r => { vocabDens[r.pid] += r.dens; }));
+    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop, tianxiaTop, shanheTop, verbTop,
+                 _verbRows: verbRows, _vocabDens: vocabDens };
     _wxBusy = false;
     if (typeof then === "function") then(_wxCache); else wxRender(_wxCache);
   };
@@ -317,6 +374,8 @@ function wxRender(c){
 
   <div class="readrow" style="margin-top:14px;display:flex;gap:8px">
     <button class="readfull" id="wxheat" title="在舆图上以圆径色温呈现各府被引次数">🗺 被引着色</button>
+    <button class="readfull" id="densbtn" title="省域按密度上色：语汇（青）⇄ 动词（赭）——切换即见史论反转">🗺 密度着色</button>
+    <button class="readfull" id="densflip" style="display:none"></button>
     <button class="readfull" id="wxCsv">⤓ 导出 CSV</button>
     <button class="readfull" id="wxBack">⟨ 返回舆图</button>
   </div>`;
@@ -358,6 +417,11 @@ function wxRender(c){
 
   const wh = document.getElementById("wxheat");
   if (wh) wh.onclick = () => toggleFuHeat();
+  const db = document.getElementById("densbtn");
+  if (db) db.onclick = () => {
+    if (densLayer) flipDensMode();
+    else toggleDensHeat();
+  };
   document.getElementById("wxCsv").onclick = () => {
     const NL = String.fromCharCode(10);
     let csv = String.fromCharCode(0xFEFF) + "类别,名称,省份,指标,数值" + NL;

@@ -16,6 +16,7 @@ function setMode(m){
   if (typeof clearJurisdiction === "function") clearJurisdiction();
   if (typeof clearFuHull === "function") clearFuHull();
   if (typeof clearFuHeat === "function") clearFuHeat();   // 文心被引着色随模式摘除
+  if (typeof clearDensHeat === "function") clearDensHeat();  // 密度着色随模式摘除
   selPid=null;document.body.classList.remove("selprov");
   if (typeof __curFu !== "undefined") __curFu = null;   // 换模式弃置 3D 上下文
   if(m==="舆图") setFuLabels(null);

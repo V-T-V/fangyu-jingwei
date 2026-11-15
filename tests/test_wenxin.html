@@ -65,6 +65,17 @@ window.addEventListener("load",function(){
             P("HEAT-ON",document.querySelectorAll(".fuheat").length>=180&&!!document.querySelector(".fuheat-legend"));
             hb.click();
             P("HEAT-OFF",document.querySelectorAll(".fuheat").length===0);
+            /* 密度着色：开（15 省晕）→ 翻转（按钮文案变）→ 关 */
+            var db2=document.getElementById("densbtn");
+            db2.click();
+            var polys=document.querySelectorAll(".dens-poly, #map path.leaflet-interactive").length;
+            P("DENS-ON",polys>=13&&/语汇着色/.test(db2.textContent));
+            db2.click();
+            P("DENS-FLIP",/动词着色/.test(db2.textContent));
+            var stillOn=document.querySelectorAll("#map path.leaflet-interactive").length>=13;
+            P("DENS-STAY",stillOn&&/着色/.test(db2.textContent));
+            if(typeof clearDensHeat==="function"){clearDensHeat();}
+            P("DENS-OFF",document.getElementById("densbtn").textContent==="🗺 密度着色");
             /* 文→地联动：省名可点入舆图，府行 ➤ 直飞 */
             P("LINK-PROV",document.querySelectorAll(".wx-nm[data-pid]").length>=30);
             P("LINK-FU",document.querySelectorAll(".wxgo").length>=20);
