@@ -51,6 +51,12 @@ assert "水经注: 山东 8.9" in out, "引书×地域漂移"
 assert "东: 29294" in out, "方向偏好漂移"
 print("  ✓ 东 29294")
 assert "三门: 100" in out, "门数漂移"
+assert "攻·金人: 31" in out, "攻守漂移"
+print("  ✓ 金人 31")
+assert "陷·台城: 21" in out, "围城漂移"
+print("  ✓ 台城 21")
+assert "旱: 201" in out, "灾害漂移"
+print("  ✓ 旱 201")
 print("  ✓ 三门 100")
 print("  ✓ 水经注·山东 8.9")
 print("  ✓ 山之冠 河南 7.9")

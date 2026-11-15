@@ -165,6 +165,21 @@ console.log('--- 门数（n=' + gateTotal + '） ---');
 console.log('三门: ' + (gates['三'] || 0));
 console.log('驿: ' + (corpusAll.split('驿').length - 1));
 
+
+// ── 季节×军事 + 攻守三元组——ANALYSIS §4.11 之源 ──
+console.log('--- 季节 ---');
+['春','秋','冬'].forEach(s2 => console.log(s2 + ': ' + (corpusAll.split(s2).length - 1)));
+console.log('旱: ' + (corpusAll.split('旱').length - 1));
+const WAR_RE = new RegExp('([\u4e00-\u9fff]{2,3})(攻|伐|陷|围|破)([\u4e00-\u9fff]{2,3})', 'g');
+const warTriples = [];
+let wm;
+while ((wm = WAR_RE.exec(corpusAll)) !== null) warTriples.push([wm[1], wm[2], wm[3]]);
+console.log('--- 攻守三元组 n=' + warTriples.length + ' ---');
+const att = {}, vic = {};
+warTriples.forEach(t => { att[t[0]] = (att[t[0]] || 0) + 1; vic[t[2]] = (vic[t[2]] || 0) + 1; });
+Object.entries(att).sort((a, b) => b[1] - a[1]).slice(0, 5).forEach(x => console.log('攻·' + x[0] + ': ' + x[1]));
+Object.entries(vic).sort((a, b) => b[1] - a[1]).slice(0, 5).forEach(x => console.log('陷·' + x[0] + ': ' + x[1]));
+
 console.log('--- 每词之冠（每万字） ---');
 VOCAB.forEach(w => {
   const best = out.reduce((m, r) => (r.cnt[w]*10000/r.chars > m.cnt[w]*10000/m.chars ? r : m), out[0]);
