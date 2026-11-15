@@ -196,6 +196,18 @@ console.log('--- 断代词频 ---');
 });
 console.log('长城: ' + (corpusAll.split('长城').length - 1));
 
+
+// ── 判断的地理——ANALYSIS §4.14 之源 ──
+console.log('谓: ' + (corpusAll.split('谓').length - 1));
+console.log('盖: ' + (corpusAll.split('盖').length - 1));
+const jRows = out.map(function(r){
+  const txt = provTextById[r.p] || '';
+  const j = txt.split('谓').length - 1 + txt.split('盖').length - 1;
+  return { p: r.p, d: +(j * 10000 / r.chars).toFixed(2) };
+}).sort((a, b) => b.d - a.d);
+console.log('判断之冠: ' + jRows[0].p + ' ' + jRows[0].d);
+console.log('判断之末: ' + jRows[jRows.length-1].p + ' ' + jRows[jRows.length-1].d);
+
 console.log('--- 每词之冠（每万字） ---');
 VOCAB.forEach(w => {
   const best = out.reduce((m, r) => (r.cnt[w]*10000/r.chars > m.cnt[w]*10000/m.chars ? r : m), out[0]);

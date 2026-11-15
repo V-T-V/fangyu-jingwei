@@ -62,6 +62,8 @@ assert "鼓角: 858" in out, "声景漂移"
 assert "元: 8102" in out, "断代漂移"
 print("  ✓ 元 8102")
 assert "长城: 178" in out, "长城漂移"
+assert "判断之冠: 山东 31.66" in out, "判断漂移"
+print("  ✓ 山东判断 31.66")
 print("  ✓ 长城 178")
 print("  ✓ 鼓角 858")
 print("  ✓ 旱 201")
