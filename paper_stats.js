@@ -147,6 +147,24 @@ BOOKS_X.forEach(b => {
   console.log(b + ': ' + best[0] + ' ' + best[1]);
 });
 
+
+// ── 方向偏好 + 门数——ANALYSIS §4.10 之源 ──
+const DIRS = ['东','南','西','北'];
+console.log('--- 方向偏好 ---');
+DIRS.forEach(d => {
+  const re2 = new RegExp('(?<![东南西北])' + d + '(?!南西北)', 'g');
+  const n = (corpusAll.match(re2) || []).length;
+  console.log(d + ': ' + n);
+});
+const GATE_RE = new RegExp('([一二三四五六七八九十]+)门', 'g');
+const gates = {};
+let gm;
+while ((gm = GATE_RE.exec(corpusAll)) !== null) gates[gm[1]] = (gates[gm[1]] || 0) + 1;
+const gateTotal = Object.values(gates).reduce((a, b) => a + b, 0);
+console.log('--- 门数（n=' + gateTotal + '） ---');
+console.log('三门: ' + (gates['三'] || 0));
+console.log('驿: ' + (corpusAll.split('驿').length - 1));
+
 console.log('--- 每词之冠（每万字） ---');
 VOCAB.forEach(w => {
   const best = out.reduce((m, r) => (r.cnt[w]*10000/r.chars > m.cnt[w]*10000/m.chars ? r : m), out[0]);

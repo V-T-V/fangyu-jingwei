@@ -48,6 +48,10 @@ print("  ✓ 洪武 1678")
 assert "嘉靖: 1450" in out, "年号漂移"
 print("  ✓ 嘉靖 1450")
 assert "水经注: 山东 8.9" in out, "引书×地域漂移"
+assert "东: 29294" in out, "方向偏好漂移"
+print("  ✓ 东 29294")
+assert "三门: 100" in out, "门数漂移"
+print("  ✓ 三门 100")
 print("  ✓ 水经注·山东 8.9")
 print("  ✓ 山之冠 河南 7.9")
 
