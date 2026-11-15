@@ -59,6 +59,10 @@ assert "旱: 201" in out, "灾害漂移"
 assert "马: 3410" in out, "战略资源漂移"
 print("  ✓ 马 3410")
 assert "鼓角: 858" in out, "声景漂移"
+assert "元: 8102" in out, "断代漂移"
+print("  ✓ 元 8102")
+assert "长城: 178" in out, "长城漂移"
+print("  ✓ 长城 178")
 print("  ✓ 鼓角 858")
 print("  ✓ 旱 201")
 print("  ✓ 三门 100")

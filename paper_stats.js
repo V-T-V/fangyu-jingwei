@@ -187,6 +187,15 @@ console.log('--- 战略资源 ---');
 console.log('鼓角: ' + (corpusAll.split('鼓').length - 1 + corpusAll.split('角').length - 1));
 console.log('炮铳: ' + (corpusAll.split('炮').length - 1 + corpusAll.split('铳').length - 1));
 
+
+// ── 时间深度——ANALYSIS §4.13 之源 ──
+console.log('--- 断代词频 ---');
+['元','汉','宋','唐','明','秦'].forEach(function(d){
+  const n = corpusAll.split(d).length - 1;
+  console.log(d + ': ' + n);
+});
+console.log('长城: ' + (corpusAll.split('长城').length - 1));
+
 console.log('--- 每词之冠（每万字） ---');
 VOCAB.forEach(w => {
   const best = out.reduce((m, r) => (r.cnt[w]*10000/r.chars > m.cnt[w]*10000/m.chars ? r : m), out[0]);
