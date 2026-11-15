@@ -124,6 +124,13 @@ if not ok2:
     bad2 = [l for l in r2.stdout.splitlines() if l.startswith("✗")][:3]
     fails.append(("check_stats", bad2))
 
+# 文档同步哨兵
+r3 = _sp2.run([sys.executable, "tools/check_docs_sync.py"], capture_output=True, text=True, timeout=30)
+ok3 = "同步" in r3.stdout and "✓" in r3.stdout
+print(r3.stdout.strip() or "✗ tools/check_docs_sync.py 无输出")
+if not ok3:
+    fails.append(("check_docs_sync", [r3.stdout.strip()[-80:]]))
+
 # CLI 测试
 import importlib.util
 cli_test = os.path.join(os.path.dirname(__file__), "tests", "test_cli.py")

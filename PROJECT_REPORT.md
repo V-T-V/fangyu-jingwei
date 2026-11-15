@@ -75,6 +75,8 @@ site_data.js 160KB 首屏 · mentions.js 3KB · config.js（九朝/七水/50 关
 | 端到端 | test_journey | 9 步链路（检索→…→全文/Worker） |
 | 视觉 | pose 截图 + 视觉模型 + 像素统计 | RGB/σ 量化核验 |
 | 几何 | 移动端探针 | 元素重叠面积归零 |
+| 数字哨兵 | tools/check_stats.py | 论文 17 项关键数 CI 锚定 |
+| 文档哨兵 | tools/check_docs_sync.py | md↔PDF 同步守护 |
 | CI | GitHub Actions | push/PR 全绿 |
 
 ## 六、工程教训录（跨轮沉淀）
@@ -110,7 +112,7 @@ site_data.js 160KB 首屏 · mentions.js 3KB · config.js（九朝/七水/50 关
 
 | 指标 | 值 |
 |---|---|
-| git 提交 | 149 |
+| git 提交 | 156 |
 | 版本标签 | 13（v1.0.0 → v3.5.0） |
 | 代码行数 | ~6,000（js 3,348 + css/py/html） |
 | 测试文件 | 23（14 断言页 + 6 pose + 3 兼容位） |
