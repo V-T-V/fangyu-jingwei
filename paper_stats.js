@@ -181,6 +181,7 @@ Object.entries(att).sort((a, b) => b[1] - a[1]).slice(0, 5).forEach(x => console
 Object.entries(vic).sort((a, b) => b[1] - a[1]).slice(0, 5).forEach(x => console.log('陷·' + x[0] + ': ' + x[1]));
 
 
+
 // ── 战略资源 + 声景——ANALYSIS §4.12 之源 ──
 console.log('--- 战略资源 ---');
 ['马','盐','铁','茶'].forEach(r2 => console.log(r2 + ': ' + (corpusAll.split(r2).length - 1)));
@@ -207,6 +208,9 @@ const jRows = out.map(function(r){
 }).sort((a, b) => b.d - a.d);
 console.log('判断之冠: ' + jRows[0].p + ' ' + jRows[0].d);
 console.log('判断之末: ' + jRows[jRows.length-1].p + ' ' + jRows[jRows.length-1].d);
+
+
+// ── 战略共现——ANALYSIS §4.15 之源 ──
 
 console.log('--- 每词之冠（每万字） ---');
 VOCAB.forEach(w => {
