@@ -108,7 +108,7 @@ nav button:hover{color:var(--cinnabar-d)}
   background:var(--silk-3);border:1px solid var(--line);
   box-shadow:0 14px 30px -10px rgba(60,45,20,.45);display:none;z-index:5;
 }
-#sresults.open{display:block}
+#sresults.open{display:block;box-shadow:0 8px 24px rgba(60,45,20,.25);border:1px solid var(--line)}
 #sresults .sr{
   padding:7px 13px;cursor:pointer;display:flex;align-items:baseline;gap:8px;
   border-bottom:1px dashed rgba(120,96,54,.22);font-size:13px;
@@ -733,3 +733,15 @@ body.imgbasemap .grain{opacity:.25}
 @media (max-width:640px){
   .ftool{padding:8px 14px;font-size:14px;margin:2px 3px}  /* 移动端加大触控 */
 }
+/* 移动端缩放控件加大 */
+@media (max-width:640px){
+  .leaflet-control-zoom a{width:38px!important;height:38px!important;line-height:38px!important;font-size:22px!important}
+}
+
+/* 文心/透视 计算中动画 */
+.wx-prog::after{content:"…";animation:wxpulse 1.2s ease-in-out infinite}
+@keyframes wxpulse{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* 展卷按钮呼吸——引导首次点击 */
+#boot .go{animation:goPulse 2.5s ease-in-out infinite}
+@keyframes goPulse{0%,100%{opacity:.7}50%{opacity:1;text-shadow:0 0 12px rgba(178,58,46,.4)}}
