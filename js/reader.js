@@ -169,6 +169,7 @@ function renderText(title, kicker, raw, backFn, ctxPid, toc){
     ? `<div class="tocrow"><span class="tocap">卷内跳转</span>${toc.map(n=>
         `<span class="chip small tocz" data-n="${n}">${n.replace(/县$/,"")}</span>`).join("")}</div>` : "";
   pbody.innerHTML = `
+    <div id="readprog"><div class="bar"></div></div>
     <div class="p-kicker">${kicker}</div>
     <button class="tback" id="tback">⟨ 返回详情</button>
     <div class="tmeta">《${title}》全篇 · ${raw.length.toLocaleString()} 字
@@ -212,6 +213,25 @@ function renderText(title, kicker, raw, backFn, ctxPid, toc){
   });
   pbody.scrollTop = 0;
   showPanel();
+
+  /* 阅读进度条 + 回顶按钮 */
+  const progBar = pbody.querySelector("#readprog .bar");
+  const updateProg = () => {
+    if (!progBar) return;
+    const max = pbody.scrollHeight - pbody.clientHeight;
+    const pct = max > 0 ? (pbody.scrollTop / max * 100) : 0;
+    progBar.style.width = pct.toFixed(1) + "%";
+    const bt = pbody.querySelector("#backtop");
+    if (bt) bt.classList.toggle("show", pbody.scrollTop > 400);
+  };
+  pbody.addEventListener("scroll", updateProg, { passive: true });
+
+  const backtop = document.createElement("div");
+  backtop.id = "backtop";
+  backtop.textContent = "↑";
+  backtop.title = "回到卷首";
+  backtop.onclick = () => pbody.scrollTo({ top: 0, behavior: "smooth" });
+  pbody.querySelector(".twrap").after(backtop);
   if (renderText._q) { const q = renderText._q; renderText._q = null; setTimeout(()=>jumpInText(q), 120); }
 }
 
