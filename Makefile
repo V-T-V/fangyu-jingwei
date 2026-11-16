@@ -1,7 +1,10 @@
-.PHONY: lint verify test health all
+.PHONY: lint fix verify test health all
 
 lint:
 	python tools/lint.py
+
+fix:
+	python tools/lint.py --fix
 
 verify:
 	python verify.py

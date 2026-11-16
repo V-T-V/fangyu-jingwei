@@ -3,6 +3,7 @@
    Lauren Tan 信任金字塔实践：修 agent 不加规则，变成 lint。
    python tools/lint.py  →  0 = 全过 / 1 = 有违规"""
 import os, re, sys, glob, json
+FIX = "--fix" in sys.argv
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
@@ -33,7 +34,16 @@ for f in ['3d.html'] + glob.glob('tests/*.html'):
     c = open(f, encoding='utf-8').read()
     fv = set(re.findall(r'\?v=(\d+)', c))
     bad = fv - {idx_v}
-    check(not bad, f"{f} 版本对齐（杂散 {bad or '无'}）")
+    if bad and FIX:
+        # 自愈：对齐到 index.html 版本
+        c = open(f, encoding='utf-8').read()
+        c2 = re.sub(r'\?v=\d+', f'?v={idx_v}', c)
+        open(f, 'w', encoding='utf-8').write(c2)
+        print(f"  🔧 {f}: 版本对齐 → v={idx_v}")
+    elif bad:
+        check(False, f"{f} 版本对齐（杂散 {bad}）— try --fix")
+    else:
+        check(True, f"{f} 版本对齐")
 
 # ── L2: 目录结构（教训：仓库理整后的约定）──
 print("── 2. 目录结构")
@@ -163,4 +173,18 @@ if fails:
         print(f"✗ {f_}")
     print(f"Lint：{len(fails)} 项违规")
     sys.exit(1)
-print(f"Lint：全过 ✓")
+# 自愈：尾空格 + 文件末尾换行
+if FIX:
+    fixed = 0
+    for f in glob.glob('js/*.js') + glob.glob('tools/*.py') + glob.glob('tests/*.html'):
+        c = open(f, encoding='utf-8').read()
+        c2 = c.rstrip() + chr(10) if c.strip() else c
+        if not c2.endswith(chr(10)):
+            c2 += chr(10)
+        if c != c2:
+            open(f, 'w', encoding='utf-8').write(c2)
+            fixed += 1
+    if fixed:
+        print(f"  🔧 尾空格/末行自愈 ×{fixed}")
+
+print(f"Lint：全过 ✓" + ("（含自愈）" if FIX else ""))
