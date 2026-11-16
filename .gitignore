@@ -12,3 +12,11 @@ Thumbs.db
 
 # 旧版评审残图
 .screenshots/
+
+# 探针与调试（本项目中多次产生后手动删除——应一开始就忽略）
+_probe_*.html
+_wsim.js
+_jd.*
+srv.log
+shot_*.png
+docs/_p*.png
