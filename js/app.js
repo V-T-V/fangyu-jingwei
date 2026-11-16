@@ -51,6 +51,12 @@ document.addEventListener("keydown",e=>{
     return;
   }
   if(e.key==="?" && e.target.tagName!=="INPUT"){ openAbout(); return; }
+  if(e.key==="/" && e.target.tagName!=="INPUT"){
+    e.preventDefault();
+    const si = document.getElementById("search");
+    if (si){ si.focus(); si.select(); }
+    return;
+  }
   if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT") return;  // 输入中不抢键
   if(mode!=="形势") return;
   if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
