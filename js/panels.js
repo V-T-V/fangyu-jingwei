@@ -22,6 +22,31 @@ function vset(name,seal){vname.textContent=name;vseal.textContent=seal||"纪要"
 
 function openIntro(){
   vset("方舆经纬","总叙");
+  /* 首访简化：只展示三模式入口 + 开始按钮；回访显示全功能 */
+  let firstVisit = false;
+  try{ firstVisit = !localStorage.getItem("fyvisited"); }catch(e){ firstVisit = true; }
+  try{ localStorage.setItem("fyvisited","1"); }catch(e){}
+  if (firstVisit){
+    pbody.innerHTML = `
+     <div class="p-kicker">读史方舆纪要 · 顾祖禹撰 · 首次到访</div>
+     <div class="quote qxu" style="font-size:16px;line-height:2.2;text-align:center;padding:30px 16px">
+       据山河形胜<br>论古今兴废
+     </div>
+     <div class="p-cap">选择一种方式开始</div>
+     <ul class="ful">
+       <li data-go="舆图"><span class="fn" style="font-size:16px">🗺 舆图</span><span class="fnow">十五省治所 · 点击探索</span><span class="arrow">➤</span></li>
+       <li data-go="形势"><span class="fn" style="font-size:16px">📜 形势</span><span class="fnow">九朝疆域推演</span><span class="arrow">➤</span></li>
+       <li data-go="川渎"><span class="fn" style="font-size:16px">🌊 川渎</span><span class="fnow">七大水系沿流</span><span class="arrow">➤</span></li>
+     </ul>
+     <div style="text-align:center;padding:20px 0">
+       <button class="readfull" id="skipIntro" style="font-size:15px;padding:10px 28px">直接开始探索 ⟩</button>
+     </div>`;
+    pbody.querySelectorAll("[data-go]").forEach(el=>el.onclick=()=>setMode(el.dataset.go));
+    const sk = pbody.querySelector("#skipIntro");
+    if (sk) sk.onclick = ()=>{ hidePanel(); };
+    showPanel();
+    return;
+  }
   pbody.innerHTML = `
    <div class="p-kicker">读史方舆纪要 · 顾祖禹撰</div>
    <div class="quote qxu">据山河形胜，论古今兴废。自唐虞三代，迄于有明，凡历代州域形势九卷、十五省方舆一百十四卷、川渎异同六卷、分野一卷。</div>

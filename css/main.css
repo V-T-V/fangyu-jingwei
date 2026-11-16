@@ -263,7 +263,9 @@ footer .right{margin-left:auto;display:flex;gap:16px;color:var(--ink-faint);lett
 #modelabel{color:var(--cinnabar-d);font-family:"KaiTi",serif;letter-spacing:4px}
 
 /* ── 地图要素 ───────────────────────────────────────── */
-.fuseal{
+.fuseal{position:relative;
+  /* 触控区扩大 */
+
   width:13px;height:13px;background:rgba(245,238,218,.92);
   box-shadow:inset 0 0 0 1.6px var(--pc,#2f5d70),0 0 0 1px rgba(60,45,20,.25);
   transform:rotate(45deg);transition:box-shadow .2s,transform .2s;
@@ -271,7 +273,9 @@ footer .right{margin-left:auto;display:flex;gap:16px;color:var(--ink-faint);lett
 .fuseal:hover,.fuseal.hot{transform:rotate(45deg) scale(1.35);box-shadow:inset 0 0 0 2px var(--pc,#2f5d70),0 0 0 1.5px rgba(60,45,20,.4)}
 body.m-舆图 .leaflet-marker-icon{cursor:pointer}
 /* 省选中淡出他省 */
-body.selprov .fuseal{opacity:.94}
+body.selprov .fuseal{position:relative;
+  /* 触控区扩大 */
+opacity:.94}
 body.selprov .fuseal.dim{opacity:.13}
 /* 标签 */
 .fulab{
@@ -698,7 +702,9 @@ body.imgbasemap .paper-wash{
 }
 body.imgbasemap .xseal{box-shadow:0 0 0 1.5px rgba(246,239,220,.95)}
 body.imgbasemap .zseal{box-shadow:0 0 0 1.5px rgba(246,239,220,.95)}
-body.imgbasemap .fuseal{box-shadow:inset 0 0 0 1.5px rgba(246,239,220,.55),0 0 5px rgba(0,0,0,.45)}
+body.imgbasemap .fuseal{position:relative;
+  /* 触控区扩大 */
+box-shadow:inset 0 0 0 1.5px rgba(246,239,220,.55),0 0 5px rgba(0,0,0,.45)}
 body.imgbasemap .passmark{box-shadow:0 0 0 1.5px rgba(246,239,220,.9)}
 body.imgbasemap .grain{opacity:.25}
 
@@ -745,3 +751,15 @@ body.imgbasemap .grain{opacity:.25}
 /* 展卷按钮呼吸——引导首次点击 */
 #boot .go{animation:goPulse 2.5s ease-in-out infinite}
 @keyframes goPulse{0%,100%{opacity:.7}50%{opacity:1;text-shadow:0 0 12px rgba(178,58,46,.4)}}
+
+/* 府治印章触控热区——视觉 13px / 触控 ≥26px（移动端手指可及） */
+.leaflet-marker-icon .fuseal{margin:-7px;padding:7px;box-sizing:content-box}
+.leaflet-marker-icon .zseal{margin:-5px;padding:5px;box-sizing:content-box}
+.leaflet-marker-icon .passmark{margin:-6px;padding:6px;box-sizing:content-box}
+
+/* 移动端纲目折叠 */
+@media (max-width:640px){
+  #rail{width:130px}
+  #raillist{font-size:12px}
+  #rail .ri{padding:4px 6px}
+}
