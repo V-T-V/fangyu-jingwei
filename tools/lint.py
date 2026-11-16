@@ -167,6 +167,16 @@ for f in sorted(_g2.glob('js/*.js') + _g2.glob('tools/*.py')):
         # 超 3 行连续注释（可能是用注释代替代码）
 check(len(todo_hits) <= 3, f"TODO/FIXME/HACK ≤3（实得 {len(todo_hits)}：{todo_hits[:3]}）")
 
+# ── L13: CI 吞错禁用（教训 20：竖线竖线 true 把「确定坏了」变「随机坏」——镜像迁移日全灭根因）──
+print("── 13. CI 吞错")
+swallow = []
+for f in sorted(glob.glob('.github/workflows/*.yml')):
+    for i, line in enumerate(open(f, encoding='utf-8'), 1):
+        code = line.split('#')[0]        # 剥注释：禁止令的文档表述不算违规（git mv -q 自指案同款）
+        if '|| true' in code or '|| exit 0' in code:
+            swallow.append(f"{f}:{i}")
+check(not swallow, f"workflows 无吞错兜底（实得 {swallow}）")
+
 print()
 if fails:
     for f_ in fails:

@@ -200,3 +200,22 @@ Worker 后台计算（实测 1,512ms 主线程零阻塞）；paper_stats.js v5 �
 **学术**：文献综述(6条引文)+英文摘要+投稿格式
 
 Lauren Tan 三实践完整落地：12类lint+AGENTS.md+pre-commit+Makefile
+
+---
+
+## 第十一纪：论文配图与 CI 事故（2026-11-16/17）
+
+**论文配图**：四张绢底 matplotlib 出版级插图（书架/里程/史论错位/PCA）
+- 口径同源：figs_data.js 与 paper_stats.js 逐字同正则；PCA 12 列标准化复算
+  56.9/21.3/11.1%=89.3% 与论文全同；r=-0.529 复现
+- 脚本自证：PC1 南北 7v8 分割由绘图脚本内置断言逐次验证
+- 图注居中经几何核验（中心=297.6pt 偏差 0.0）——视觉模型两度误报被确定性证据推翻
+
+**CI 事故两层**：
+- 表层（教训 21）：就绪等待循环静默落穿→裸 traceback；修为带就绪标志 +
+  显式 raise + 整体重试 3 次 + 干净失败（CDP-LAUNCH FAIL）
+- 根因（教训 20）：ubuntu-latest 迁移 Ubuntu 26 期间 chromium-browser 成 snap
+  过渡壳（容器内不可运行）；`|| true` 吞掉安装失败；FY_BROWSER 硬指壳又压掉
+  预装 Chrome → 修为预装 google-chrome + `test -x` 就绪即响
+- 教训 20 升格 lint L13（CI 吞错禁用）：注释剥离豁免——禁止令的文档表述
+  不算违规（git mv -q 自指案同款）
