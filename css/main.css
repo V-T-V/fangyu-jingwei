@@ -713,3 +713,7 @@ body.imgbasemap .grain{opacity:.25}
 .fuheat-legend span{display:inline-block;width:86px;height:8px;vertical-align:middle;margin:0 5px;
   border:1px solid rgba(60,45,20,.25)}
 .leaflet-marker-shadow~.fuheat,.fuheat{cursor:pointer}
+
+/* 移动端触控：地图区禁默认手势，面板区允许滚动 */
+#map{touch-action:none}
+#pbody{touch-action:pan-y}

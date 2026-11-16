@@ -26,7 +26,7 @@ function setBasemap(kind){
   /* 瓦片断供兜底：>5 张 404 → 隐瓦片层，绢底自足（矢量数据不受影响） */
   tileLayer.on("tileerror", ()=>{
     tileErrs++;
-    if (tileErrs === 6){
+    if (tileErrs === 3){
       map.removeLayer(tileLayer);
       document.getElementById("map").style.background =
         "radial-gradient(ellipse 130% 100% at 50% 30%, #efe6cf 0%, #e7dcbc 50%, #ddd0ae 100%)";
