@@ -101,6 +101,50 @@ for f in glob.glob('js/*.js'):
     if n > 700:
         check(False, f"{f} {n} 行 > 700（考虑拆分，教训：API 截断）")
 
+
+# ── L10: 危险 API 禁用（Lauren Tan 实践 1：useEffect 等价物）──
+print("── 10. 危险 API")
+DANGEROUS = [
+    # (pattern, file_glob, message)
+    (r'map\.fire\("click"', 'tests/*.html',
+     'map.fire("click") 委托分发不可靠（§4 排档档）→ canvas.dispatchEvent'),
+    (r'innerHTML\.indexOf\("mode=', 'tests/*.html',
+     'innerHTML 含 &amp; 序列化（教训：&→&amp;）→ 用 href 或 textContent'),
+    (r'git mv -q', 'tools/*.py',
+     'git mv -q 不存在 → 去掉 -q'),
+]
+for pat, fglob, msg in DANGEROUS:
+    hits = []
+    import glob as _g
+    for f in _g.glob(fglob):
+        if 'lint.py' in f: continue
+        c = open(f, encoding='utf-8').read()
+        if re.search(pat, c):
+            hits.append(f)
+    check(not hits, f"API 禁用：{msg[:30]}...（违 {hits[:3] or '无'}）")
+
+# ── L11: Worker 无 DOM（Lauren Tan 实践 2：目录即上下文）──
+print("── 11. 架构约束")
+w = open('js/ftworker.js', encoding='utf-8').read()
+dom_refs = re.findall(r'(?:document|window)\.', w)
+# postMessage 的 self 不算
+check(len(dom_refs) == 0, f"Worker 不引用 DOM（实得 {len(dom_refs)} 处 {dom_refs[:3]}）")
+
+# 核心模块不引用特性模块的 DOM ID
+core = open('js/map.js', encoding='utf-8').read() + open('js/panels.js', encoding='utf-8').read()
+feature_ids = re.findall(r'id="(?:wxheat|densbtn|tourbtn|cambmk)"', 
+                         open('js/wenxin.js', encoding='utf-8').read() + open('js/map3d.js', encoding='utf-8').read())
+check(not feature_ids or not any(fid in core for fid in feature_ids),
+      f"核心模块不含特性模块 DOM ID（{feature_ids[:3]}）")
+
+# 脚本加载顺序（defer 依赖链）
+scripts = re.findall(r'<script src="js/(\w+)\.js', idx)
+expected_order = ['config', 'map', 'panels', 'rail', 'search', 'reader',
+                  'bookmarks', 'fulltext', 'app', 'modes', 'analytics', 'wenxin', 'bian']
+actual_order = [s for s in scripts if s in expected_order]
+check(actual_order == expected_order[:len(actual_order)],
+      f"脚本 defer 顺序符合依赖链（{actual_order}）")
+
 print()
 if fails:
     for f_ in fails:
