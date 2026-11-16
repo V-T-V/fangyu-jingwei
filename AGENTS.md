@@ -7,7 +7,7 @@
 
 ```bash
 python -m http.server 9200 &          # 起本地服务
-python tools/lint.py                   # 11 类确定性检查（先跑这个）
+python tools/lint.py                   # 13 类确定性检查（先跑这个）
 python verify.py                       # 数据完整性
 python run_tests.py                    # 全套回归（含 lint · 14 页 · 哨兵 · CLI）
 ```
@@ -39,6 +39,7 @@ docs/                        # 论文 PDF · 配套数据 · 截图
 | Worker 中引用 `document/window` | Worker 无 DOM | 纯数据计算 + `postMessage` |
 | 核心模块引用特性模块 DOM ID | 架构分层 | 用 `typeof` 守卫回调 |
 | 版本号手列清单 bump | 教训 13 | `glob` 全站 `?v=` |
+| workflows 里 `|| true` 兜底 | 教训 20：吞错把「确定坏」变「随机坏」 | 让命令失败即响，或显式处理 |
 
 ## 数据纪律
 
