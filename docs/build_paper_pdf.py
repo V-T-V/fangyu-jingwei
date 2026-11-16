@@ -7,12 +7,21 @@ from reportlab.lib.units import mm
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, Paragraph,
-                                Spacer, Table, TableStyle, KeepTogether, HRFlowable)
+                                Spacer, Table, TableStyle, KeepTogether, HRFlowable, Image)
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "docs", "方舆经纬-空间与文本计量研究.pdf")
+FIGS_DIR = os.path.join(ROOT, "docs", "figs")
+
+# 插图缺失时自动重建（管线可重入：figs_data.js → build_paper_figs.py）
+_NEED_FIGS = ["fig3_books.png", "fig4_li.png", "fig1_shilun.png", "fig2_pca.png"]
+if not all(os.path.exists(os.path.join(FIGS_DIR, f)) for f in _NEED_FIGS):
+    import subprocess, sys
+    with open(os.path.join(ROOT, "docs", "figs_data.json"), "wb") as _f:
+        subprocess.run(["node", "docs/figs_data.js"], check=True, cwd=ROOT, stdout=_f)
+    subprocess.run([sys.executable, "-I", os.path.join(ROOT, "docs", "build_paper_figs.py")], check=True)
 
 pdfmetrics.registerFont(TTFont("KaiTi", r"C:\Windows\Fonts\STKAITI.TTF"))
 pdfmetrics.registerFont(TTFont("YaHei", r"C:\Windows\Fonts\msyh.ttc", subfontIndex=0))
@@ -63,6 +72,10 @@ def tbl(headers, rows, widths, caption=None, left_cols=()):
     out = [t]
     if caption: out.append(Paragraph(caption, S["cap"]))
     return KeepTogether(out)
+
+def fig(fname, h_mm, caption):
+    img = Image(os.path.join(FIGS_DIR, fname), width=AW, height=h_mm * mm, hAlign="CENTER")
+    return KeepTogether([Spacer(1, 2 * mm), img, Paragraph(caption, S["cap"])])
 
 def footer(cv, doc):
     cv.saveState()
@@ -167,6 +180,7 @@ E += [      P("4.4 顾祖禹的书架（《》引书榜）", "h2"),
            ["城邑考", "216", "舆程记", "165", "隋志", "144"]],
           [.17, .16, .17, .16, .17, .17], "表 5　《》引书 TOP（书例引用近万处）"),
       P("水经注一骑绝尘（次席的 2.6 倍）——「以山川为经」的方法论有其文献学根基；汉—隋—唐—宋正史地理志成链；城邑考、舆程记当属顾氏自著或家学所辑（自引互证）。"),
+      fig("fig3_books.png", 108.6, "图 1　《》引书 TOP10——水经注为次席的 2.6 倍（docs/figs_data.js 复算）"),
       P("4.5 时代层：明初透镜与五代峰值", "h2"),
       P("时代连称合计：明初 1,499、五代 893、魏晋 63、南北朝 50、隋唐 37。明初为全域最厚时间层（卫所·迁徙·边防的当代意识）；五代叙事密度之最在北直隶与山西——燕云十六州叙事带，石晋割地之痛的文本投影，与九边防务主题互为表里。"),
       P("4.6 意象与两级节奏", "h2"),
@@ -175,6 +189,7 @@ E += [      P("4.4 顾祖禹的书架（《》引书榜）", "h2"),
           [["政区内（山川·关隘定位）", "35 里", "叙事分辨率——半日之程"],
            ["政区间（县→府）", "150 里", "一日可达——管辖半径"]],
           [.42, .18, .40], "表 6　两级行政地理节奏", left_cols=(0, 2)),
+      fig("fig4_li.png", 113.3, "图 2　方位里程分布（n=28,750）——35 里与 150 里的两级行政节奏"),
       P("4.7 山河名录与城周金字塔", "h2"),
       P("水名榜：大江 829 单目居首，黄河系（黄河 398 + 大河 372）合计 770 仍冠；漳水 269（卫河-漕运系）位次之高出乎意料。山名榜：太行 225 次，为次席荆山 74 之三倍——「天下之脊」所指之山即全书被言及最多的山，意象层与名录层互证。山河密度亦呈北方化：山名之冠河南 7.9（太行·荆山·嵩山环拱），水名之冠南直隶 26.5，而福建水名仅 1.8、云南山名 0.1——滇桂闽在语汇层被高频警示（设论），其山河之名却罕被具名，「山河」本身即北方叙事的骨架。城周金字塔（n=1,023）：中位 5 里，3–9 里占 67%，52 里孤例都城级；县城 3–5 里、府城 5–9 里、都会 15 里以上，与行政层级同构。"),
       P("4.8 战争的动词地理：警示与战史的错位", "h2"),
@@ -182,6 +197,7 @@ E += [      P("4.4 顾祖禹的书架（《》引书榜）", "h2"),
           [["河南", "105.2", "贵州 / 福建 / 广东", "48.8 / 46.5 / 41.0"]],
           [.25, .15, .35, .25], "表 7　攻守动词每万字密度（14 词）"),
       P("攻守动词（攻·围·拔·陷·克·破·守·据·降·战·败·屠·焚·掠）密度之冠是语汇垫底的河南，语汇前四的广东、福建恰居榜末——顾祖禹对腹里中原写发生过什么（史·战场剧场），对帝国边缘写需要防什么（论·设险方略）。全书的史与论，在语汇与动词两张密度图上互补成对。"),
+      fig("fig1_shilun.png", 132.2, "图 3　语汇密度 × 动词密度的负相关（r=-0.53，n=15 省）——史论错位"),
 ]
 
 E += [
@@ -231,6 +247,7 @@ E += [
 E += [
       P("4.18 PCA——三维性", "h2"),
       P("S1 PCA：PC1 57%（叙事-警示轴·完美分割南北 7v8 无一交叉）+ PC2 21%（警示强度）+ PC3 11%（行政规模）= 89% 累计。南直隶双极（最叙事 AND 最警示——留都的二元性）。山东边缘（叙事低→归警示组，但警示也低→纯分析对象）。"),
+      fig("fig2_pca.png", 136.9, "图 4　S1 十二维标准化 PCA——PC1 无一交叉分割南北（7v8），前三主成分累计 89.3%"),
 ]
 # ── 五、互证 ──
 E += [
