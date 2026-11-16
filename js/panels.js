@@ -172,6 +172,9 @@ function openFu(p,u){
             ? `<div class="p-cap">文心 · 掂量</div><div class="chips"><span class="chip jschip" id="wxjump" title="点开文心观全书排名">全书被引 ${st.n} 次 · 第 ${st.rank} 位 ➤</span></div>`
             : `<div class="p-cap">文心 · 掂量</div><div class="chips"><span class="chip small" id="wxcalc" style="cursor:pointer" title="载入全书原文后统计此府被引次数">🖋 掂量此府（载入原文约数秒）…</span></div>`; })()
       : ""}
+    <div class="readrow" style="margin-top:8px">
+      <button class="readfull" id="shareFu" title="复制此景链接，发给朋友">🔗 分享此景</button>
+    </div>
     <div class="p-cap">出处</div>
     <div class="hint">《读史方舆纪要》${p.name}方舆纪要 · ${p.vols.join("、")}。县名后〔今废〕〔新改〕等注记皆原书自注。</div>`;
   const fb = pbody.querySelector("[data-ft]");
@@ -198,6 +201,24 @@ function openFu(p,u){
     });
   };
   if(u.c) safeFlyTo(u.c,7,{duration:1.1});
+  const shBtn = pbody.querySelector("#shareFu");
+  if (shBtn) shBtn.onclick = () => {
+    const url = location.origin + location.pathname +
+      "#mode=舆图&p=" + p.id + "&fu=" + encodeURIComponent(u.n);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        shBtn.textContent = "✓ 已复制";
+        setTimeout(() => shBtn.textContent = "🔗 分享此景", 1600);
+      });
+    } else {
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = url; document.body.appendChild(ta);
+      ta.select(); document.execCommand("copy"); ta.remove();
+      shBtn.textContent = "✓ 已复制";
+      setTimeout(() => shBtn.textContent = "🔗 分享此景", 1600);
+    }
+  };
   if (typeof showJurisdiction === "function") showJurisdiction(p, u);
   if (typeof showFuHull === "function") showFuHull(p, u);
   if (typeof clearCountyTerritories === "function") clearCountyTerritories();
