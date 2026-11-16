@@ -73,49 +73,63 @@ for page in PAGES:
 
 # ── 3D 页（MapLibre 与虚拟时间不合）：CDP 真实时间 + 标题协议 ──
 import json as _json, urllib.request as _ur, time as _time
-def run_cdp_test(page):
-    port, proc, out = 9333, None, None
+def run_cdp_test(page, _attempts=3):
+    # CI 冷机偶发浏览器 >10s 起不来（2026-11-16 教训：就绪循环静默落穿→裸 traceback）
     import subprocess as _sp, tempfile as _tf, os as _os
-    prof = _tf.mkdtemp(prefix="fy3d_")
-    proc = _sp.Popen([EDGE, "--headless=new", "--disable-gpu", "--use-angle=swiftshader",
-        "--no-first-run", "--remote-debugging-port=%d" % port,
-        "--user-data-dir=" + prof, "about:blank"],
-        stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
-    try:
-        base = "http://127.0.0.1:%d" % port
-        for _ in range(50):                      # 等调试端口就绪
-            try:
-                _ur.urlopen(base + "/json/version", timeout=1).read(); break
-            except Exception:
-                _time.sleep(.2)
-        req = _ur.Request(base + "/json/new?" + BASE + page, method="PUT")
-        tabinfo = _json.loads(_ur.urlopen(req, timeout=5).read())
-        deadline = _time.time() + 95
-        while _time.time() < deadline:
-            _time.sleep(1.5)
-            tabs = _json.loads(_ur.urlopen(base + "/json/list", timeout=5).read())
-            tab = next((t for t in tabs if t.get("id") == tabinfo["id"]), None)
-            title = (tab or {}).get("title", "")
-            if title.startswith("R3D:") or title.startswith("R3D-ERR"):
-                out = title.split(":",1)[1] if title.startswith("R3D-ERR") else title[4:]; break
-        if out is None:
-            # 超时也带出部分进度（R3DP 前缀），不再伪装成纯超时
-            tabs2 = _json.loads(_ur.urlopen(base + "/json/list", timeout=5).read())
-            tab2 = next((t for t in tabs2 if t.get("id") == tabinfo["id"]), None)
-            part = (tab2 or {}).get("title", "")
-            out = "CDP-TIMEOUT FAIL" + (" / PART:" + part[5:180] if part.startswith("R3DP:") else "")
-    finally:
-        proc.terminate()
-        # 收尸：无头浏览器子进程（terminate 只杀主进程，尸体吃 CPU 会让下一轮 CDP 假超时）
-        if sys.platform == "win32":
-            _sp.run(["powershell", "-NoProfile", "-Command",
-              "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe'\" | "
-              "Where-Object {$_.CommandLine -like '*headless*'} | "
-              "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],
-              capture_output=True, timeout=30)
-        else:
-            _sp.run(["pkill", "-f", "remote-debugging-port=%d" % port],
-              capture_output=True, timeout=15)
+    out = None
+    for _att in range(_attempts):
+        port, proc = 9333, None
+        prof = _tf.mkdtemp(prefix="fy3d_")
+        proc = _sp.Popen([EDGE, "--headless=new", "--disable-gpu", "--use-angle=swiftshader",
+            "--no-first-run", "--remote-debugging-port=%d" % port,
+            "--user-data-dir=" + prof, "about:blank"],
+            stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+        try:
+            base = "http://127.0.0.1:%d" % port
+            _ready = False
+            for _ in range(75):                     # 等调试端口就绪（15s）
+                try:
+                    _ur.urlopen(base + "/json/version", timeout=1).read(); _ready = True; break
+                except Exception:
+                    _time.sleep(.2)
+            if not _ready:
+                raise RuntimeError("CDP 端口 15s 未就绪（浏览器未启动）")
+            req = _ur.Request(base + "/json/new?" + BASE + page, method="PUT")
+            tabinfo = _json.loads(_ur.urlopen(req, timeout=5).read())
+            deadline = _time.time() + 95
+            while _time.time() < deadline:
+                _time.sleep(1.5)
+                tabs = _json.loads(_ur.urlopen(base + "/json/list", timeout=5).read())
+                tab = next((t for t in tabs if t.get("id") == tabinfo["id"]), None)
+                title = (tab or {}).get("title", "")
+                if title.startswith("R3D:") or title.startswith("R3D-ERR"):
+                    out = title.split(":",1)[1] if title.startswith("R3D-ERR") else title[4:]; break
+            if out is None:
+                # 超时也带出部分进度（R3DP 前缀），不再伪装成纯超时
+                tabs2 = _json.loads(_ur.urlopen(base + "/json/list", timeout=5).read())
+                tab2 = next((t for t in tabs2 if t.get("id") == tabinfo["id"]), None)
+                part = (tab2 or {}).get("title", "")
+                out = "CDP-TIMEOUT FAIL" + (" / PART:" + part[5:180] if part.startswith("R3DP:") else "")
+            break                                    # 成功（含 CDP-TIMEOUT 诊断），不再重试
+        except Exception as e:
+            if _att < _attempts - 1:
+                print("    ↻ %s 第 %d 次启动失败，重试：%s" % (page, _att + 1, e))
+                continue
+            fails.append((page, ["CDP-LAUNCH FAIL " + str(e)]))
+            print("✗ %-20s CDP-LAUNCH FAIL（%s）" % (page, e))
+            return
+        finally:
+            proc.terminate()
+            # 收尸：无头浏览器子进程（terminate 只杀主进程，尸体吃 CPU 会让下一轮 CDP 假超时）
+            if sys.platform == "win32":
+                _sp.run(["powershell", "-NoProfile", "-Command",
+                  "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe'\" | "
+                  "Where-Object {$_.CommandLine -like '*headless*'} | "
+                  "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],
+                  capture_output=True, timeout=30)
+            else:
+                _sp.run(["pkill", "-f", "remote-debugging-port=%d" % port],
+                  capture_output=True, timeout=15)
     lines = [l.strip() for l in out.split(";") if l.strip()]
     bad = [l for l in lines if "FAIL" in l and "SKIP" not in l]
     print(("✓" if not bad else "✗") + " %-20s %d 项断言%s" % (page, len(lines), "" if not bad else "："))
