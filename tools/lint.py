@@ -145,6 +145,18 @@ actual_order = [s for s in scripts if s in expected_order]
 check(actual_order == expected_order[:len(actual_order)],
       f"脚本 defer 顺序符合依赖链（{actual_order}）")
 
+# ── L12: 借口注释（Lauren Tan 实践 3 的温和版）──
+print("── 12. 借口注释")
+import glob as _g2
+todo_hits = []
+for f in sorted(_g2.glob('js/*.js') + _g2.glob('tools/*.py')):
+    for i, line in enumerate(open(f, encoding='utf-8'), 1):
+        # TODO/FIXME/HACK = 借口（ Lauren Tan：agent 把它当「这事很难所以我不做对」的通行证）
+        if re.search(r'(?:TODO|FIXME|HACK)', line, re.I):
+            todo_hits.append(f"{f}:{i}")
+        # 超 3 行连续注释（可能是用注释代替代码）
+check(len(todo_hits) <= 3, f"TODO/FIXME/HACK ≤3（实得 {len(todo_hits)}：{todo_hits[:3]}）")
+
 print()
 if fails:
     for f_ in fails:

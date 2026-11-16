@@ -75,6 +75,21 @@ site_data.js 160KB 首屏 · mentions.js 3KB · config.js（九朝/七水/50 关
 
 ## 五、质量体系
 
+### Agent 基建（Lauren Tan 信任金字塔 · 2026-11-16 集成）
+
+基于 SpaceX/xAI 首席工程师 Lauren Tan @ AI Engineer Code Summit 2026 的框架：
+**修 agent 时不加规则，而是变成确定性检查。**
+
+| 层 | 工具 | 检查类 |
+|---|---|---|
+| 文字指令 | AGENTS.md | agent 入职手册（架构·禁令·纪律·bump·发版） |
+| **Lint** | tools/lint.py | **12 类确定性检查**（版本·目录·数据·哨兵·闭包·SW·文档·语法·大文件·危险API·架构·借口注释） |
+| 功能 | run_tests.py | 14 页 + CLI 7 用例（lint 在测试之前跑） |
+| 哨兵 | check_stats + check_docs_sync | 数字 30 锚 + md↔PDF 同步 |
+| CI | GitHub Actions | 全链全绿 |
+| 强制 | pre-commit hook | lint 不可跳过 |
+| 入口 | Makefile | make lint/verify/test/health/all |
+
 | 层 | 工具 | 终态 |
 |---|---|---|
 | 数据 | verify.py | 7 节 + PWA 基建/版本同步校验 |

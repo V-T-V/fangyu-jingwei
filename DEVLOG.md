@@ -171,3 +171,18 @@ Worker 后台计算（实测 1,512ms 主线程零阻塞）；paper_stats.js v5 �
 
 工程：密度着色四模式循环（Worker 后台零解析）· 数字哨兵 30 锚 ·
 文档哨兵 · 配套数据 S1-S3 · paper_stats v12
+
+---
+
+## 第九纪：Agent 基建（Lauren Tan 集成 · 2026-11-16）
+
+输入：Lauren Tan（SpaceX/xAI Grok Bot 首席工程师）@ AI Engineer Code Summit 2026
+- 月发 11,000 PR · 撤回率 0.5% · 信任金字塔 · 三实践
+
+落地：
+- tools/lint.py 12 类确定性检查（首跑抓 22 违规：19 测试页版本失谐）
+- pre-commit hook（lint 不可跳过）· Makefile 一键入口
+- AGENTS.md 项目级 agent 入职手册
+- 三实践全落地：禁危险 API（L10）· 目录即上下文（L11）· 禁借口注释（L12 温和版）
+
+核心原则：「修 agent 时不加规则，变成确定性检查」——19 条教训从文字升格为 lint
