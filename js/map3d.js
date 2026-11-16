@@ -290,7 +290,21 @@ m3.on("load", () => {
   fetch("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/32/15.png",
         { method: "GET", signal: AbortSignal.timeout(4000) })
     .then(r => { if (r.ok){ m3.setTerrain({ source: "dem", exaggeration: 1.4 }); window.__m3terrain = true; } })
-    .catch(() => { const chip = document.getElementById("demnote"); if (chip) chip.style.display = "block"; });
+    .catch(() => {
+        const chip = document.getElementById("demnote");
+        if (chip) {
+          chip.style.display = "block";
+          chip.style.cursor = "pointer";
+          chip.title = "点击重试加载高程数据";
+          chip.onclick = () => {
+            chip.style.display = "none";
+            fetch("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/32/15.png",
+                  { signal: AbortSignal.timeout(4000) })
+              .then(r => { if (r.ok){ m3.setTerrain({ source: "dem", exaggeration: 1.4 }); window.__m3terrain = true; chip.style.display = "none"; } })
+              .catch(() => { chip.style.display = "block"; });
+          };
+        }
+      });
 });
 
 

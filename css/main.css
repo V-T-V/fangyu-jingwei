@@ -717,3 +717,19 @@ body.imgbasemap .grain{opacity:.25}
 /* 移动端触控：地图区禁默认手势，面板区允许滚动 */
 #map{touch-action:none}
 #pbody{touch-action:pan-y}
+
+
+/* ── 页脚功能按钮（从文字链升级为真按钮）────────────── */
+.ftools-label{font-size:10px;letter-spacing:3px;color:var(--ink-faint);margin-right:4px}
+.ftool{
+  appearance:none;cursor:pointer;
+  font-family:KaiTi,serif;font-size:13px;letter-spacing:2px;
+  color:var(--ink-mid);background:var(--silk-2);
+  border:1px solid var(--line);padding:5px 12px;margin:0 2px;
+  transition:all .2s;
+}
+.ftool:hover{color:var(--cinnabar-d);border-color:rgba(178,58,46,.4);background:var(--silk-3)}
+.ftool:active{transform:scale(.96)}
+@media (max-width:640px){
+  .ftool{padding:8px 14px;font-size:14px;margin:2px 3px}  /* 移动端加大触控 */
+}
