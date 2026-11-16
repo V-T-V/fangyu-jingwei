@@ -29,6 +29,17 @@ BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
 
 fails = []
 
+# Lint：教训→确定性（在测试之前——Lauren Tan 信任金字塔：地基先查）
+import subprocess as _spl
+rl = _spl.run([sys.executable, "tools/lint.py"], capture_output=True, text=True, timeout=120)
+lint_ok = "全过" in rl.stdout
+print(rl.stdout.strip().split(chr(10))[-1] if rl.stdout.strip() else "✗ lint 无输出")
+if not lint_ok:
+    bad_l = [l for l in rl.stdout.splitlines() if l.startswith("✗")]
+    fails.append(("lint", bad_l[:5]))
+    print("  Lint 违规——先修再测：")
+    for b in bad_l[:5]: print("    " + b)
+
 # 本地服务健康检查：连不上直接报错（避免整套"无日志产出"假失败）
 import urllib.request as _u0
 try:
