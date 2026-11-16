@@ -16,6 +16,16 @@
 
 **关键词**　读史方舆纪要；历史地理；数字人文；政区空间结构；文本计量；明代军事地理
 
+**Abstract**  This study applies quantitative text analysis to Gu Zuyu's (1631-1692) *Dushi Fangyu Jiyao*, a 130-volume geographical treatise of 2.6 million characters. Computational methods include frequency analysis, PCA, clustering, and network analysis across 15 provinces. Key findings: (1) a "one-day reach" principle (median 53.7 km); (2) an inversion between military vocabulary and war verbs; (3) Shandong as cognitive anomaly (38% PCA residual). First full-text computational analysis of this work.
+
+**Keywords**  Dushi Fangyu Jiyao; Gu Zuyu; historical geography; digital humanities; Ming military geography
+
+---
+**作者信息**（投稿时填写）
+- 姓名：［待填］
+- 单位：［待填］
+- 邮箱：［待填］
+
 ---
 
 ## 一、引言
