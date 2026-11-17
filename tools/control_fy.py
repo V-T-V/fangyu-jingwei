@@ -152,7 +152,9 @@ class CDP:
         else:
             self.__exit__(None, None, None)
             fail("CDP 15s 未就绪", "重跑一次；仍失败查是否有残留无头进程占用 9333（control_fy.py cleanup）")
-        req = ur.Request(base + "/json/new?" + BASE + self.page, method="PUT")
+        import urllib.parse
+        req = ur.Request(base + "/json/new?" + urllib.parse.quote(BASE + self.page, safe=""),
+                         method="PUT")
         self.tab = json.loads(ur.urlopen(req, timeout=5).read())
         return self
 

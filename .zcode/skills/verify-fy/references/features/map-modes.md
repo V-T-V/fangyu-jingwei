@@ -14,11 +14,12 @@
 ```bash
 python tools/control_fy.py drive index.html --wait "window.map && window.map._loaded"
 python tools/control_fy.py screenshot index.html ev.png --wait "window.map && window.map._loaded" --click "#boot .go"
-python tools/control_fy.py drive "index.html#mode=形势&era=8" --wait "window.__era===8 || document.body.classList.contains('m-形势')"
+python tools/control_fy.py drive "index.html#mode=形势&era=8" --wait "document.body.classList.contains('m-形势')"
 ```
 
 ## Gotchas
 - **`#boot` 封面盖着地图**：等 `map._loaded` 后截图只能拍到封面——必须 `--click "#boot .go"`
-- `window.__era` 等 var 挂 window（var 非 let），但 app.js 中途崩溃会留 TDZ——判存在用 `typeof`
+- **`curEra` 是 map.js 的 `let` 闭包量，不在 window 上**（`_ftw` 同款教训）——外部断言用
+  `document.body.classList.contains('m-形势')` 或 hash，勿猜全局量（审计器会逮）
 - 形势自动播放走 TTS：无头环境 TTS 不可用属预期，断言只看卷号与标签
 - 深链 hash 变化不触发 reload——drive 每次开新页（CLI 已如此）
