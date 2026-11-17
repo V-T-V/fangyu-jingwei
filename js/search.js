@@ -8,6 +8,8 @@ const IDX = (()=>{const a=[];
       u.zhou.forEach(z=>a.push({t:z,k:"州",ctx:p.name+"·"+u.n,pid:p.id,fu:u.n}));
       u.xian.forEach(x=>{const nm=x.replace(/〔.*?〕/g,"");
         a.push({t:nm,k:"县",ctx:p.name+"·"+u.n,pid:p.id,fu:u.n});});
+      (u.zx||[]).forEach(z=>(z.x||[]).forEach(x=>{const nm=x.replace(/〔.*?〕/g,"");   /* 州属县入索引（2026-11-18 即墨县案：曾整类不可搜） */
+        a.push({t:nm,k:"县",ctx:p.name+"·"+u.n+"·"+z.n,pid:p.id,fu:u.n});}));
     });
   });
   ERAS.forEach(e=>a.push({t:e.label,k:"朝",ctx:e.time,era:e.i}));
