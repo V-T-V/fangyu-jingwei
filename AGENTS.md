@@ -7,10 +7,22 @@
 
 ```bash
 python -m http.server 9200 &          # 起本地服务
-python tools/lint.py                   # 13 类确定性检查（先跑这个）
+python tools/lint.py                   # 14 类确定性检查（先跑这个）
 python verify.py                       # 数据完整性
 python run_tests.py                    # 全套回归（含 lint · 14 页 · 哨兵 · CLI）
 ```
+
+## 验证技能（改完代码必须自证，证据不过关=没完成）
+
+```bash
+python tools/control_fy.py serve start && python tools/control_fy.py doctor
+python tools/control_fy.py screenshot index.html ev.png --wait "window.map && window.map._loaded" --click "#boot .go"
+python tools/control_fy.py cleanup
+```
+
+完整五节（Launch/Doctor/Drive/Evidence/Cleanup）与功能地图：
+`.zcode/skills/verify-fy/SKILL.md`。规则↔执行者对照：`docs/RULES-EXECUTORS.md`；
+隔夜契约：`docs/OVERNIGHT-CONTRACT.md`。
 
 ## 架构（目录即上下文）
 

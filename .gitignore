@@ -20,3 +20,7 @@ _jd.*
 srv.log
 shot_*.png
 docs/_p*.png
+
+# 验证技能运行时产物
+.fyserve.pid
+docs/evidence/

@@ -177,6 +177,13 @@ for f in sorted(glob.glob('.github/workflows/*.yml')):
             swallow.append(f"{f}:{i}")
 check(not swallow, f"workflows 无吞错兜底（实得 {swallow}）")
 
+# ── L14: CSS !important 棘轮（附录 A：specificity 军备竞赛）──
+print("── 14. CSS !important")
+imp = 0
+for f in sorted(glob.glob('css/*.css')):
+    imp += open(f, encoding='utf-8').read().count('!important')
+check(imp <= 25, f"!important ≤25 棘轮（实得 {imp}，按出现次数计）——新增样式用特异性/媒体块；压厂商样式集中在允许区，只减不增")
+
 print()
 if fails:
     for f_ in fails:
