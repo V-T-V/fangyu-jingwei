@@ -47,6 +47,7 @@ python tools/control_fy.py perf index.html
 - **改性能**：perf 探针 A/B 各 ≥3 轮取中位（教训：单样本不作数）
 - **改数据/文本**：`python verify.py` + `tools/check_stats.py` 全部一致
 - **改 UI**：screenshot + 对应 pose 页（tests/*_pose.html）
+- **改启动/入口逻辑**：`python tools/boot_smoke.py`（真页心电图——脚本前置注入错误采集，2D 10 步 / 3D 5 步全入口驱动，任一错误即红）
 
 ## Cleanup（收尾）
 
