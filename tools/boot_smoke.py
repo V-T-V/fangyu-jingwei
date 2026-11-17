@@ -63,7 +63,8 @@ def pick_steps(target):
 
 def main():
     prof = tempfile.mkdtemp(prefix="fysmoke_")
-    proc = subprocess.Popen([EDGE, "--headless=new", "--disable-gpu", "--window-size=1440,900",
+    size = os.environ.get("FY_SIZE", "1440,900")   # 移动靶：FY_SIZE=390,844 python tools/boot_smoke.py
+    proc = subprocess.Popen([EDGE, "--headless=new", "--disable-gpu", "--window-size=" + size,
         "--no-first-run", f"--remote-debugging-port={PORT}",
         f"--user-data-dir={prof}", "about:blank"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
