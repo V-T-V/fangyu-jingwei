@@ -160,8 +160,13 @@ window.addEventListener("load",function(){
               },300);
             }catch(e){log.push("ERR2 "+e);eraChain();}
           };
-          window.__m3.once("idle",fireFn);
-          setTimeout(fireFn,1500);
+          /* 一次性守卫：地形早挂载（并行探测优化）后 idle 真会触发，
+             与 1500ms 超时双保险叠加 → fireFn 双跑 → eraChain 交错假失败（CI 36 断言案）。
+             内部拾取重试仍直调 fireFn，不受此守卫影响。 */
+          var firedOnce=false;
+          var fireOnce=function(){ if(firedOnce) return; firedOnce=true; fireFn(); };
+          window.__m3.once("idle",fireOnce);
+          setTimeout(fireOnce,1500);
         }catch(e){log.push("ERR3 "+e);eraChain();}
       },4800);
     }catch(e){log.push("ERR "+e);done();}
