@@ -98,7 +98,7 @@ var _wl = document.getElementById("wanderlink");
 if (_wl) _wl.onclick = wander;
 
 var _ana = document.getElementById("analyticslink");
-if (_ana) _ana.onclick = openAnalytics;
+if (_ana) _ana.onclick = function(){ if (typeof openAnalytics === "function") openAnalytics(); };   /* 裸引后加载模块 = 加载即崩，101 行后全灭（2026-11-18 案：透视/九边/底图/播放键齐死） */
 
 var _wx = document.getElementById("wenxinlink");
 if (_wx) _wx.onclick = function(){ if (typeof openWenxin === "function") openWenxin(); };

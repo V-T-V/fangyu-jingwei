@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script>window.__NOTILES__=1;/* 测试密封：不拉外网瓦片 */</script>
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=115">
+<link rel="stylesheet" href="css/main.css?v=116">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div>
@@ -24,20 +24,32 @@
   <div class="vtitle"><div class="vname" id="vname"></div><div class="vseal" id="vseal">纪要</div></div>
   <div id="pbody"></div></section>
 <footer><span id="modelabel">舆图</span><span id="modenote"></span><span class="fb" id="bookstat"></span></footer>
+<button id="bmtoggle" title="影像切换">影像</button>
+<span class="ftools-label">探索</span>
+  <button class="ftool" id="wanderlink" title="随机游历帝国一隅">⚑ 漫步</button>
+  <button class="ftool" id="analyticslink" title="全书空间统计——距离·面积·分布">📊 透视</button>
+  <button class="ftool" id="wenxinlink" title="文本计量——书架·战略词·被引">🖋 文心</button>
+  <button class="ftool" id="bianlink" title="九边防线专题">⚔ 九边</button>
+  <button class="ftool" id="tdlink" title="三维形胜——真地形上观天下">⛰ 形胜</button>
+  <span class="sep"></span><span id="modelabel">舆图</span><span class="sep"></span>
+  <span id="modenote">十五布政使司 · 府州县治所见于图</span>
+  <span class="sep"></span><span class="fb" id="bookstat"></span>
+  <div class="right"><span id="swstate" title="Service Worker 就绪后：整本书与已览瓦片离线可用" style="display:none;color:var(--azur-d);cursor:default"></span><span id="tablelink" style="cursor:pointer">古今对照</span><span id="aboutlink" style="cursor:pointer">关于 · 校勘记</span><span>文本 · 国学导航</span><span>底图 · Esri World Physical</span></div>
+</footer>
 <div id="tl"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:420px;white-space:pre-wrap"></pre>
 
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=115" defer></script>
-<script src="js/map.js?v=115" defer></script>
-<script src="js/panels.js?v=115" defer></script>
-<script src="js/rail.js?v=115" defer></script>
-<script src="js/search.js?v=115" defer></script>
-<script src="js/reader.js?v=115" defer></script>
-<script src="js/bookmarks.js?v=115" defer></script>
-<script src="js/fulltext.js?v=115" defer></script>
-<script src="js/app.js?v=115" defer></script>
-<script src="js/modes.js?v=115" defer></script>
+<script src="js/config.js?v=116" defer></script>
+<script src="js/map.js?v=116" defer></script>
+<script src="js/panels.js?v=116" defer></script>
+<script src="js/rail.js?v=116" defer></script>
+<script src="js/search.js?v=116" defer></script>
+<script src="js/reader.js?v=116" defer></script>
+<script src="js/bookmarks.js?v=116" defer></script>
+<script src="js/fulltext.js?v=116" defer></script>
+<script src="js/app.js?v=116" defer></script>
+<script src="js/modes.js?v=116" defer></script>
 <script defer>
 window.addEventListener("load", () => {
   const log = [];
@@ -71,6 +83,11 @@ window.addEventListener("load", () => {
           buildRivers("漕河"); openRiver(rc);
           log.push(`RIVER-PANEL vname=${document.getElementById("vname").textContent} ${document.getElementById("vname").textContent === "漕河" ? "PASS" : "FAIL"}`);
           // ③ 终态切回对照表过滤视图（供截图）
+          const anaBtn = document.getElementById("analyticslink");
+          anaBtn.click();
+          const anaOpen = document.getElementById("panel").classList.contains("open");
+          document.getElementById("pclose").click();
+          log.push(`FOOTER-BTNS ana=${anaOpen} bian=${typeof document.getElementById("bianlink").onclick === "function"} td=${typeof document.getElementById("tdlink").onclick === "function"} bm=${typeof document.getElementById("bmtoggle").onclick === "function"} ${anaOpen ? "PASS" : "FAIL"}`);
           openTable("xian");
           const f2 = document.getElementById("tfilter");
           f2.value = "桃源";

@@ -155,6 +155,24 @@ actual_order = [s for s in scripts if s in expected_order]
 check(actual_order == expected_order[:len(actual_order)],
       f"脚本 defer 顺序符合依赖链（{actual_order}）")
 
+# 核心→特性裸引用（app.js:101 案：裸引后加载模块 = 加载即崩，101 行后绑定全灭）
+CORE_FILES = ['js/config.js', 'js/map.js', 'js/panels.js', 'js/rail.js', 'js/search.js',
+              'js/reader.js', 'js/bookmarks.js', 'js/fulltext.js', 'js/app.js', 'js/modes.js']
+bare_feature = []
+for f in CORE_FILES:
+    src = re.sub(r'/\*.*?\*/', '', open(f, encoding='utf-8').read(), flags=re.S)   # 剥块注释（禁令文档表述不算）
+    src = re.sub(r'//[^\n]*', '', src)                                             # 剥行注释
+    for m in re.finditer(r'(?<![\w"\'])(openAnalytics|openWenxin|openBian)\b', src):
+        pre = src[max(0, m.start() - 120):m.start()]
+        if pre.endswith('typeof '):              # typeof 操作数位置豁免
+            continue
+        if ('typeof ' + m.group(1)) in pre:      # 守卫窗内调用豁免
+            continue
+        if ('function ' + m.group(1)) in pre:        # 定义处豁免
+            continue
+        bare_feature.append(f + ':' + m.group(1))
+check(not bare_feature, f"核心链无特性函数裸引用（实得 {bare_feature}）——一律 typeof 守卫（AGENTS 架构分层）")
+
 # ── L12: 借口注释（Lauren Tan 实践 3 的温和版）──
 print("── 12. 借口注释")
 import glob as _g2
