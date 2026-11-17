@@ -7,7 +7,7 @@
 
 ```bash
 python -m http.server 9200 &          # 起本地服务
-python tools/lint.py                   # 14 类确定性检查（先跑这个）
+python tools/lint.py                   # 15 类确定性检查（先跑这个）
 python verify.py                       # 数据完整性
 python run_tests.py                    # 全套回归（含 lint · 14 页 · 哨兵 · CLI）
 ```

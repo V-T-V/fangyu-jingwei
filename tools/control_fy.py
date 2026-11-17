@@ -232,7 +232,7 @@ def cmd_screenshot(page, path, wait_expr, click_sel=None):
 
 def cmd_perf(page):
     r = subprocess.run([sys.executable, "-I", os.path.join(ROOT, "tools", "perf_probe.py"), page],
-                       capture_output=True, text=True, timeout=120)
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
     out({"ok": r.returncode == 0, "probe": r.stdout.strip().splitlines()[-8:],
          "next": "" if r.returncode == 0 else "先 control_fy.py serve start"})
 
@@ -246,7 +246,7 @@ def cmd_cleanup(dry):
         if dry:
             r = subprocess.run(["powershell", "-NoProfile", "-Command",
                                 query + " | Select-Object -ExpandProperty ProcessId"],
-                               capture_output=True, text=True, timeout=30)
+                               capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
             out({"ok": True, "dry_run": True, "would_kill": r.stdout.split()})
         subprocess.run(["powershell", "-NoProfile", "-Command",
                         query + " | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],

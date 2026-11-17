@@ -10,7 +10,7 @@ os.chdir(ROOT)
 
 def run(name, cmd):
     t0 = time.time()
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=300,
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300,
                        shell=(sys.platform == "win32"))
     dt = time.time() - t0
     ok = r.returncode == 0
@@ -43,7 +43,7 @@ results.append((n, True, f"{dt:.1f}s", first))
 print(f"  ✓ {n:12s} {dt:5.1f}s  {first}")
 
 # ④ git status
-r = subprocess.run(["git", "status", "-sb"], capture_output=True, text=True, timeout=10)
+r = subprocess.run(["git", "status", "-sb"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10)
 synced = "origin/main" in r.stdout and "ahead" not in r.stdout and "behind" not in r.stdout
 n = "git 同步"
 results.append((n, synced, "-", r.stdout.strip().split("\n")[0]))

@@ -92,7 +92,7 @@ check(len(shell_files) >= 20, f"SW SHELL ≥20 文件（实得 {len(shell_files)
 # ── L7: 文档同步（教训：md 改了 PDF 忘排）──
 print("── 7. 文档同步")
 import subprocess
-r = subprocess.run([sys.executable, 'tools/check_docs_sync.py'], capture_output=True, text=True, timeout=30)
+r = subprocess.run([sys.executable, 'tools/check_docs_sync.py'], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30)
 check('✓' in r.stdout, "md↔PDF 同步")
 
 # ── L8: JS 语法（教训：静默失败）──
@@ -183,6 +183,15 @@ imp = 0
 for f in sorted(glob.glob('css/*.css')):
     imp += open(f, encoding='utf-8').read().count('!important')
 check(imp <= 25, f"!important ≤25 棘轮（实得 {imp}，按出现次数计）——新增样式用特异性/媒体块；压厂商样式集中在允许区，只减不增")
+
+# ── L15: subprocess 显式编码（教训 22：cp936 默认解码遇非 GBK 字符崩读线程 → 孤儿雪崩）──
+print("── 15. subprocess 编码")
+bare_sub = []
+for f in ['run_tests.py', 'verify.py', 'tests/test_cli.py'] + sorted(glob.glob('tools/*.py')):
+    for i, line in enumerate(open(f, encoding='utf-8'), 1):
+        if 'text=True' in line and 'encoding' not in line:
+            bare_sub.append(f"{f}:{i}")
+check(not bare_sub, f"text=True 同行须显式 encoding（实得 {bare_sub}）——教训 22：Windows 默认 cp936 解码子输出遇非 GBK 字符即崩")
 
 print()
 if fails:

@@ -14,7 +14,7 @@ CASES = [
 ]
 fails = 0
 for args, expect, coord in CASES:
-    r = subprocess.run([sys.executable, Q] + args, capture_output=True, text=True, timeout=15)
+    r = subprocess.run([sys.executable, Q] + args, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15)
     out = r.stdout
     ok = expect in out and (coord is None or coord in out) and r.returncode == 0
     status = "✓" if ok else "✗"

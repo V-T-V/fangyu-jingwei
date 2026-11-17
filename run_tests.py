@@ -31,7 +31,7 @@ fails = []
 
 # Lint：教训→确定性（在测试之前——Lauren Tan 信任金字塔：地基先查）
 import subprocess as _spl
-rl = _spl.run([sys.executable, "tools/lint.py"], capture_output=True, text=True, timeout=120)
+rl = _spl.run([sys.executable, "tools/lint.py"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
 lint_ok = "全过" in rl.stdout
 print(rl.stdout.strip().split(chr(10))[-1] if rl.stdout.strip() else "✗ lint 无输出")
 if not lint_ok:
@@ -142,7 +142,7 @@ for _pg in CDP_PAGES:
 
 # 数字哨兵：论文数字 CI 守护
 import subprocess as _sp2
-r2 = _sp2.run([sys.executable, "tools/check_stats.py"], capture_output=True, text=True, timeout=180)
+r2 = _sp2.run([sys.executable, "tools/check_stats.py"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
 ok2 = "全部一致" in r2.stdout
 print(("✓" if ok2 else "✗") + " tools/check_stats.py  数字哨兵" + ("" if ok2 else "（数字漂移）"))
 if not ok2:
@@ -150,7 +150,7 @@ if not ok2:
     fails.append(("check_stats", bad2))
 
 # 文档同步哨兵
-r3 = _sp2.run([sys.executable, "tools/check_docs_sync.py"], capture_output=True, text=True, timeout=30)
+r3 = _sp2.run([sys.executable, "tools/check_docs_sync.py"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
 ok3 = "同步" in r3.stdout and "✓" in r3.stdout
 print(r3.stdout.strip() or "✗ tools/check_docs_sync.py 无输出")
 if not ok3:
@@ -160,7 +160,7 @@ if not ok3:
 import importlib.util
 cli_test = os.path.join(os.path.dirname(__file__), "tests", "test_cli.py")
 if os.path.exists(cli_test):
-    r = subprocess.run([sys.executable, cli_test], capture_output=True, text=True, timeout=60)
+    r = subprocess.run([sys.executable, cli_test], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
     cli_ok = "全过" in r.stdout
     print(("✓" if cli_ok else "✗") + " test_cli.py       " + ("7 用例" if cli_ok else r.stdout.strip()[-60:]))
     if not cli_ok:

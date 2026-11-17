@@ -5,7 +5,7 @@ import subprocess, sys, os, re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
 
-r = subprocess.run(["node", "paper_stats.js"], capture_output=True, text=True, timeout=120)
+r = subprocess.run(["node", "paper_stats.js"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
 out = r.stdout
 if r.returncode:
     print("✗ paper_stats.js 执行失败"); sys.exit(1)

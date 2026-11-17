@@ -4,7 +4,7 @@
 > 每条规则/教训必须能指出执行者（lint 类 · 哨兵 · 测试 · CI · 运行时兜底）。
 > 新增规则时同步登记本表；散文层（AGENTS.md）只留需要判断力的事。
 
-## L1-L2 代码库与静态分析（lint.py 14 类）
+## L1-L2 代码库与静态分析（lint.py 15 类）
 
 | 规则 / 教训 | 执行者 | 触发方式 |
 |---|---|---|
@@ -22,6 +22,7 @@
 | 借口注释（TODO/FIXME/HACK ≤3） | lint L12 | lint |
 | CI 吞错（`|| true` / `|| exit 0`）· 教训 20 | lint L13 | lint（注释豁免） |
 | CSS `!important` ≤25 棘轮（附录 A，按出现次数） | lint L14 | lint（只减不增） |
+| subprocess `text=True` 同行显式 `encoding` · 教训 22（cp936 崩读线程→孤儿雪崩） | lint L15 | lint（注入实测过） |
 
 ## L3 验证（测试 · 探针 · 验证技能）
 
