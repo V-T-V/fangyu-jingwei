@@ -18,6 +18,7 @@ python tools/control_fy.py drive tests/test_sw.html --wait "document.getElementB
 
 ## Gotchas
 - **截图底图空白 ≠ bug**：瓦片 3 错即降级绢底是设计行为；断言看矢量层（印章/九边线）
+- 全部 fy* localStorage 读取都有守卫（2026-11-18 投毒实证：9 键塞损坏 JSON/数字/巨串 → 重载存活，fybasemap 自愈为 physical）
 - SW 改动必须 bump `VERSION`（v111…）且全站 `?v=` 同步（lint L1 拦）；忘记 bump = 回访者吃旧缓存
 - SW 的 TILES 层只认 `server.arcgisonline.com`——DEM（s3）不进 TILES 缓存
 - 首访抢跑脚本在 SW 接管后自动跳过（controller 判断）——别删那个 guard
