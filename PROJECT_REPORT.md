@@ -83,9 +83,9 @@ site_data.js 160KB 首屏 · mentions.js 3KB · config.js（九朝/七水/50 关
 | 层 | 工具 | 检查类 |
 |---|---|---|
 | 文字指令 | AGENTS.md | agent 入职手册（架构·禁令·纪律·bump·发版） |
-| **Lint** | tools/lint.py | **12 类确定性检查**（版本·目录·数据·哨兵·闭包·SW·文档·语法·大文件·危险API·架构·借口注释） |
+| **Lint** | tools/lint.py | **16 类确定性检查**（版本·目录·数据·哨兵·闭包·SW·文档·语法·大文件·危险API·架构·借口注释·CI吞错·CSS棘轮·subprocess编码·工具编译） |
 | 功能 | run_tests.py | 14 页 + CLI 7 用例（lint 在测试之前跑） |
-| 哨兵 | check_stats + check_docs_sync | 数字 30 锚 + md↔PDF 同步 |
+| 哨兵 | check_stats + check_docs_sync | 数字 15 锚 + md↔PDF 同步 |
 | CI | GitHub Actions | 全链全绿 |
 | 强制 | pre-commit hook | lint 不可跳过 |
 | 入口 | Makefile | make lint/verify/test/health/all |
