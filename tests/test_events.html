@@ -85,7 +85,33 @@ window.addEventListener("load", () => {
           }
           const mok = mlab.indexOf("公里") >= 0 && mlab.indexOf("明里") >= 0;
           log.push("MEASURE " + (mok ? "PASS" : "FAIL label=" + (mlab.trim().slice(0, 24) || "none")));
-          done();
+          // 键盘矩阵：/ 聚焦 · ←→ 切卷（rail 高亮）· 输入中不抢键
+          setTimeout(() => {
+            try {
+              setMode("形势");   // 箭头键只在形势模式工作（量距块已切回舆图）
+              const dk = k => document.dispatchEvent(new KeyboardEvent("keydown", {key: k, bubbles: true}));
+              dk("/");
+              const kSlash = document.activeElement === document.getElementById("search");
+              document.activeElement.blur();
+              const eraOn = () => { const e = document.querySelector("#raillist .ri.on"); return e ? e.dataset.e : null; };
+              dk("ArrowRight");
+              setTimeout(() => {
+                const e1 = eraOn();
+                dk("ArrowLeft");
+                setTimeout(() => {
+                  const e2 = eraOn();
+                  const kArrow = e1 !== null && String(e1) !== String(e2);
+                  document.getElementById("search").focus();
+                  document.getElementById("search").dispatchEvent(new KeyboardEvent("keydown", {key: "ArrowRight", bubbles: true}));
+                  const kGuard = eraOn() === e2;   // 输入中不切卷
+                  document.activeElement.blur();
+                  log.push(`KEYBOARD slash=${kSlash} arrow=${kArrow} guard=${kGuard} ` +
+                           ((kSlash && kArrow && kGuard) ? "PASS" : "FAIL"));
+                  done();
+                }, 700);
+              }, 700);
+            } catch (e) { log.push("ERR-KB " + e); done(); }
+          }, 300);
         }, 900);
       }, 2600);
     } catch (e) { log.push("ERR " + e); done(); }

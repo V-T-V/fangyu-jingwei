@@ -292,3 +292,24 @@ heredoc 反斜杠塌成 \x01 控制符吃掉 <script src=——按字节修复 1
 工具纪律两课（入档未编号）：
 - 写文件一律临时文件 + os.replace（emoji 代理对 + open('w') 截断 = 腰斩 87 行案）
 - heredoc 反斜杠通道永久禁用于代码注入（三案：\x01 / \n 成真换行 / \b 成 ^H）
+
+---
+
+## 第十五纪：维度远征——内存 · 混沌 · 键盘（2026-11-18 凌晨）
+
+正确性之后的三个新维度门卫：
+
+- **heap_probe（内存）**：GC 强制回收 + Performance.getMetrics（免旗通道），
+  180 轮 UI 循环——每 60 轮恒定 +1.2-1.3MB（~20KB/交互的温和线性残留），
+  判定稳定；红线 2MB/60轮。探针三坑入注：performance.memory 要旗、
+  --expose-gc 要 js-flags、getMetrics 免旗
+- **chaos_monkey（混沌）**：种子 42 可复现乱点，150 记全可点件——
+  0 错误、map 存活。Phase 5 fuzz 的单页轻量版
+- **键盘矩阵**：/ 聚焦 · ? 关于 · Esc 关 · ←→ 切卷（rail 0→1→0）·
+  输入不抢键——五验全过 + KEYBOARD 锚（锚自查：模式前置是隐含条件）
+
+**机器天气案**：凌晨 CPU 100%（25 个非调试旗 Edge——外部负载，非我进程
+不动）；探针狂欢的自噬部分（node 残兵）已清。提交被 pre-commit lint 卡
+= 机器慢，**绝不 --no-verify**——耐心环每 5 分钟试，绿了才落。
+
+七件验证兵器：perf · drive · boot_smoke · offline · audit · heap · chaos
