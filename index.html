@@ -39,6 +39,31 @@
 </script>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
+<script>
+/* 首访瓦片抢跑（2026-11-17 性能探针：冷加载 load 1982ms，瓦片瀑布 700-800ms 占大头）：
+   HTML 解析期即按视口算出 fitBounds([[17,96],[44,129]]) 将选的缩放级并预取该级瓦片，
+   抢回 CSS/JS 下载解析的几百毫秒。SW 已接管（瓦片有缓存）或非默认底图时跳过，不浪费字节。 */
+(function(){
+  try{
+    if (navigator.serviceWorker.controller) return;
+    if ((localStorage.getItem("fybasemap") || "physical") !== "physical") return;
+    var B = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/";
+    function px(lat,lng,n){ /* Web Mercator 全球像素坐标，n=2^zoom×256 */
+      var s = Math.sin(lat*Math.PI/180);
+      return [(lng+180)/360*n, (0.5 - Math.log((1+s)/(1-s))/(4*Math.PI))*n];
+    }
+    var a = px(44,96,256), b = px(17,129,256);      /* 初始 bounds 对角（z0 像素） */
+    var z = Math.floor(Math.log2(Math.min(innerWidth/(b[0]-a[0]), innerHeight/(b[1]-a[1]))));
+    z = Math.max(4, Math.min(5, z));                 /* 只抢跑 4/5 两级 */
+    var T = 1 << z;                                  /* 该级每边瓦片数 */
+    var yOf = function(lat){ var s = Math.sin(lat*Math.PI/180);
+      return Math.floor((0.5 - Math.log((1+s)/(1-s))/(4*Math.PI))*T); };
+    var x0 = Math.floor((96+180)/360*T), x1 = Math.floor((129+180)/360*T);
+    for (var y = yOf(44); y <= yOf(17); y++) for (var x = x0; x <= x1; x++)
+      fetch(B + z + "/" + y + "/" + x, {mode:"no-cors"}).catch(function(){});  /* 预热 HTTP/SW 缓存，免主线程解码 */
+  }catch(e){}
+})();
+</script>
 <script src="vendor/leaflet.js" defer></script>
 <link rel="stylesheet" href="css/main.css?v=110">
 </head>
