@@ -12,6 +12,7 @@ import urllib.request as ur
 
 BASE = "http://127.0.0.1:9200/"
 PAGE = sys.argv[1] if len(sys.argv) > 1 else "index.html"
+WAIT = sys.argv[2] if len(sys.argv) > 2 else None   # 可选：等待该 JS 表达式为真，报告达成时刻
 PORT = 9333
 
 CANDS = [
@@ -56,8 +57,9 @@ try:
     tab = json.loads(ur.urlopen(req, timeout=5).read())
     t0 = time.time()
     out = None
+    wait_ms = None
     while time.time() - t0 < 45:
-        time.sleep(2)
+        time.sleep(1 if WAIT else 2)
         tabs = json.loads(ur.urlopen(base + "/json/list", timeout=5).read())
         ws = next((t.get("webSocketDebuggerUrl") for t in tabs if t.get("id") == tab["id"]), None)
         if not ws:
@@ -65,17 +67,23 @@ try:
         try:
             import websocket  # pip install websocket-client（若缺则降级 title 协议）
             ws = websocket.create_connection(ws, timeout=5)
+            expr = JS if not WAIT else f"({WAIT}) ? performance.now() : false"
             ws.send(json.dumps({"id": 1, "method": "Runtime.evaluate",
-                                "params": {"expression": JS, "returnByValue": True}}))
+                                "params": {"expression": expr, "returnByValue": True}}))
             r = json.loads(ws.recv())
             v = r.get("result", {}).get("result", {}).get("value")
-            if v and json.loads(v).get("load"):
+            if WAIT:
+                if isinstance(v, (int, float)) and v:
+                    out = {"wait_ms": round(v)}; ws.close(); break
+            elif v and json.loads(v).get("load"):
                 out = json.loads(v); ws.close(); break
             ws.close()
         except ImportError:
             print("✗ 缺 websocket-client：pip install websocket-client"); sys.exit(2)
     if not out:
-        print("✗ 45s 未完成加载"); sys.exit(1)
+        print("X 45s 未完成加载" + (f"（{WAIT} 未达成）" if WAIT else "")); sys.exit(1)
+    if WAIT:
+        print(f"── {PAGE} · {WAIT} 达成于 {out['wait_ms']}ms ──"); sys.exit(0)
     print(f"── {PAGE} 冷加载 ──")
     print(f"responseStart {out['rs']}ms · FCP {out['fcp']}ms · DOMContentLoaded {out['dcl']}ms · load {out['load']}ms · 资源 {out['nres']} 项")
     print(f"{'资源':<46}{'传输KB':>7}{'耗时ms':>8}  类型")

@@ -273,6 +273,19 @@ if (mentBtn) mentBtn.onclick = () => {
   mentBtn.textContent = mentOn ? "◧ 文柱 ✓" : "◧ 文柱";
 };
 
+/* 高程懒探测：与地图装载并行起跑（原在 load 后串行，白等一个 map boot；
+   2026-11-17 探针基线：地形挂载 4461ms，开场 5.2s 长镜头仅末 0.7s 见山）。
+   曾成功过（localStorage）则免探测直挂——回访地形零等待；失败链保留 demnote 兜底。 */
+let demRemembered = false;
+try { demRemembered = localStorage.getItem("fydemok") === "1"; } catch(e) {}
+const demProbe = fetch("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/32/15.png",
+      { method: "GET", signal: AbortSignal.timeout(4000) })
+  .then(r => {
+    if (r.ok){ try { localStorage.setItem("fydemok", "1"); } catch(e) {} return true; }
+    return false;
+  })
+  .catch(() => false);
+
 m3.on("load", () => {
   buildOverlays();
   initEraLayers();
@@ -286,25 +299,25 @@ m3.on("load", () => {
       duration: 5200, curve: 1.45, essential: true });
     m3.once("dragstart", () => { if (m3.isMoving()) m3.stop(); });   /* 空闲时 stop() 会毒化后续缓动 */
   }
-  /* 高程懒探测：可达才挂地形（4s 超时降平面 + 提示） */
-  fetch("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/32/15.png",
-        { method: "GET", signal: AbortSignal.timeout(4000) })
-    .then(r => { if (r.ok){ m3.setTerrain({ source: "dem", exaggeration: 1.4 }); window.__m3terrain = true; } })
-    .catch(() => {
-        const chip = document.getElementById("demnote");
-        if (chip) {
-          chip.style.display = "block";
-          chip.style.cursor = "pointer";
-          chip.title = "点击重试加载高程数据";
-          chip.onclick = () => {
-            chip.style.display = "none";
-            fetch("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/32/15.png",
-                  { signal: AbortSignal.timeout(4000) })
-              .then(r => { if (r.ok){ m3.setTerrain({ source: "dem", exaggeration: 1.4 }); window.__m3terrain = true; chip.style.display = "none"; } })
-              .catch(() => { chip.style.display = "block"; });
-          };
-        }
-      });
+  const demAttach = () => { m3.setTerrain({ source: "dem", exaggeration: 1.4 }); window.__m3terrain = true; };
+  if (demRemembered){ demAttach(); return; }
+  demProbe.then(ok => {
+    if (ok){ demAttach(); return; }
+    const chip = document.getElementById("demnote");
+    if (chip) {
+      chip.style.display = "block";
+      chip.style.cursor = "pointer";
+      chip.title = "点击重试加载高程数据";
+      chip.onclick = () => {
+        chip.style.display = "none";
+        fetch("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/32/15.png",
+              { signal: AbortSignal.timeout(4000) })
+          .then(r => { if (r.ok){ demAttach(); chip.style.display = "none";
+                       try { localStorage.setItem("fydemok", "1"); } catch(e) {} } })
+          .catch(() => { chip.style.display = "block"; });
+      };
+    }
+  });
 });
 
 
