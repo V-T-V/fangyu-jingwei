@@ -13,6 +13,7 @@
 | 6 | 九边专题 | [bian.md](bian.md) | test_bian |
 | 7 | 底图与 SW 离线 | [basemap-sw.md](basemap-sw.md) | test_basemap · test_sw |
 | 8 | 三维形胜（3D） | [mode3d.md](mode3d.md) | test_3d |
+| 9 | 实用件（量距·导出·对照·分享） | [utilities.md](utilities.md) | test_events(MEASURE) · test_filter |
 
 全量回归：`python run_tests.py`（14 页 + lint + 哨兵 + CLI）。
  pose 页（`tests/*_pose.html`）为视觉摆拍辅助，不算断言。
