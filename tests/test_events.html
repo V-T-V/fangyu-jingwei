@@ -70,7 +70,23 @@ window.addEventListener("load", () => {
         log.push("EVENT-FLY chibi target=" + (ft ? ft[0].toFixed(2) + "," + ft[1].toFixed(2) : "none") + (near ? " PASS" : " FAIL"));
         const located = ERAS.reduce((s, e) => s + e.evs.filter(v => v[2]).length, 0);
         log.push("EVENT-COUNT located=" + located + (located >= 25 ? " PASS" : " FAIL"));
-        done();
+        // 量距：容器两 shift+click → 公里/明里标签（Leaflet 听容器非 canvas——2026-11-18 实测）
+        setMode("舆图");
+        const mc = document.getElementById("map");
+        const mb = mc.getBoundingClientRect();
+        const fireM = (fx, fy) => mc.dispatchEvent(new MouseEvent("click",
+          {clientX: mb.left + mb.width*fx, clientY: mb.top + mb.height*fy, shiftKey: true, bubbles: true}));
+        fireM(0.3, 0.4); fireM(0.7, 0.6);
+        setTimeout(() => {
+          let mlab = "";
+          for (const e of document.querySelectorAll(".leaflet-marker-icon")) {
+            const t = e.textContent || "";
+            if (t.indexOf("公里") >= 0) { mlab = t; break; }
+          }
+          const mok = mlab.indexOf("公里") >= 0 && mlab.indexOf("明里") >= 0;
+          log.push("MEASURE " + (mok ? "PASS" : "FAIL label=" + (mlab.trim().slice(0, 24) || "none")));
+          done();
+        }, 900);
       }, 2600);
     } catch (e) { log.push("ERR " + e); done(); }
   }, 2500);
