@@ -56,7 +56,7 @@ def audit_anchors(md_text):
 def live_sweep():
     env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
     r = subprocess.run([sys.executable, "run_tests.py"], capture_output=True, text=True, encoding="utf-8", errors="replace",
-                       encoding="utf-8", errors="replace", timeout=600, cwd=ROOT, env=env)
+                       timeout=600, cwd=ROOT, env=env)
     return r.returncode == 0, (r.stdout or "").strip().splitlines()[-1]
 
 

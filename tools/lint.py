@@ -193,6 +193,18 @@ for f in ['run_tests.py', 'verify.py', 'tests/test_cli.py'] + sorted(glob.glob('
             bare_sub.append(f"{f}:{i}")
 check(not bare_sub, f"text=True 同行须显式 encoding（实得 {bare_sub}）——教训 22：Windows 默认 cp936 解码子输出遇非 GBK 字符即崩")
 
+# ── L16: Python 工具可编译（教训 23：重复 kwarg 曾入库无人拦——CI 不跑审计器，碎文件出不了门）──
+print("── 16. 工具编译")
+import tempfile as _tf
+broken_py = []
+for f in sorted(glob.glob('tools/*.py')) + ['run_tests.py', 'verify.py', 'tests/test_cli.py']:
+    import py_compile
+    try:
+        py_compile.compile(f, doraise=True, cfile=os.path.join(_tf.gettempdir(), 'fy_lint.pyc'))
+    except Exception as e:
+        broken_py.append(f"{f}: {str(e)[:60]}")
+check(not broken_py, f"工具脚本可编译（实得 {broken_py}）")
+
 print()
 if fails:
     for f_ in fails:
