@@ -46,7 +46,9 @@ const XL = (()=>{ const m = new Map();
       const zb = z.replace(/州$/, "");
       if (zb !== z && zb.length >= 2) add(zb, tgt); });
     u.xian.forEach(x=>add(x.replace(/〔.*?〕/g,""), tgt));
+    (u.zx||[]).forEach(z=>z.x.forEach(x=>add(x.replace(/〔.*?〕/g,""), tgt)));   /* 州属县入跨链（即墨县案同族） */
   }));
+  window.__XL = m;   /* 测试锚：断言州属县在链（test_journey XL-ZX） */
   return m;
 })();
 const XL_RE = new RegExp(
@@ -253,7 +255,7 @@ function openFuText(p, u, q){
   loadTextFile(p.id, ok=>{
     const t = ok ? fuText(p.id, u.n) : null;
     if (t) renderText(u.n, p.name+"方舆纪要 · "+p.vols.join("、"), t, back, p.id,
-      [...new Set([u.fg, ...u.zhou, ...u.xian].filter(Boolean).map(x=>x.replace(/〔.*?〕/g,"")))]);
+      [...new Set([u.fg, ...u.zhou, ...u.xian, ...(u.zx||[]).flatMap(z=>z.x)].filter(Boolean).map(x=>x.replace(/〔.*?〕/g,"")))]);
     else textFallback(u.n, back, "原卷未见此府独立成篇（土州羁縻附见于统辖府叙事），所示为摘录。");
   });
 }

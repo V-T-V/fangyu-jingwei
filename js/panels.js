@@ -110,7 +110,7 @@ function openIntro(){
 
 function openProv(p){
   vset(p.name,"方舆");
-  const fuN=p.fu.length, zN=p.fu.reduce((s,u)=>s+u.zhou.length,0), xN=p.fu.reduce((s,u)=>s+u.xian.length,0);
+  const fuN=p.fu.length, zN=p.fu.reduce((s,u)=>s+u.zhou.length,0), xN=p.fu.reduce((s,u)=>s+u.xian.length+(u.zx||[]).reduce((a,z)=>a+z.x.length,0),0);
   pbody.innerHTML = `
     <div class="p-kicker">${p.vols[0]}至${p.vols[p.vols.length-1]} · 凡${p.vols.length}卷</div>
     <div class="p-ju">${p.name}方舆纪要</div>
@@ -129,7 +129,7 @@ function openProv(p){
       ${p.fu.map((u,i)=>`<li data-i="${i}">
         <span class="fn">${u.n}</span>
         <span class="fnow">${u.now?"今"+u.now:""}</span>
-        <span class="fct">${u.zhou.length?"州"+u.zhou.length+" ":""}县${u.xian.length||u.xs}</span>
+        <span class="fct">${u.zhou.length?"州"+u.zhou.length+" ":""}县${u.xian.length+(u.zx||[]).reduce((a,z)=>a+z.x.length,0)||u.xs}</span>
         <span class="arrow">➤</span></li>`).join("")}
     </ul>`;
   pbody.querySelectorAll(".ful li").forEach(li=>li.onclick=()=>{

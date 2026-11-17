@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script>window.__NOTILES__=1;/* 测试密封：不拉外网瓦片 */</script>
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=114">
+<link rel="stylesheet" href="css/main.css?v=115">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
@@ -19,16 +19,16 @@
 <div id="tl"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap"></pre>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=114" defer></script>
-<script src="js/map.js?v=114" defer></script>
-<script src="js/panels.js?v=114" defer></script>
-<script src="js/rail.js?v=114" defer></script>
-<script src="js/search.js?v=114" defer></script>
-<script src="js/reader.js?v=114" defer></script>
-<script src="js/bookmarks.js?v=114" defer></script>
-<script src="js/fulltext.js?v=114" defer></script>
-<script src="js/app.js?v=114" defer></script>
-<script src="js/modes.js?v=114" defer></script>
+<script src="js/config.js?v=115" defer></script>
+<script src="js/map.js?v=115" defer></script>
+<script src="js/panels.js?v=115" defer></script>
+<script src="js/rail.js?v=115" defer></script>
+<script src="js/search.js?v=115" defer></script>
+<script src="js/reader.js?v=115" defer></script>
+<script src="js/bookmarks.js?v=115" defer></script>
+<script src="js/fulltext.js?v=115" defer></script>
+<script src="js/app.js?v=115" defer></script>
+<script src="js/modes.js?v=115" defer></script>
 <script defer>
 window.addEventListener("error",function(e){window.__err=e.message});
 window.__FY_NO_WORKER__ = true;   /* 虚拟时钟页禁 Worker，走主线程回退 */
@@ -47,6 +47,7 @@ window.addEventListener("load",function(){
           P("SEARCH",document.querySelectorAll("#sresults .sr").length>0);
           var idxHas=typeof IDX!=="undefined"&&IDX.some(e=>e.t==="即墨县");
           P("SEARCH-ZX",idxHas);   /* 州属县可搜（即墨县案回归锚） */
+          P("XL-ZX",window.__XL instanceof Map&&window.__XL.has("即墨县"));   /* 州属县入跨链（同族第二锚） */
           document.querySelector("#sresults .sr[data-i]").click();
           setTimeout(function(){
             try{
