@@ -120,6 +120,41 @@ def main():
         png = os.path.join(ROOT, "docs", "evidence", "offline-index.png")
         open(png, "wb").write(base64.b64decode(shot["data"]))
 
+        # 可选 TEXTS 阶段（--texts）：首查暖存 → 离线重载 → 再查必中
+        if "--texts" in sys.argv:
+            cmd("Network.emulateNetworkConditions",
+                {"offline": False, "latency": 0, "downloadThroughput": -1, "uploadThroughput": -1})
+            cmd("Page.reload", {"ignoreCache": False})
+            for _ in range(40):
+                time.sleep(1)
+                if ev("document.readyState==='complete' && !!(window.map && window.map._loaded)"): break
+
+            def search_q(q, waits):
+                ev("document.querySelector('#boot .go') && document.querySelector('#boot .go').click()")
+                time.sleep(1)
+                ev(f"(function(){{const si=document.getElementById('search');si.value='{q}';si.dispatchEvent(new Event('input'));}})()")
+                time.sleep(1.5)
+                ev("document.getElementById('ftall') && document.getElementById('ftall').click()")
+                for _ in range(waits):
+                    time.sleep(1)
+                    t = ev("(document.querySelector('.fthead')||{}).textContent || ''")
+                    if "/" in t and "处" in t:
+                        return t.strip()
+                return ""
+
+            warm = search_q("襄阳", 60)
+            mark("texts-warm", bool(warm), warm[:24])
+            cmd("Network.emulateNetworkConditions",
+                {"offline": True, "latency": 0, "downloadThroughput": 0, "uploadThroughput": 0})
+            cmd("Page.reload", {"ignoreCache": False})
+            for _ in range(40):
+                time.sleep(1)
+                if ev("document.readyState==='complete' && !!(window.map && window.map._loaded)"): break
+            cold = search_q("襄阳", 90)   # 离线索引重建较慢，窗口给足（首测假阴性教训）
+            mark("texts-offline-search", bool(cold), cold[:24])
+            ntexts = cmd("Runtime.evaluate", {"expression": "(async()=>{let t=0;for(const k of await caches.keys()){const c2=await caches.open(k);if(k.includes('texts'))t=(await c2.keys()).length;}return t;})()", "returnByValue": True, "awaitPromise": True}).get("result", {}).get("value")
+            mark("texts-cache-18", ntexts == 18, f"{ntexts}/18")
+
         report["ok"] = all(s["ok"] for s in report["steps"].values())
         report["evidence"] = png
         print(json.dumps(report, ensure_ascii=False, indent=1))
