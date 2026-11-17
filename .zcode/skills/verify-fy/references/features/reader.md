@@ -18,6 +18,8 @@ python tools/control_fy.py drive "index.html#p=henan&fu=%E5%BC%80%E5%B0%81%E5%BA
 ```
 
 ## Gotchas
+- 渲染管线（escT 转义 + XL 链接包裹）保内容——2026-11-18 三府头/中/尾指纹全保留实证；
+  浏览器侧取样必等内容信号（轮询指纹词），定时猜会撞异步竞态（武昌府假阴性案）
 - 无头环境 `speechSynthesis` 可能空实现——TTS 断言页只验证启停状态机，不验证出声
 - 夜读态存 localStorage `fynight`——跨页断言前清存储（fresh profile 的 drive 天然干净）
 - reader 打开后 Esc 收起；跨链接点击会预取目标卷——网络慢时给 --timeout
