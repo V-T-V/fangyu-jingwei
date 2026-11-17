@@ -1,26 +1,26 @@
 /* ═══════════ 方舆经纬 · Service Worker ═══════════
    三级缓存：SHELL 外壳预存 · TEXTS 全文懒存（首查后整本书离线）
              TILES 瓦片限额存（stale-while-revalidate）
-   VERSION 与 index.html 的 ?v= 同步递增（当前 v111）。 */
+   VERSION 与 index.html 的 ?v= 同步递增（当前 v112）。 */
 
-const VERSION = "v111";
+const VERSION = "v112";
 const SHELL = `fy-${VERSION}-shell`;
 const TEXTS = `fy-${VERSION}-texts`;
 const TILES = `fy-${VERSION}-tiles`;
 const TILE_CAP = 1200;          // 瓦片上限（约 40MB），超限整体重置
 const SHELL_FILES = [
   "./", "./index.html", "./manifest.json",
-  "./css/main.css?v=111",
+  "./css/main.css?v=112",
   "./vendor/leaflet.js", "./vendor/leaflet.css",
   "./data/site_data.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png",
-  "./js/config.js?v=111", "./js/map.js?v=111", "./js/panels.js?v=111",
-  "./js/rail.js?v=111", "./js/search.js?v=111", "./js/reader.js?v=111",
-  "./js/bookmarks.js?v=111", "./js/fulltext.js?v=111", "./js/app.js?v=111",
-  "./js/modes.js?v=111", "./js/analytics.js?v=111",
-  "./js/wenxin.js?v=111",
+  "./js/config.js?v=112", "./js/map.js?v=112", "./js/panels.js?v=112",
+  "./js/rail.js?v=112", "./js/search.js?v=112", "./js/reader.js?v=112",
+  "./js/bookmarks.js?v=112", "./js/fulltext.js?v=112", "./js/app.js?v=112",
+  "./js/modes.js?v=112", "./js/analytics.js?v=112",
+  "./js/wenxin.js?v=112",
   "./js/ftworker.js",
-  "./js/bian.js?v=111",
+  "./js/bian.js?v=112",
 ];
 
 self.addEventListener("install", e => {
@@ -58,8 +58,10 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  /* 瓦片：stale-while-revalidate + 限额 */
-  if (url.hostname === "server.arcgisonline.com") {
+  /* 瓦片：stale-while-revalidate + 限额（底图 + DEM 高程——3D 回访免重付、地形可离线） */
+  const isTile = url.hostname === "server.arcgisonline.com" ||
+                 (url.hostname === "s3.amazonaws.com" && url.pathname.startsWith("/elevation-tiles-prod/"));
+  if (isTile) {
     e.respondWith((async () => {
       const cache = await caches.open(TILES);
       const hit = await cache.match(req);

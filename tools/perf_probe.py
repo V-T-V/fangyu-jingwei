@@ -33,12 +33,17 @@ JS = r"""JSON.stringify((function(){
     n: r.name.split('/').pop().slice(0,44),
     t: Math.round(r.transferSize/1024),
     d: Math.round(r.duration),
-    init: r.initiatorType
+    init: r.initiatorType,
+    _s: Math.round(r.startTime), _e: Math.round(r.responseEnd),
+    dem: r.name.indexOf('terrarium') >= 0
   })).sort((a,b)=>b.t-a.t);
+  const dem = res.filter(r=>r.dem);
   return { rs: Math.round(nav.responseStart), dcl: Math.round(nav.domContentLoadedEventEnd),
            load: Math.round(nav.loadEventEnd), fcp: fcp?Math.round(fcp):null,
            nres: res.length, top: res.slice(0,15),
-           slow: res.slice().sort((a,b)=>b.d-a.d).slice(0,10) };
+           slow: res.slice().sort((a,b)=>b.d-a.d).slice(0,10),
+           dem: dem.length ? { n: dem.length, first_start: Math.min(...dem.map(r=>r._s)),
+                               last_end: Math.max(...dem.map(r=>r._e)) } : null };
 })())"""
 
 prof = tempfile.mkdtemp(prefix="fyperf_")
@@ -74,7 +79,14 @@ try:
             v = r.get("result", {}).get("result", {}).get("value")
             if WAIT:
                 if isinstance(v, (int, float)) and v:
-                    out = {"wait_ms": round(v)}; ws.close(); break
+                    # 达成后附带完整瀑布（--wait 成为超集视图）
+                    ws.send(json.dumps({"id": 2, "method": "Runtime.evaluate",
+                                        "params": {"expression": JS, "returnByValue": True}}))
+                    full = json.loads(ws.recv()).get("result", {}).get("result", {}).get("value")
+                    out = {"wait_ms": round(v)}
+                    if full:
+                        out.update(json.loads(full))
+                    ws.close(); break
             elif v and json.loads(v).get("load"):
                 out = json.loads(v); ws.close(); break
             ws.close()
@@ -83,9 +95,13 @@ try:
     if not out:
         print("X 45s 未完成加载" + (f"（{WAIT} 未达成）" if WAIT else "")); sys.exit(1)
     if WAIT:
-        print(f"── {PAGE} · {WAIT} 达成于 {out['wait_ms']}ms ──"); sys.exit(0)
-    print(f"── {PAGE} 冷加载 ──")
+        print(f"── {PAGE} · {WAIT} 达成于 {out['wait_ms']}ms ──")
+    else:
+        print(f"── {PAGE} 冷加载 ──")
     print(f"responseStart {out['rs']}ms · FCP {out['fcp']}ms · DOMContentLoaded {out['dcl']}ms · load {out['load']}ms · 资源 {out['nres']} 项")
+    if out.get("dem"):
+        dm = out["dem"]
+        print(f"DEM 瓦片 {dm['n']} 张：首发于 {dm['first_start']}ms · 末张毕于 {dm['last_end']}ms")
     print(f"{'资源':<46}{'传输KB':>7}{'耗时ms':>8}  类型")
     for r in out["top"]:
         print(f"{r['n']:<46}{r['t']:>7}{r['d']:>8}  {r['init']}")
