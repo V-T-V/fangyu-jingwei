@@ -219,3 +219,31 @@ Lauren Tan 三实践完整落地：12类lint+AGENTS.md+pre-commit+Makefile
   预装 Chrome → 修为预装 google-chrome + `test -x` 就绪即响
 - 教训 20 升格 lint L13（CI 吞错禁用）：注释剥离豁免——禁止令的文档表述
   不算违规（git mv -q 自指案同款）
+
+---
+
+## 第十二纪：方法论落地与性能三部曲（2026-11-17）
+
+**Lauren Tan 实施指南全量落地**（对照五层逐项补缺）：
+- 验证技能 verify-fy：control_fy.py 六子命令（JSON/--dry-run/--click/报错带 next）
+  + SKILL.md 五节 + 功能地图 8 域（Gotchas 全部实测）
+- fy-mode 主入口：六路由（修bug/新功能/性能/重构/纠犯/拉偏），三要素不可替换
+- 每日审计：audit_features.py 三态（地图自审计锚点 + run_tests 活体），
+  09:00 定时挂接；--live 全路径预演 clean
+- 制度：RULES-EXECUTORS（21 教训逐条指认执行者）+ OVERNIGHT-CONTRACT（decisions.tsv）
+- lint L14：CSS !important 棘轮 ≤25（基线按出现次数，grep 行数 13 是假账）
+
+**性能三部曲**（探针驱动，A/B 各 ≥3 轮中位数）：
+- 一：2D 首访瓦片抢跑（fetch no-cors 按视口预取 z4/z5）——load 1879→1170ms（-38%）
+- 二：3D 探测并行 + localStorage 记忆快径——地形挂载 4461→~3400ms，回访≈0
+- 三：SW TILES 收编 s3 高程——回访 DEM 末张 7750→596ms（13×），3D 地形可离线
+
+**方法论自证三案**：
+- 审计器首跑抓到自家地图假锚（window.__era——真名 curEra 且为 let 闭包量）
+- 预取假设被基线推翻（DEM 本就 541ms 首发）——改道缓存持久化，测量先于方案
+- 验收门槛拦下未验证的定时任务：--live 首跑暴露编码缺陷，修完才交付
+
+**教训 22**：Windows 下 subprocess 捕获子输出必须显式 encoding='utf-8'——
+默认 cp936 遇 ✓ 崩读线程，子进程悬活引发孤儿雪崩（假红三连环）
+
+**事故存档**：CI 镜像迁移期 snap 壳 chromium 全灭案（教训 20/21，已升格 lint L13）
