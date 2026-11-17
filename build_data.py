@@ -123,7 +123,15 @@ def parse_county_block(block):
             # 县词条: "XX县(附郭|今废|...)?"（含"永清县东安县"粘连）
             for m in re.finditer(r"([一-鿿]{1,4})县(附郭|今废|新改|今省|改属)?", cell):
                 raw, tag = m.group(1), m.group(2) or ""
-                raw = re.sub(r"^(亦见|俱在|即|亦|见|在|及|与|又|其|俱|自)", "", raw)
+                # 即墨县真名以「即」起——在剥前缀白名单里（2026-11-17 缺口考古：曾截肢成「墨县」）
+                if raw not in ("即墨",):
+                    for _ in range(3):          # 多趟剥（蓝山县今又设嘉禾县 → 又设嘉禾 → 设嘉禾 → 嘉禾）
+                        raw2 = re.sub(r"^(亦见|俱在|即|亦|见|在|及|与|又|其|俱|自|设|今)", "", raw)
+                        if raw2 == raw:
+                            break
+                        raw = raw2
+                if raw == "城":
+                    continue     # GB2312 损坏残渣（『�城县＝韩城县首字丢失）——拒幽灵「城县」
                 if not raw or len(raw) > 3 or re.search(r"[府州卫司]", raw):
                     continue
                 nm = raw + "县"
@@ -437,6 +445,20 @@ def main():
     total_co = sum(p["stats"]["co"] for p in provinces)
     print(f"\n十五省府条目共 {total_fu}，配坐标 {total_co} ({total_co*100//total_fu}%)")
     print(f"形势 {len(data['xingshi'])} 卷 · 川渎 {len(data['chuandu'])} 卷")
+    # 县治覆盖与缺口账本（论文 §六 引用源——凡缺口必具名，脚本产出口径）
+    n_tot = n_have = 0
+    gaps = []
+    for p in data["provinces"]:
+        for u in p["fu"]:
+            for nm in list(u["xian"]) + [x for z in u.get("zx", []) for x in z.get("x", [])]:
+                n_tot += 1
+                if u.get("xianc") and u["xianc"].get(nm.split("〔")[0]):
+                    n_have += 1
+                else:
+                    gaps.append(f"{p['name']}·{u['n']}·{nm}")
+    print(f"县治覆盖 {n_have}/{n_tot} ({n_have*1000//n_tot/10}%) · 缺口 {len(gaps)}：")
+    for g in gaps:
+        print(f"  - {g}")
 
     js = "/* 《方舆经纬》数据 · 由 build_data.py 生成，勿手改 */\nconst FY = " + \
          json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";"
@@ -602,8 +624,19 @@ def derive_county_coords(data):
             nm, base, dr, li = m.group(1), m.group(2), m.group(3), m.group(4)
             if base.startswith("府") or base == "郭":
                 anchor = None; anchor_name = ""      # 县段以府为锚
-            u_ref = next((u for u in p["fu"] if nm in u["xian"] or
-                          any(nm in z.get("x", []) for z in u.get("zx", []))), None)
+            # 名册匹配按基名（剥〔今废〕等注记）+ 异体归一（璧↔壁：名录「灵璧」/正文「灵壁」）
+            nmN = nm.replace("璧", "壁")
+            u_ref, rname = None, None
+            for u in p["fu"]:
+                hit = next((x for x in u["xian"] if x.split("〔")[0].replace("璧", "壁") == nmN), None)
+                if hit:
+                    u_ref, rname = u, hit.split("〔")[0]; break
+                for z in u.get("zx", []):
+                    hit = next((x for x in z.get("x", []) if x.split("〔")[0].replace("璧", "壁") == nmN), None)
+                    if hit:
+                        u_ref, rname = u, hit.split("〔")[0]; break
+                if u_ref:
+                    break
             a = anchor if (base == "州" and anchor) else (u_ref["c"] if u_ref and u_ref.get("c") else None)
             if not a:
                 continue
@@ -612,18 +645,30 @@ def derive_county_coords(data):
                 continue
             pos = offset_point(a, DIR_DEG[dr], km)
             if 18 < pos[0] < 54 and 73 < pos[1] < 136:
+                # 富对象：坐标 + 原书方位/里程（里程存纯数字串，展示层补"里"）
+                # type 省缺＝推算（前端各处 d.type||"推算" 默认），附郭才显式标注
                 if u_ref:
-                    # 富对象：坐标 + 原书方位/里程（里程存纯数字串，展示层补"里"）
-                    # type 省缺＝推算（前端各处 d.type||"推算" 默认），附郭才显式标注
-                    u_ref.setdefault("xianc", {})[nm] = {"c": pos, "dir": dr, "li": li}
+                    u_ref.setdefault("xianc", {})[rname or nm] = {"c": pos, "dir": dr, "li": li}
                     n_hit += 1
-        # 兜底二：全文任意位置 县名(在)?(府|州)方位N里（段落锚定漏网者）
+                elif base == "州" and anchor_name and "废" not in nm:
+                    # 条目侧补全：名录被 GB2312 损坏吞名的真县（韩城县案）——挂到锚州所属府；
+                    # 「XX废县」为历史废县条目（带方位句者众），不是明代属县，拒收
+                    for u in p["fu"]:
+                        if any(z["n"] == anchor_name for z in u.get("zx", [])):
+                            for z in u.get("zx", []):
+                                if z["n"] == anchor_name and nm not in z.get("x", []):
+                                    z["x"].append(nm)
+                            u.setdefault("xianc", {})[nm] = {"c": pos, "dir": dr, "li": li}
+                            n_hit += 1
+                            break
+        # 兜底二：全文任意位置 县名(在)?(府|州)方位N里（段落锚定漏网者；璧/壁异体兼容）
         for u in p["fu"]:
             for nm in list(u["xian"]):
                 nm_c = nm.split("〔")[0]
                 if not nm_c or nm_c in (u.get("xianc") or {}):
                     continue
-                m = re.search(re.escape(nm_c) + r"(?:在)?(府城?|州城?)" +
+                pat = re.escape(nm_c).replace("璧", "[璧壁]")
+                m = re.search(pat + r"(?:在)?(府城?|州城?)" +
                               r"(东南|东北|西南|西北|东|南|西|北)([一二三四五六七八九十百]+)里",
                               full.replace("@@@", ""))
                 if not m or not u.get("c"):

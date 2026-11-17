@@ -1,13 +1,13 @@
 # 《读史方舆纪要》的空间与文本计量研究
-## ——基于 1,476 治所坐标与 260 万字语料的数字人文分析
+## ——基于 1,489 治所坐标与 260 万字语料的数字人文分析
 
 > 方舆经纬项目组 · 2026-11 · 全部数字由脚本可复核（`paper_stats.js`、`build_mentions.py`）
 
 **摘要**　本文对顾祖禹《读史方舆纪要》一百三十卷进行双重计量：其一，由原书
-"县名·府方位 N 里"句式三角化推算 1,096 个县治坐标（驿路系数 0.62 标定），
+"县名·府方位 N 里"句式三角化推算 1,109 个县治坐标（驿路系数 0.62 标定），
 考察明代府级政区的空间尺度；其二，对 260 万字全文语料作卷帙、地名频次与
-军事语汇的文本计量。主要发现：(1) 县治距府治中位数 53.7 km，四分之三在
-90 km 内——明代设县遵循"一日可达"原则；(2) 府辖半径自江南（浙江 39 km）
+军事语汇的文本计量。主要发现：(1) 县治距府治中位数 53.9 km，四分之三在
+92 km 内——明代设县遵循"一日可达"原则；(2) 府辖半径自江南（浙江 39 km）
 向山地边疆（湖广 76 km）递增近一倍，与地形破碎度同构；(3) 文本注意力呈
 "开封—太原—襄阳"北方轴线，而军事语汇密度呈**边缘高、中原低**的环带：
 浙江（海防 10.5/万字）、广东（岭南 9.4）居首，河南（3.0）、山东（2.9）垫底；
@@ -16,7 +16,7 @@
 
 **关键词**　读史方舆纪要；历史地理；数字人文；政区空间结构；文本计量；明代军事地理
 
-**Abstract**  This study applies quantitative text analysis to Gu Zuyu's (1631-1692) *Dushi Fangyu Jiyao*, a 130-volume geographical treatise of 2.6 million characters. Computational methods include frequency analysis, PCA, clustering, and network analysis across 15 provinces. Key findings: (1) a "one-day reach" principle (median 53.7 km); (2) an inversion between military vocabulary and war verbs; (3) Shandong as cognitive anomaly (38% PCA residual). First full-text computational analysis of this work.
+**Abstract**  This study applies quantitative text analysis to Gu Zuyu's (1631-1692) *Dushi Fangyu Jiyao*, a 130-volume geographical treatise of 2.6 million characters. Computational methods include frequency analysis, PCA, clustering, and network analysis across 15 provinces. Key findings: (1) a "one-day reach" principle (median 53.9 km); (2) an inversion between military vocabulary and war verbs; (3) Shandong as cognitive anomaly (38% PCA residual). First full-text computational analysis of this work.
 
 **Keywords**  Dushi Fangyu Jiyao; Gu Zuyu; historical geography; digital humanities; Ming military geography
 
@@ -47,7 +47,7 @@
 
 由段首句式 `县名（府城|州城）（方位）（N里）` 解析方位与里程，
 以府治坐标为锚、明里 = 0.57 km（驿路系数 0.62 标定）作平面推算；
-附郭县直接取府治。覆盖率 1,096/1,104（99.3%）；越界异常值剔除。
+附郭县直接取府治。覆盖率 1,109/1,111（99.8%）；越界异常值剔除。缺口仅二（§六具名）。
 
 ### 2.3 地名频次的双计法
 
@@ -69,17 +69,18 @@
 
 ## 三、空间格局：县治距府治的分布
 
-（样本 949 个非附郭县）
+（样本 962 个非附郭县；数字源 tools/county_dist.py）
 
 | 统计量 | 值 (km) |
 |---|---|
-| 中位数 | **53.7** |
-| 均值 / 标准差 | 68.8 / 51.3 |
-| P25 — P75 | 32.2 — 89.6 |
-| P95 / 极值 | 161.0 / 3.6（大名）—437.7（永兴·陕西） |
+| 中位数 | **53.9** |
+| 均值 / 标准差 | 69.3 / 51.9 |
+| P25 — P75 | 32.2 — 91.5 |
+| P95 / 极值 | 162.8 / 3.6（大名）—437.2（永兴·郴州） |
 
-**一日可达原则**：中位 54 km ≈ 驿路一日程（约 150 明里）——县的设置以
-府城一日管辖为度。
+**一日可达原则**：中位 53.9 km，原书里程中位 120 里——县的设置以府城一日
+管辖为度。（勘误：初稿「约 150 明里」系与方位里程 P95 混淆；两套口径分别
+为 87 明里与 120 原书里，见 §4.6。）
 
 | 分省中位（选） | km | 解读 |
 |---|---|---|
@@ -190,18 +191,18 @@
 
 **方位里程分布**（脚本口径 n = 28,750）：中位 **35 里**（≈20 km），P25/P75 =
 15/70 里，P95 = 150 里；40% 在 30 里内，仅 1% 超过 300 里。与县治距府样本
-（中位 150 里）对照，构成**两级行政地理节奏**：
+（原书里程中位 120 里）对照，构成**两级行政地理节奏**：
 
 | 层 | 中位 | 语义 |
 |---|---|---|
 | 政区内（山川·关隘·城邑定位） | 35 里 | 叙事分辨率——半日之程 |
-| 政区间（县→府） | 150 里 | 一日可达——管辖半径 |
+| 政区间（县→府） | 120 里 | 一日可达——管辖半径 |
 
-书的地毯是 35 里一格铺的；国的骨架是 150 里一站搭的。
+书的地毯是 35 里一格铺的；国的骨架是 120 里一站搭的。
 
 ![图 2　方位里程分布](docs/figs/fig4_li.png)
 
-*图 2　方位里程分布（n=28,750，对数轴）——35 里与 150 里的两级行政节奏*
+*图 2　方位里程分布（n=28,750，对数轴）——35 里（政区内叙事）与 120 里（县→府管辖）的两级行政节奏*
 
 
 ### 4.7 山河名录与城周金字塔
@@ -707,7 +708,12 @@ singleton·PCA 残差·网络入度）。这不是方法伪影，而是**认知�
 
 ## 六、方法局限与教训
 
-1. 三角化为方法近似：山径系数偏离致偏（黔江一县三法皆偏 80 km+，记阙）；
+1. 三角化为方法近似：山径系数偏离致偏（黔江一县三法皆偏 80 km+，记阙）。
+   全书县治缺口仅二：四川·重庆府·黔江县、湖广·衡州府·嘉禾县（明末新置，
+   原书无「县名·州方位 N 里」句式）。2026-11-17 解析考古曾修复六案——即墨县
+   （前缀剥离截肢）、韩城县（GB2312 吞名，条目侧补全）、灵璧县（璧/壁异体）、
+   海门/岳池/武隆（注记〔今废〕〔今省〕阻断名册匹配），并剔除两个幽灵县
+   （墨县/城县），覆盖率由 99.3% 升至 99.8%（build_data.py 缺口账本可复算）；
 2. 简名计含同名词目噪声（太平/清河等），须与全名计并读；
 3. 语料口径必须单一：volumes 原文与站点 text 全集数字不同，
    本文一律采用站点语料；

@@ -54,7 +54,7 @@ for page in PAGES:
         [EDGE, "--headless=new", "--disable-gpu", "--no-first-run",
          "--user-data-dir=" + prof, "--virtual-time-budget=16000",
          "--dump-dom", BASE + page],
-        capture_output=True, timeout=120)
+        capture_output=True, timeout=240)
     html = r.stdout.decode("utf-8", errors="replace")
     m = re.search(r'id="testlog"[^>]*>([^<]*)<', html)
     if not m or "TESTLOG" not in (m.group(1) or ""):

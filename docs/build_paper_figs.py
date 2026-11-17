@@ -149,9 +149,9 @@ med, p95 = D["median"], D["p95"]
 ax.axvline(med, color=CINNABAR, lw=1.8, ls="--")
 ax.annotate(f"中位 {med} 里\n政区内·半日之程", (med, counts[2] * 1.6),
             fontsize=10, color=CINNABAR, ha="left", xytext=(med + 8, counts[2] * 2))
-ax.axvline(150, color=INK, lw=1.4, ls=":")
+ax.axvline(120, color=INK, lw=1.4, ls=":")
 ax.annotate("150 里\n县→府·一日可达", (150, max(counts) * .35),
-            fontsize=10, color=INK, ha="left", xytext=(158, max(counts) * .5))
+            fontsize=10, color=INK, ha="left", xytext=(128, max(counts) * .5))
 ax.set_title(f"方位里程的两级行政节奏（n = {D['n_li']:,}）", fontproperties=KAI, pad=12)
 fig.tight_layout()
 fig.savefig(os.path.join(OUT, "fig4_li.png"))

@@ -18,11 +18,12 @@ function setBasemap(kind){
   const conf = BASEMAPS[bm];
   if (tileLayer) map.removeLayer(tileLayer);
   tileErrs = 0;
-  tileLayer = L.tileLayer(conf.url,{maxZoom:12,maxNativeZoom:conf.maxNative}).addTo(map);
   document.body.classList.toggle("imgbasemap", !!conf.cls);
   try{ localStorage.setItem("fybasemap", bm); }catch(e){}
   const btn = document.getElementById("bmtoggle");
   if (btn) btn.textContent = conf.btn;
+  if (window.__NOTILES__) return;   /* 测试密封：断言页不拉外网瓦片——时长不被 CDN 天气绑架（test_basemap 是真网络金丝雀，不设此旗） */
+  tileLayer = L.tileLayer(conf.url,{maxZoom:12,maxNativeZoom:conf.maxNative}).addTo(map);
   /* 瓦片断供兜底：>5 张 404 → 隐瓦片层，绢底自足（矢量数据不受影响） */
   tileLayer.on("tileerror", ()=>{
     tileErrs++;
@@ -47,7 +48,7 @@ function setBasemap(kind){
 
 const fuLayer = L.layerGroup().addTo(map);      // 舆图：府治印章（常驻）
 const zhouLayer = L.layerGroup();               // 属州方章（zoom≥6 挂载，省 DOM）
-const countyLayer = L.layerGroup();             // 县治点（zoom≥7 挂载——1476 点常驻拖慢平移）
+const countyLayer = L.layerGroup();             // 县治点（zoom≥7 挂载——1489 点常驻拖慢平移）
 const passLayer = L.layerGroup();               // 关隘（zoom≥5 挂载）
 const eraLayer = L.layerGroup().addTo(map);     // 形势：都城要地
 const riverLayer = L.layerGroup().addTo(map);   // 川渎：水道
