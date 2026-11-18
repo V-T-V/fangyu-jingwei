@@ -1,1 +1,2 @@
 2026-11-18T09:00+08:00	audit	维持 clean	锚点全在活体绿	audit_features.py --live 输出 state:clean（9 域 + run_tests 14 页）	done
+2026-11-18T09:30+08:00	deep-audit	八兵器全绿	boot 0错×2 · 离线8验 · heap stable(4.6→5.9MB) · chaos 100拳0错 · 带宽100%免	boot_smoke/offline_check/heap_probe/chaos_monkey/bandwidth_probe	done
