@@ -104,12 +104,29 @@ python -m http.server 9200
 python audit.py   # 以原书四至八到交叉验证坐标：277 条可解析，直线/载里中位 0.62（驿路系数），方位吻合——零坐标错误
 ```
 
-## 校验
+## 校验与验证体系
 
 ```
-python verify.py     # 数据完整性：文件/计数/坐标域/摘录洁净/全文覆盖/卷首/JS 语法
-python run_tests.py  # 无头回归：5 断言页（筛选/漕河/事件定位/夜读/朗读），一键全绿
+python verify.py      # 数据完整性：文件/计数/坐标域/摘录洁净/全文覆盖/卷首/JS 语法
+python run_tests.py   # 无头回归：14 断言页 + lint 16 类 + 哨兵 + CLI
+make all              # lint · verify · test · health 一键
 ```
+
+**八件验证兵器（tools/，全部可独立复跑）**
+
+| 工具 | 维度 | 战绩 |
+|---|---|---|
+| perf_probe | 性能 | 瓦片抢跑 -38% · 3D 地形回访 13× |
+| control_fy | 驱动 | 验证技能 CLI（serve/doctor/drive/screenshot/perf/cleanup） |
+| boot_smoke | 启动 | 真页心电图：本地/生产/移动 0 错 |
+| offline_check | 离线 | 断网重载三验 + 全文检索 18/18 |
+| audit_features | 地图 | 9 域锚点自审计（每日 09:00 自动） |
+| heap_probe | 内存 | 180 轮 UI 循环稳定 |
+| chaos_monkey | 混沌 | 150 记乱拳 0 错（种子 42 可复现） |
+| bandwidth_probe | 带宽 | 再访 0 字节（SW 全命中） |
+
+自动化：每日 09:00 地图审计（三态 clean/changed/blocked，decisions.tsv 落账）；
+周六 09:30 深度审计（八兵器全跑）。工作流与证据形态见 `.zcode/skills/verify-fy/`。
 
 底栏「关于 · 校勘记」列数据源流、校勘约定与已知之阙。
 
