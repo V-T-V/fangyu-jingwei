@@ -30,7 +30,7 @@
 
 | 规则 / 教训 | 执行者 | 触发方式 |
 |---|---|---|
-| 14 断言页全绿（含 2 CDP 真实时间页） | `run_tests.py` + CI「无头回归」 | `python run_tests.py` |
+| 16 断言页全绿（14 无头 + 2 CDP 真实时间页） | `run_tests.py` + CI「无头回归」 | `python run_tests.py` |
 | 论文 15 数字锚（动词密度/被引/里程…） | `tools/check_stats.py` | 数字哨兵 |
 | CDP 冷机启动抖动 · 教训 21（就绪循环带标志+重试） | `run_tests.py` 内置护栏 | 自动 |
 | test_3d 双触发假失败（idle+超时双保险） | `fireOnce` 守卫（tests/test_3d.html） | 自动 |
@@ -45,12 +45,16 @@
 | 口径单一来源：县距/中文里程＝`tools/fy_geo.py`（county_dist 与 build_s5 字节级对拍，53.9km 哨兵锚联动即红）；全文/文心纯核＝`js/ft_core.js`（主线程 defer 链与 Worker importScripts 共一份，禁 DOM） | 对拍复算 + `check_stats.py` 空间锚 | 改口径时 |
 | 兵器可移植：FY_BROWSER / FY_BASE / FY_CDP_PORT 三环境变量（缺省不变）+ 收尸统一 | `tools/control_fy.py` 等 7 工具 + `run_tests.py`（共 8 处）+ `tools/fy_reap.py`（六探针复用） | 换机 / CI 注入 |
 | 测试页就绪门控：断言前等 `map._loaded` 真信号（固定 2500ms 在系统负载下先于初始化完成 → 假红实录） | tests/test_basemap.html 门控环（200ms 轮询，10s 上限诚实红） | `python run_tests.py` |
+| 装载进度回归锚 WPROG：Worker 装载全书时 (i,total) 进度必须流过 onmessage 接线（该接线自 v4.2 起是死信——UI/CSS/回调挂点俱全，独缺消费分支；教训：**接线完整性也是断言对象**） | tests/test_ft_worker.html WPROG（挂点须在 worker 首建同步块内——ftWorkerReady 无 pending 去重，二次调用产孤儿 worker） | run_tests CDP |
+| boot_smoke 证据按页命名（3d 跑完覆盖 index 截图实录） | tools/boot_smoke.py（smoke-3d.png / smoke-index.png 并存） | 每次冒烟 |
+| chaos alive 探针跨世界（2D `map._loaded` ∥ 3D `__m3ready`——混沌点击误入巡游不误报失活；ok 判据仍只看 JS 错误数） | tools/chaos_monkey.py | 混沌测试 |
+| 指纹账本 BOM 容忍（`utf-8-sig` 读入——Windows 编辑器给账本加 BOM 不再触发双重 confusing red；负向对照：注入 BOM 仍全绿） | verify.py 第 8 节 | `python verify.py` |
 
 ## L5 流程（CI · 隔夜 · 约定）
 
 | 规则 / 教训 | 执行者 | 触发方式 |
 |---|---|---|
-| push 必过 lint+verify+14 页 | `.github/workflows/ci.yml`（无吞错） | 每次 push |
+| push 必过 lint+verify+16 页 | `.github/workflows/ci.yml`（无吞错） | 每次 push |
 | 生产部署 | Pages workflow | 每次 push main |
 | 改数据先跑管线（可重入） | `build_data.py` / `build_mentions.py` | 手动 |
 | 隔夜循环可判停 + 决策日志 | `docs/OVERNIGHT-CONTRACT.md` + `decisions.tsv` | 隔夜任务 |
@@ -62,3 +66,4 @@
 - 代码风格（缩进/命名随仓库惯例）——无 formatter 接入
 - 提交信息格式——git 历史即范例，未上 commitlint
 - 图表美学判断——视觉审查用人眼/视觉模型，无可执行判据
+- 功能地图语义层——audit_features 只验锚点存在性，行为描述过时需人工/agent 对照（2026-11-19 实录：静态 clean 但语义脱节 9 处）
