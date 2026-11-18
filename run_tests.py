@@ -23,7 +23,8 @@ PAGES = ["tests/" + p for p in (
          "test_auto.html", "test_filter.html", "test_events.html",
          "test_night.html", "test_tts.html", "test_counties.html",
          "test_journey.html", "test_gating.html", "test_sw.html",
-         "test_wenxin.html", "test_bian.html", "test_basemap.html")]
+         "test_wenxin.html", "test_bian.html", "test_basemap.html",
+         "test_edge.html", "test_visual_verify.html")]
 # 本地端口可被环境变量覆盖（Windows 保留端口段会吞掉 8613；CI 用默认）
 BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
 

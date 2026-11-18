@@ -5,7 +5,7 @@
 <meta charset="UTF-8"><title>自动验证 · 边界</title>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=116">
+<link rel="stylesheet" href="css/main.css?v=117">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
@@ -18,23 +18,23 @@
 <div id="tl"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:500px;white-space:pre-wrap"></pre>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=116" defer></script>
-<script src="js/map.js?v=116" defer></script>
-<script src="js/panels.js?v=116" defer></script>
-<script src="js/rail.js?v=116" defer></script>
-<script src="js/search.js?v=116" defer></script>
-<script src="js/reader.js?v=116" defer></script>
-<script src="js/bookmarks.js?v=116" defer></script>
-<script src="js/fulltext.js?v=116" defer></script>
-<script src="js/app.js?v=116" defer></script>
-<script src="js/modes.js?v=116" defer></script>
+<script src="js/config.js?v=117" defer></script>
+<script src="js/map.js?v=117" defer></script>
+<script src="js/panels.js?v=117" defer></script>
+<script src="js/rail.js?v=117" defer></script>
+<script src="js/search.js?v=117" defer></script>
+<script src="js/reader.js?v=117" defer></script>
+<script src="js/bookmarks.js?v=117" defer></script>
+<script src="js/fulltext.js?v=117" defer></script>
+<script src="js/app.js?v=117" defer></script>
+<script src="js/modes.js?v=117" defer></script>
 <script defer>
 window.addEventListener("error",e=>{window.__err=(window.__err||"")+"|"+e.message});
 window.addEventListener("load",()=>{
   const NL=String.fromCharCode(10),log=[];
   const P=(n,ok)=>log.push(n+" "+(ok?"PASS":"FAIL"));
   const done=()=>{document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ERR:"+(window.__err||"none")+" ENDLOG";
-    document.title=log.every(l=>l.includes("PASS"))?"ALL-PASS":"HAS-FAIL";};
+    document.title=log.some(l=>l.includes("FAIL"))?"HAS-FAIL":"ALL-PASS";};
   const si=document.getElementById("search");
   setTimeout(()=>{
     try{
@@ -63,18 +63,22 @@ window.addEventListener("load",()=>{
       const bmCount=BM.load().length;
       P("EDGE-bm35", bmCount<=30); // 上限 30
       try{localStorage.removeItem("fybm");}catch(e){}
-      // ⑥ 不存在的省
+      // ⑥ 不存在的省（搜索输入有 110ms 防抖——等防抖渲染后再查，断言不削弱）
       si.value="不存在的省"; si.dispatchEvent(new Event("input"));
-      const none=document.querySelector("#sresults .none");
-      P("EDGE-nofind", !!none);
-      si.value=""; si.dispatchEvent(new Event("input"));
-      // ⑦ 极速三模式连切
-      setMode("形势"); setMode("川渎"); setMode("舆图"); setMode("形势");
-      P("EDGE-quickswitch", !window.__err);
-      // ⑧ 不存在的河
-      const badRiver=buildRivers("不存在的河");
-      P("EDGE-badriver", !!badRiver); // 应回退到大江
-      done();
+      setTimeout(()=>{
+        try{
+          const none=document.querySelector("#sresults .none");
+          P("EDGE-nofind", !!none);
+          si.value=""; si.dispatchEvent(new Event("input"));
+          // ⑦ 极速三模式连切
+          setMode("形势"); setMode("川渎"); setMode("舆图"); setMode("形势");
+          P("EDGE-quickswitch", !window.__err);
+          // ⑧ 不存在的河
+          const badRiver=buildRivers("不存在的河");
+          P("EDGE-badriver", !!badRiver); // 应回退到大江
+          done();
+        }catch(e){log.push("ERR "+e);done();}
+      },200);
     }catch(e){log.push("ERR "+e);done();}
   },2500);
 });

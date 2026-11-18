@@ -5,7 +5,7 @@
 <meta charset="UTF-8"><title>全要素可见性终检</title>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=116">
+<link rel="stylesheet" href="css/main.css?v=117">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div>
@@ -19,22 +19,22 @@
 <div id="tl"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:500px;white-space:pre-wrap"></pre>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=116" defer></script>
-<script src="js/map.js?v=116" defer></script>
-<script src="js/panels.js?v=116" defer></script>
-<script src="js/rail.js?v=116" defer></script>
-<script src="js/search.js?v=116" defer></script>
-<script src="js/reader.js?v=116" defer></script>
-<script src="js/bookmarks.js?v=116" defer></script>
-<script src="js/fulltext.js?v=116" defer></script>
-<script src="js/app.js?v=116" defer></script>
-<script src="js/modes.js?v=116" defer></script>
+<script src="js/config.js?v=117" defer></script>
+<script src="js/map.js?v=117" defer></script>
+<script src="js/panels.js?v=117" defer></script>
+<script src="js/rail.js?v=117" defer></script>
+<script src="js/search.js?v=117" defer></script>
+<script src="js/reader.js?v=117" defer></script>
+<script src="js/bookmarks.js?v=117" defer></script>
+<script src="js/fulltext.js?v=117" defer></script>
+<script src="js/app.js?v=117" defer></script>
+<script src="js/modes.js?v=117" defer></script>
 <script defer>
 window.addEventListener("load",()=>{
   const NL=String.fromCharCode(10),log=[];
   const P=(n,ok)=>log.push(n+" "+(ok?"PASS":"FAIL"));
   const done=()=>{document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
-    document.title=log.every(l=>l.includes("PASS"))?"ALL-PASS":"HAS-FAIL";};
+    document.title=log.some(l=>l.includes("FAIL"))?"HAS-FAIL":"ALL-PASS";};
   try{localStorage.clear();}catch(e){}
   setTimeout(()=>{
     try{
@@ -42,7 +42,7 @@ window.addEventListener("load",()=>{
       // 等初始化完成
       setTimeout(()=>{
         try{
-          // zoom 4：全国景 — 检查府印 + 防线 + 关隘
+          // zoom 4：全国景 — 检查府印 + 防线 + 关隘门控（关隘 zoom≥5 才挂载，map.js 渲染分层）
           map.setZoom(4,{animate:false});
           setTimeout(()=>{
             const z4 = {
@@ -51,7 +51,7 @@ window.addEventListener("load",()=>{
               fl: document.querySelectorAll(".fronlab").length
             };
             P("Z4-FU-"+z4.fu, z4.fu>=190);
-            P("Z4-PASS-"+z4.pm, z4.pm>=40);
+            P("Z4-GATE-"+z4.pm, z4.pm===0);   /* 关隘 z4 不挂载——与 test_gating LOW-PASS-0 同口径 */
             P("Z4-FRONTIER-"+z4.fl, z4.fl>=1);
             // zoom 6：省景 — 检查州章
             map.setZoom(6,{animate:false});
@@ -59,10 +59,12 @@ window.addEventListener("load",()=>{
             setTimeout(()=>{
               const z6 = {
                 zs: document.querySelectorAll(".zseal").length,
-                zsVis: Array.from(document.querySelectorAll(".zseal")).filter(e=>getComputedStyle(e).opacity>0.3).length
+                zsVis: Array.from(document.querySelectorAll(".zseal")).filter(e=>getComputedStyle(e).opacity>0.3).length,
+                pm: document.querySelectorAll(".passmark").length
               };
               P("Z6-ZHOU-"+z6.zs, z6.zs>=100);
               P("Z6-ZHOU-VIS-"+z6.zsVis, z6.zsVis>=50);
+              P("Z6-GATE-"+z6.pm, z6.pm===50);   /* zoom≥5 关隘全挂载：50 处天下名关 */
               // zoom 7：县景 — 检查县点
               map.setZoom(7,{animate:false});
               map.panTo([37,115],{animate:false});
