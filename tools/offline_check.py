@@ -18,9 +18,12 @@ import time
 import urllib.request as ur
 import urllib.parse
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # 兼容 python -I 调用
+from fy_reap import reap_browser
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
-PORT = 9333
+PORT = int(os.environ.get("FY_CDP_PORT", "9333"))
 
 CANDS = [
     os.environ.get("FY_BROWSER", ""),
@@ -160,7 +163,7 @@ def main():
         print(json.dumps(report, ensure_ascii=False, indent=1))
         sys.exit(0 if report["ok"] else 1)
     finally:
-        proc.terminate()
+        reap_browser(proc, PORT)   # 收尸共享版（教训 9）：terminate 只杀主进程
 
 
 if __name__ == "__main__":

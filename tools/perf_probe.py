@@ -7,24 +7,29 @@
   - 资源瀑布：transferSize / duration Top15
 数字出脚本，不作目测（数据纪律）。
 """
-import json, subprocess, sys, tempfile, time
+import json, os, subprocess, sys, tempfile, time
 import urllib.request as ur
 
-BASE = "http://127.0.0.1:9200/"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # 兼容 python -I 调用
+from fy_reap import reap_browser
+
+BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
 PAGE = sys.argv[1] if len(sys.argv) > 1 else "index.html"
 WAIT = sys.argv[2] if len(sys.argv) > 2 else None   # 可选：等待该 JS 表达式为真，报告达成时刻
-PORT = 9333
+PORT = int(os.environ.get("FY_CDP_PORT", "9333"))
 
 CANDS = [
+    os.environ.get("FY_BROWSER", ""),   # 显式指定优先（CI 注入）
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
     "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser",
 ]
-import os
 def _ok(c):
     return c and (os.path.exists(c) if c[1] == ":" else os.access(c, os.X_OK))
 EDGE = next((c for c in CANDS if _ok(c)), None)
+if not EDGE:
+    print("X 未找到浏览器（FY_BROWSER 可指定）"); sys.exit(2)
 
 JS = r"""JSON.stringify((function(){
   const nav = performance.getEntriesByType('navigation')[0] || {};
@@ -109,4 +114,4 @@ try:
     for r in out["slow"]:
         print(f"{r['n']:<46}{r['t']:>7}{r['d']:>8}  {r['init']}")
 finally:
-    proc.terminate()
+    reap_browser(proc, PORT)   # 收尸共享版（教训 9）：terminate 只杀主进程

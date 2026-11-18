@@ -1,0 +1,4 @@
+* text=auto
+data/** eol=lf
+docs/supplementary/** eol=lf
+SHA256SUMS eol=lf

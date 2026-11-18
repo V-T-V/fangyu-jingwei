@@ -10,6 +10,7 @@
 若某轮改动后增量显著抬升（>2MB/60轮），即回归信号。
 """
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -17,17 +18,20 @@ import time
 import urllib.request as ur
 import urllib.parse
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # 兼容 python -I 调用
+from fy_reap import reap_browser
+
 EDGE_CANDS = [
+    os.environ.get("FY_BROWSER", ""),   # 显式指定优先（CI 注入）
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
     "/usr/bin/google-chrome", "/usr/bin/chromium",
 ]
-import os
 EDGE = next((c for c in EDGE_CANDS if c and os.path.exists(c)), None)
 
 BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
-PORT = 9333
+PORT = int(os.environ.get("FY_CDP_PORT", "9333"))
 THRESH_MB = 2.0   # 每 60 轮增量阈值
 
 
@@ -105,7 +109,7 @@ def main():
         print(json.dumps(out, ensure_ascii=False, indent=1))
         sys.exit(0 if out["ok"] else 1)
     finally:
-        proc.terminate()
+        reap_browser(proc, PORT)   # 收尸共享版（教训 9）：terminate 只杀主进程
 
 
 if __name__ == "__main__":

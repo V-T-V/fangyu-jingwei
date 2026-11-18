@@ -5,6 +5,8 @@
 FAIL 行逐条列出；退出码 0=全过 / 1=有失败。
 """
 import re, subprocess, sys, tempfile, os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools"))
+from fy_reap import reap_browser   # 收尸共享版（教训 9，tools/fy_reap.py）
 
 CANDS = [
     os.environ.get("FY_BROWSER", ""),                      # 显式指定优先
@@ -76,10 +78,10 @@ for page in PAGES:
 import json as _json, urllib.request as _ur, time as _time
 def run_cdp_test(page, _attempts=3):
     # CI 冷机偶发浏览器 >10s 起不来（2026-11-16 教训：就绪循环静默落穿→裸 traceback）
-    import subprocess as _sp, tempfile as _tf, os as _os
+    import subprocess as _sp, tempfile as _tf
     out = None
     for _att in range(_attempts):
-        port, proc = 9333, None
+        port, proc = int(os.environ.get("FY_CDP_PORT", "9333")), None
         prof = _tf.mkdtemp(prefix="fy3d_")
         proc = _sp.Popen([EDGE, "--headless=new", "--disable-gpu", "--use-angle=swiftshader",
             "--no-first-run", "--remote-debugging-port=%d" % port,
@@ -120,17 +122,8 @@ def run_cdp_test(page, _attempts=3):
             print("✗ %-20s CDP-LAUNCH FAIL（%s）" % (page, e))
             return
         finally:
-            proc.terminate()
-            # 收尸：无头浏览器子进程（terminate 只杀主进程，尸体吃 CPU 会让下一轮 CDP 假超时）
-            if sys.platform == "win32":
-                _sp.run(["powershell", "-NoProfile", "-Command",
-                  "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe'\" | "
-                  "Where-Object {$_.CommandLine -like '*headless*'} | "
-                  "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],
-                  capture_output=True, timeout=30)
-            else:
-                _sp.run(["pkill", "-f", "remote-debugging-port=%d" % port],
-                  capture_output=True, timeout=15)
+            # 收尸共享版（教训 9）：terminate 只杀主进程，尸体吃 CPU 会让下一轮 CDP 假超时
+            reap_browser(proc, port)
     lines = [l.strip() for l in out.split(";") if l.strip()]
     bad = [l for l in lines if "FAIL" in l and "SKIP" not in l]
     print(("✓" if not bad else "✗") + " %-20s %d 项断言%s" % (page, len(lines), "" if not bad else "："))

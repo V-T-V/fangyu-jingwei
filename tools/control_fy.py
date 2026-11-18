@@ -28,7 +28,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PID_FILE = os.path.join(ROOT, ".fyserve.pid")
 BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
 PORT = int(BASE.rstrip("/").rsplit(":", 1)[1])
-CDP_PORT = 9333
+CDP_PORT = int(os.environ.get("FY_CDP_PORT", "9333"))
 EVIDENCE_DIR = os.path.join(ROOT, "docs", "evidence")
 
 CANDS = [
@@ -151,7 +151,7 @@ class CDP:
                 time.sleep(.2)
         else:
             self.__exit__(None, None, None)
-            fail("CDP 15s 未就绪", "重跑一次；仍失败查是否有残留无头进程占用 9333（control_fy.py cleanup）")
+            fail("CDP 15s 未就绪", f"重跑一次；仍失败查是否有残留无头进程占用 {self.port}（control_fy.py cleanup，或换 FY_CDP_PORT）")
         import urllib.parse
         req = ur.Request(base + "/json/new?" + urllib.parse.quote(BASE + self.page, safe=""),
                          method="PUT")

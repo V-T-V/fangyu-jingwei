@@ -16,15 +16,19 @@ import time
 import urllib.request as ur
 import urllib.parse
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # 兼容 python -I 调用
+from fy_reap import reap_browser
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
 TARGET = BASE + "index.html"
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 200
 GAP = int(sys.argv[2]) if len(sys.argv) > 2 else 60
-PORT = 9333
+PORT = int(os.environ.get("FY_CDP_PORT", "9333"))
 random.seed(42)   # 可复现混沌
 
 EDGE_CANDS = [
+    os.environ.get("FY_BROWSER", ""),   # 显式指定优先（CI 注入）
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
@@ -112,7 +116,7 @@ def main():
         print(json.dumps(out, ensure_ascii=False, indent=1))
         sys.exit(0 if out["ok"] else 1)
     finally:
-        proc.terminate()
+        reap_browser(proc, PORT)   # 收尸共享版（教训 9）：terminate 只杀主进程
 
 
 if __name__ == "__main__":
