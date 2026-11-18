@@ -150,7 +150,7 @@ check(not feature_ids or not any(fid in core for fid in feature_ids),
 # 脚本加载顺序（defer 依赖链）
 scripts = re.findall(r'<script src="js/(\w+)\.js', idx)
 expected_order = ['config', 'map', 'panels', 'rail', 'search', 'reader',
-                  'bookmarks', 'fulltext', 'app', 'modes', 'analytics', 'wenxin', 'bian']
+                  'bookmarks', 'ft_core', 'fulltext', 'app', 'modes', 'analytics', 'wenxin', 'bian']
 actual_order = [s for s in scripts if s in expected_order]
 check(actual_order == expected_order[:len(actual_order)],
       f"脚本 defer 顺序符合依赖链（{actual_order}）")

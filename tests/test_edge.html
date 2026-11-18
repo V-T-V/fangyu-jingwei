@@ -5,7 +5,7 @@
 <meta charset="UTF-8"><title>自动验证 · 边界</title>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=117">
+<link rel="stylesheet" href="css/main.css?v=118">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
@@ -18,16 +18,17 @@
 <div id="tl"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:500px;white-space:pre-wrap"></pre>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=117" defer></script>
-<script src="js/map.js?v=117" defer></script>
-<script src="js/panels.js?v=117" defer></script>
-<script src="js/rail.js?v=117" defer></script>
-<script src="js/search.js?v=117" defer></script>
-<script src="js/reader.js?v=117" defer></script>
-<script src="js/bookmarks.js?v=117" defer></script>
-<script src="js/fulltext.js?v=117" defer></script>
-<script src="js/app.js?v=117" defer></script>
-<script src="js/modes.js?v=117" defer></script>
+<script src="js/config.js?v=118" defer></script>
+<script src="js/map.js?v=118" defer></script>
+<script src="js/panels.js?v=118" defer></script>
+<script src="js/rail.js?v=118" defer></script>
+<script src="js/search.js?v=118" defer></script>
+<script src="js/reader.js?v=118" defer></script>
+<script src="js/bookmarks.js?v=118" defer></script>
+<script src="js/ft_core.js?v=118" defer></script>
+<script src="js/fulltext.js?v=118" defer></script>
+<script src="js/app.js?v=118" defer></script>
+<script src="js/modes.js?v=118" defer></script>
 <script defer>
 window.addEventListener("error",e=>{window.__err=(window.__err||"")+"|"+e.message});
 window.addEventListener("load",()=>{
@@ -70,13 +71,24 @@ window.addEventListener("load",()=>{
           const none=document.querySelector("#sresults .none");
           P("EDGE-nofind", !!none);
           si.value=""; si.dispatchEvent(new Event("input"));
-          // ⑦ 极速三模式连切
-          setMode("形势"); setMode("川渎"); setMode("舆图"); setMode("形势");
-          P("EDGE-quickswitch", !window.__err);
-          // ⑧ 不存在的河
-          const badRiver=buildRivers("不存在的河");
-          P("EDGE-badriver", !!badRiver); // 应回退到大江
-          done();
+          // ⑦ 防抖残留回归（v118）：输入后 110ms 内清空——挂起的防抖必须被取消，结果不得重新弹出
+          document.getElementById("sresults").innerHTML=""; // 清场：旧渲染残留不算证据
+          si.value="武"; si.dispatchEvent(new Event("input"));
+          si.value=""; si.dispatchEvent(new Event("input"));
+          setTimeout(()=>{
+            try{
+              const sres=document.getElementById("sresults");
+              const leak=sres.querySelector(".none,.sr,#ftall");
+              P("EDGE-clear110", !leak && !sres.classList.contains("open"));
+              // ⑧ 极速三模式连切
+              setMode("形势"); setMode("川渎"); setMode("舆图"); setMode("形势");
+              P("EDGE-quickswitch", !window.__err);
+              // ⑨ 不存在的河
+              const badRiver=buildRivers("不存在的河");
+              P("EDGE-badriver", !!badRiver); // 应回退到大江
+              done();
+            }catch(e){log.push("ERR "+e);done();}
+          },350);
         }catch(e){log.push("ERR "+e);done();}
       },200);
     }catch(e){log.push("ERR "+e);done();}

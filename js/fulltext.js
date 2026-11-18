@@ -1,6 +1,7 @@
 /* ═══════════ 方舆经纬 · 全书全文检索 ═══════════
    输入任意词句 → 按需加载 data/text/*.js（17 文件）→ 扫描全部原文
-   → 结果片段列表 → 点击直达原文命中段落。 */
+   → 结果片段列表 → 点击直达原文命中段落。
+   countHits/ftSnippet 纯函数在 js/ft_core.js（与 Worker 共用）。 */
 
 const FT_KEYS = [
   ...FY.provinces.map(p=>p.id), "juanshou", "xingshi", "chuandu"
@@ -85,26 +86,7 @@ function ftWorkerWenxin(cb){
   _ftw.postMessage({ wenxin: true });
 }
 
-/* 转义 + 片段：命中处前后各 18 字 */
-function ftSnippet(text, q){
-  const i = text.indexOf(q);
-  if (i < 0) return null;
-  const a = Math.max(0, i - 18), b = Math.min(text.length, i + q.length + 18);
-  const seg = text.slice(a, b).replace(/\s+/g, "")
-    .replace(/�/g, "□").replace(/□+/g, "□");
-  const esc = s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-                  .replace(/□/g, "<span class='qq'>□</span>");
-  return (a>0?"…":"") + esc(seg.slice(0, seg.indexOf(q))) +
-         "<b>" + esc(q).replace(/<span class='qq'>□<\/span>/g, "□") + "</b>" +
-         esc(seg.slice(seg.indexOf(q)+q.length)) + (b<text.length?"…":"");
-}
-function countHits(text, q){
-  let n = 0, i = text.indexOf(q);
-  while (i >= 0) { n++; i = text.indexOf(q, i + q.length); }
-  return n;
-}
-
-/* 扫全部已加载文本 → 结果数组 */
+/* 扫全部已加载文本 → 结果数组（countHits/ftSnippet 来自 js/ft_core.js） */
 function ftSearch(q){
   const out = [];
   const push = (title, ctx, text, jump)=>{

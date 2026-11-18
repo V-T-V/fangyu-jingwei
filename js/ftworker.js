@@ -1,27 +1,11 @@
 /* ═══════════ 方舆经纬 · 全文检索 Worker ═══════════
    自持 FYTEXT 副本（importScripts 复用 HTTP/SW 缓存），扫描不占主线程。
    协议：{init,keys,meta} → {ready} ；{q} → {type:"rows",rows}
-   计数/片段算法与 js/fulltext.js 保持一致（改动须两处同步）。 */
+   计数/片段与文心词表/计量纯核在 js/ft_core.js（与本 Worker 同目录，相对解析即 js/ft_core.js）。 */
+
+importScripts("ft_core.js");
 
 var FYTEXT = {};
-
-function countHits(text, q){
-  var n = 0, i = text.indexOf(q);
-  while (i >= 0){ n++; i = text.indexOf(q, i + q.length); }
-  return n;
-}
-function ftSnippet(text, q){
-  var i = text.indexOf(q);
-  if (i < 0) return null;
-  var a = Math.max(0, i - 18), b = Math.min(text.length, i + q.length + 18);
-  var seg = text.slice(a, b).replace(/\s+/g, "")
-    .replace(/\uFFFD/g, "\u25A1").replace(/\u25A1+/g, "\u25A1");
-  var esc = function(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/\u25A1/g, "<span class='qq'>\u25A1</span>"); };
-  return (a > 0 ? "\u2026" : "") + esc(seg.slice(0, seg.indexOf(q))) +
-    "<b>" + esc(q).replace(/<span class='qq'>\u25A1<\/span>/g, "\u25A1") + "</b>" +
-    esc(seg.slice(seg.indexOf(q) + q.length)) + (b < text.length ? "\u2026" : "");
-}
 
 var META = null;
 
@@ -53,104 +37,29 @@ function scan(q){
 }
 
 
-/* ── 文心计量（与 js/wenxin.js 口径逐行一致；改动须两处同步） ── */
-var WX_VOCAB = ["形胜","险要","要害","咽喉","锁钥","门户","屏蔽","冲要",
-                "守御","屯戍","关隘","堡寨","烽堠","营垒","倭寇","盗贼"];
+/* ── 文心计量：Worker 直算调度（纯核在 js/ft_core.js，与主线程 wxCompute 同口径） ── */
 function wenxinCompute(){
-  var provChars = [], provText = {}, extraChars = 0;
-  (META.keys || []).forEach(function(pid){
-    var bag = FYTEXT[pid];
-    if (!bag) return;
+  var provList = (META.keys || []).map(function(pid){
+    var bag = FYTEXT[pid] || {};
     var parts = [];
     if (bag.xu) parts.push(bag.xu);
     for (var nm in (bag.fu || {})) parts.push(bag.fu[nm]);
-    var txt = parts.join("");
-    provText[pid] = txt;
-    provChars.push({ prov: (META.provNames || {})[pid] || pid, pid: pid, chars: txt.length });
+    return { pid: pid, prov: (META.provNames || {})[pid] || pid, txt: parts.join("") };
   });
+  var extraList = [];
   ["juanshou","xingshi","chuandu"].forEach(function(k){
     var v = FYTEXT[k];
-    if (Array.isArray(v)) v.forEach(function(it){ extraChars += (typeof it === "string" ? it : it.x || "").length; });
+    if (Array.isArray(v)) v.forEach(function(it){ extraList.push(typeof it === "string" ? it : it.x || ""); });
   });
-  provChars.sort(function(a,b){ return b.chars - a.chars; });
-  var totalChars = provChars.reduce(function(s,x){ return s + x.chars; }, 0);
-
-  var vocab = {};
-  WX_VOCAB.forEach(function(wd){
-    vocab[wd] = (META.keys || []).map(function(pid){
-      var n = countHits(provText[pid] || "", wd);
-      var ch = provChars.filter(function(x){ return x.pid === pid; })[0];
-      ch = ch ? ch.chars : 0;
-      return { prov: (META.provNames || {})[pid] || pid, pid: pid, n: n, dens: ch ? n*10000/ch : 0 };
-    }).sort(function(a,b){ return b.n - a.n; });
-  });
-
-  var allParts = (META.keys || []).map(function(pid){ return provText[pid] || ""; });
-  ["juanshou","xingshi","chuandu"].forEach(function(k){
-    var v = FYTEXT[k];
-    if (Array.isArray(v)) v.forEach(function(it){ allParts.push(typeof it === "string" ? it : it.x || ""); });
-  });
-  var bigText = allParts.join("");
-
-  var LB = String.fromCharCode(0x300a), RB = String.fromCharCode(0x300b);
-  var bkRe = new RegExp("[" + LB + "]([^" + LB + RB + "]{2,8})[" + RB + "]", "g");
-  var bkCnt = {}, bmm;
-  while ((bmm = bkRe.exec(bigText)) !== null) bkCnt[bmm[1]] = (bkCnt[bmm[1]] || 0) + 1;
-  var bookTop = Object.keys(bkCnt).map(function(k){ return [k, bkCnt[k]]; })
-                  .sort(function(a,b){ return b[1] - a[1]; }).slice(0, 12);
-
-  var WX_VERBS = ["攻","围","拔","陷","克","破","守","据","降","战","败","屠","焚","掠"];
-  var verbRows = provChars.map(function(x){
-    var txt = provText[x.pid] || "";
-    var total = WX_VERBS.reduce(function(s2, v){ return s2 + txt.split(v).length - 1; }, 0);
-    return { prov: x.prov, d: +(total * 10000 / x.chars).toFixed(1) };
-  }).sort(function(a, b){ return b.d - a.d; });
-  var verbTop = verbRows.slice(0, 6);
-
-  var WX_RIVERS = ["黄河","大河","大江","长江","运河","汉水","江水","漳水","滹沱","淮水"];
-  var WX_MOUNTS = ["太行","荆山","阴山","恒山","陇山","剑门"];
-  var shanheTop = []
-    .concat(WX_RIVERS.map(function(r){ return ["水·" + r, countHits(bigText, r)]; }))
-    .concat(WX_MOUNTS.map(function(m){ return ["山·" + m, countHits(bigText, m)]; }))
-    .sort(function(a, b){ return b[1] - a[1]; }).slice(0, 8);
-
-  var CJK0 = String.fromCharCode(0x4e00), CJK1 = String.fromCharCode(0x9fff);
-  var txRe = new RegExp("天下之([" + CJK0 + "-" + CJK1 + "]{1,3})", "g");
-  var txCnt = {}, txm;
-  while ((txm = txRe.exec(bigText)) !== null) txCnt[txm[1]] = (txCnt[txm[1]] || 0) + 1;
-  var tianxiaTop = Object.keys(txCnt).map(function(k){ return [k, txCnt[k]]; })
-                    .sort(function(a,b){ return b[1] - a[1]; }).slice(0, 8);
-
-  var names = [], seen = {};
-  var provNms = {};
-  Object.keys(META.provNames || {}).forEach(function(k){ provNms[META.provNames[k]] = 1; });
-  var fus = META.fus || [];
-  fus.forEach(function(one){
-    var term = one.n.replace(/(军民府|军民卫|州府|府|州|卫)$/, "");
-    if (term.length < 2 || provNms[term]) term = one.n;
-    if (seen[term]) return;
-    seen[term] = 1;
-    names.push({ bare: term, fu: one.n, prov: one.prov, pid: one.pid });
-  });
-  var fuAll = names.map(function(x){
-    return { bare: x.bare, fu: x.fu, prov: x.prov, pid: x.pid, n: countHits(bigText, x.bare) };
-  }).sort(function(a,b){ return b.n - a.n; });
-
-  var vocabDens = {};
-  provChars.forEach(function(x){ vocabDens[x.pid] = 0; });
-  WX_VOCAB.forEach(function(wd){ (vocab[wd] || []).forEach(function(r){ vocabDens[r.pid] += r.dens; }); });
-  var rivDens = {}, mntDens = {};
-  provChars.forEach(function(x){
-    var txt = provText[x.pid] || "";
-    var rv = 0, mt = 0;
-    WX_RIVERS.forEach(function(r){ rv += txt.split(r).length - 1; });
-    WX_MOUNTS.forEach(function(m){ mt += txt.split(m).length - 1; });
-    rivDens[x.pid] = rv * 10000 / Math.max(1, x.chars);
-    mntDens[x.pid] = mt * 10000 / Math.max(1, x.chars);
-  });
-  return { provChars: provChars, extraChars: extraChars, totalChars: totalChars,
-           vocab: vocab, fuAll: fuAll, bookTop: bookTop, tianxiaTop: tianxiaTop, shanheTop: shanheTop, verbTop: verbTop,
-           _verbRows: verbRows, _vocabDens: vocabDens, _rivDens: rivDens, _mntDens: mntDens };
+  var corpus = wxCorpus(provList, extraList);
+  var st = wxStatic(corpus);
+  var names = wxFuNames(META.fus || [], Object.keys(META.provNames || {}));
+  var fuAll = wxFuAll(corpus.bigText, names);
+  var dens = wxDensities(corpus, st.vocab);
+  return { provChars: corpus.provChars, extraChars: corpus.extraChars, totalChars: corpus.totalChars,
+           vocab: st.vocab, fuAll: fuAll, bookTop: st.bookTop, tianxiaTop: st.tianxiaTop,
+           shanheTop: st.shanheTop, verbTop: st.verbTop,
+           _verbRows: st.verbRows, _vocabDens: dens.vocabDens, _rivDens: dens.rivDens, _mntDens: dens.mntDens };
 }
 
 self.onmessage = function(e){

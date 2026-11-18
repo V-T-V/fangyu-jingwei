@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script>window.__NOTILES__=1;/* 测试密封：不拉外网瓦片 */</script>
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=117">
+<link rel="stylesheet" href="css/main.css?v=118">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div>
@@ -28,23 +28,24 @@
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:460px;white-space:pre-wrap"></pre>
 
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=117" defer></script>
-<script src="js/map.js?v=117" defer></script>
-<script src="js/panels.js?v=117" defer></script>
-<script src="js/rail.js?v=117" defer></script>
-<script src="js/search.js?v=117" defer></script>
-<script src="js/reader.js?v=117" defer></script>
-<script src="js/bookmarks.js?v=117" defer></script>
-<script src="js/fulltext.js?v=117" defer></script>
-<script src="js/app.js?v=117" defer></script>
-<script src="js/modes.js?v=117" defer></script>
+<script src="js/config.js?v=118" defer></script>
+<script src="js/map.js?v=118" defer></script>
+<script src="js/panels.js?v=118" defer></script>
+<script src="js/rail.js?v=118" defer></script>
+<script src="js/search.js?v=118" defer></script>
+<script src="js/reader.js?v=118" defer></script>
+<script src="js/bookmarks.js?v=118" defer></script>
+<script src="js/ft_core.js?v=118" defer></script>
+<script src="js/fulltext.js?v=118" defer></script>
+<script src="js/app.js?v=118" defer></script>
+<script src="js/modes.js?v=118" defer></script>
 <script defer>
 window.addEventListener("load", () => {
   const NL = String.fromCharCode(10);
   const log = [];
   const done = () => {
     document.getElementById("testlog").textContent = "TESTLOG" + NL + log.join("; ") + " ENDLOG";
-    document.title = log.every(l => l.includes("PASS")) ? "ALL-PASS" : "HAS-FAIL";
+    document.title = log.some(l => l.includes("FAIL")) ? "HAS-FAIL" : "ALL-PASS";
   };
   setTimeout(() => {
     try {

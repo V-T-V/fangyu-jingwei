@@ -1,10 +1,7 @@
 /* ═══════════ 方舆经纬 · 文心（全书文本计量） ═══════════
-   依赖 fulltext.js 的 ensureTextAll / countHits 与 panels.js 的面板基元。
+   依赖 fulltext.js 的 ensureTextAll、ft_core.js 的纯核（countHits/词表/计量）
+   与 panels.js 的面板基元。
    三问：顾祖禹的笔墨写到哪里去？哪些地名被反复掂量？战略词汇浓在何处？ */
-
-/* 战略词汇（顾祖禹军事地理语汇，人工整编 16 词） */
-const WX_VOCAB = ["形胜","险要","要害","咽喉","锁钥","门户","屏蔽","冲要",
-                  "守御","屯戍","关隘","堡寨","烽堠","营垒","倭寇","盗贼"];
 
 let _wxCache = null;          // 计算结果缓存（重开面板即时呈现）
 let _wxBusy = false;
@@ -189,94 +186,31 @@ function wxFuStat(p, u){
   return { n: f.n, rank: _wxCache.fuAll.indexOf(f) + 1 };
 }
 
-/* ── 计算（分块，UI 不冻结；then=完成回调，缺省渲染文心面板） ── */
+/* ── 计算（分块，UI 不冻结；then=完成回调，缺省渲染文心面板） ──
+   纯核（词表/语料装订/静态指标/府名/密度）在 js/ft_core.js，与 Worker 直算共用；
+   本函数只保留主线程调度：逐府掂量按 24 名/块让出（不改成一次算完）。 */
 function wxCompute(then){
   _wxBusy = true;
-  /* 省级语料 + 字数 */
-  const provChars = [], provText = {};
-  let extraChars = 0;
-  FY.provinces.forEach(p => {
+  /* 语料装订（纯核 wxCorpus）+ 静态指标（纯核 wxStatic，全同步一次算） */
+  const provList = FY.provinces.map(p => {
     const bag = FYTEXT[p.id] || {};
     const parts = [];
     if (bag.xu){ parts.push(bag.xu); }
     Object.keys(bag.fu || {}).forEach(nm => parts.push(bag.fu[nm]));
-    const txt = parts.join("");
-    provText[p.id] = txt;
-    provChars.push({ prov: p.name, pid: p.id, chars: txt.length });
+    return { pid: p.id, prov: p.name, txt: parts.join("") };
   });
+  const extraList = [];
   ["juanshou","xingshi","chuandu"].forEach(k => {
     const v = FYTEXT[k];
-    if (Array.isArray(v)) v.forEach(it => { extraChars += (typeof it === "string" ? it : it.x || "").length; });
+    if (Array.isArray(v)) v.forEach(it => extraList.push(typeof it === "string" ? it : it.x || ""));
   });
-  provChars.sort((a,b) => b.chars - a.chars);
-  const totalChars = provChars.reduce((s,x) => s + x.chars, 0);
+  const corpus = wxCorpus(provList, extraList);
+  const st = wxStatic(corpus);
+  const names = wxFuNames(
+    FY.provinces.reduce((a, p) => a.concat(p.fu.map(u => ({ n: u.n, prov: p.name, pid: p.id }))), []),
+    FY.provinces.map(p => p.name));
 
-  /* 战略词汇分省密度 */
-  const vocab = {};
-  WX_VOCAB.forEach(w => {
-    vocab[w] = FY.provinces.map(p => {
-      const n = countHits(provText[p.id] || "", w);
-      const ch = provChars.find(x => x.prov === p.name).chars;
-      return { prov: p.name, pid: p.id, n, dens: ch ? n * 10000 / ch : 0 };
-    }).sort((a,b) => b.n - a.n);
-  });
-
-  /* 府名被引：全书语料（省+卷首+形势+川渎）连缀一次 */
-  const allParts = FY.provinces.map(p => provText[p.id] || "");
-  ["juanshou","xingshi","chuandu"].forEach(k => {
-    const v = FYTEXT[k];
-    if (Array.isArray(v)) v.forEach(it => allParts.push(typeof it === "string" ? it : it.x || ""));
-  });
-  const bigText = allParts.join("");
-
-  /* 战争的动词（口径同 paper_stats.js v5） */
-  const WX_VERBS = ["攻","围","拔","陷","克","破","守","据","降","战","败","屠","焚","掠"];
-  const verbRows = provChars.map(x => {
-    const pid = x.pid;
-    let txt = "";
-    { const bag = FYTEXT[pid] || {};
-      if (bag.xu) txt += bag.xu;
-      for (const k in (bag.fu || {})) txt += bag.fu[k]; }
-    const total = WX_VERBS.reduce((s2, v) => s2 + txt.split(v).length - 1, 0);
-    return { prov: x.prov, d: +(total * 10000 / x.chars).toFixed(1) };
-  }).sort((a, b) => b.d - a.d);
-  const verbTop = verbRows.slice(0, 6);
-
-  /* 山河名录（口径同 paper_stats.js） */
-  const WX_RIVERS = ["黄河","大河","大江","长江","运河","汉水","江水","漳水","滹沱","淮水"];
-  const WX_MOUNTS = ["太行","荆山","阴山","恒山","陇山","剑门"];
-  const shanheTop = []
-    .concat(WX_RIVERS.map(r => ["水·" + r, countHits(bigText, r)]))
-    .concat(WX_MOUNTS.map(m => ["山·" + m, countHits(bigText, m)]))
-    .sort((a, b) => b[1] - a[1]).slice(0, 8);
-
-  /* 天下之X 意象（口径同 paper_stats.js；守卫顺序教训：十/百分支在前） */
-  const CJK0 = String.fromCharCode(0x4e00), CJK1 = String.fromCharCode(0x9fff);
-  const txRe = new RegExp("天下之([" + CJK0 + "-" + CJK1 + "]{1,3})", "g");
-  const txCnt = {};
-  let txm;
-  while ((txm = txRe.exec(bigText)) !== null) txCnt[txm[1]] = (txCnt[txm[1]] || 0) + 1;
-  const tianxiaTop = Object.entries(txCnt).sort((a, b) => b[1] - a[1]).slice(0, 8);
-
-  /* 顾祖禹的书架：《》引书 TOP12（口径同 paper_stats.js） */
-  const LBk = String.fromCharCode(0x300a), RBk = String.fromCharCode(0x300b);
-  const bkRe = new RegExp("[" + LBk + "]([^" + LBk + RBk + "]{2,8})[" + RBk + "]", "g");
-  const bkCnt = {};
-  let bmm;
-  while ((bmm = bkRe.exec(bigText)) !== null) bkCnt[bmm[1]] = (bkCnt[bmm[1]] || 0) + 1;
-  const bookTop = Object.entries(bkCnt).sort((a, b) => b[1] - a[1]).slice(0, 12);
-
-  const names = [], seen = new Set();
-  const provNms = new Set(FY.provinces.map(p => p.name));
-  FY.provinces.forEach(p => p.fu.forEach(u => {
-    let term = u.n.replace(/(军民府|军民卫|州府|府|州|卫)$/, "");
-    /* 单字简名（徐州→徐）与省名撞车（河南府→河南）都退回全名检索 */
-    if (term.length < 2 || provNms.has(term)) term = u.n;
-    if (seen.has(term)) return;
-    seen.add(term);
-    names.push({ bare: term, fu: u.n, prov: p.name, pid: p.id });
-  }));
-
+  /* 逐府掂量：分块让出主线程（每块 24 名）——调度在此，计数用 ft_core 的 countHits */
   const prog = document.getElementById("wxProg");
   const fuAll = [];
   const CH = 24;                                  // 每块 24 名，让出主线程
@@ -284,23 +218,15 @@ function wxCompute(then){
     const el = prog || document.getElementById("wxProg");
     if (el) el.textContent = `掂量府名 ${Math.min(i0 + CH, names.length)} / ${names.length} …`;
     for (let i = i0; i < Math.min(i0 + CH, names.length); i++){
-      fuAll.push({ ...names[i], n: countHits(bigText, names[i].bare) });
+      fuAll.push({ ...names[i], n: countHits(corpus.bigText, names[i].bare) });
     }
     if (i0 + CH < names.length){ setTimeout(() => step(i0 + CH), 0); return; }
     fuAll.sort((a,b) => b.n - a.n);
-    const vocabDens = {};
-    provChars.forEach(x => vocabDens[x.pid] = 0);
-    WX_VOCAB.forEach(wd => (vocab[wd] || []).forEach(r => { vocabDens[r.pid] += r.dens; }));
-    const rivDens = {}, mntDens = {};
-    provChars.forEach(x => {
-      const bag = FYTEXT[x.pid] || {};
-      let txt = bag.xu || "";
-      for (const k in (bag.fu || {})) txt += bag.fu[k];
-      rivDens[x.pid] = WX_RIVERS.reduce((s, r) => s + txt.split(r).length - 1, 0) * 10000 / Math.max(1, x.chars);
-      mntDens[x.pid] = WX_MOUNTS.reduce((s, m) => s + txt.split(m).length - 1, 0) * 10000 / Math.max(1, x.chars);
-    });
-    _wxCache = { provChars, extraChars, totalChars, vocab, fuAll, bookTop, tianxiaTop, shanheTop, verbTop,
-                 _verbRows: verbRows, _vocabDens: vocabDens, _rivDens: rivDens, _mntDens: mntDens };
+    const dens = wxDensities(corpus, st.vocab);
+    _wxCache = { provChars: corpus.provChars, extraChars: corpus.extraChars, totalChars: corpus.totalChars,
+                 vocab: st.vocab, fuAll, bookTop: st.bookTop, tianxiaTop: st.tianxiaTop,
+                 shanheTop: st.shanheTop, verbTop: st.verbTop,
+                 _verbRows: st.verbRows, _vocabDens: dens.vocabDens, _rivDens: dens.rivDens, _mntDens: dens.mntDens };
     _wxBusy = false;
     if (typeof then === "function") then(_wxCache); else wxRender(_wxCache);
   };

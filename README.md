@@ -88,6 +88,7 @@ python -m http.server 9200
 | `data/site_data.js` | 解析数据（build_data.py 生成，勿手改） |
 | `data/text/*.js` | 全文数据（build_text.py 生成：卷首 + 15 省 + 形势 + 川渎，懒加载） |
 | `js/reader.js` | 原卷全文：懒加载器 + 阅读视图（损坏句标注、命中标记） |
+| `js/ft_core.js` | 全文/文心公共纯核（countHits/ftSnippet、文心词表与计量——主线程与 Worker 共用） |
 | `js/fulltext.js` | 全书全文检索（按需加载 + 扫描 + 片段预览 + 命中定位） |
 | `js/bookmarks.js` | 书签与续读（localStorage） |
 | `data/volumes/` | 全书 154 页抓取文本（scrape.py 产物） |

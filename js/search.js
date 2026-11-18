@@ -53,7 +53,7 @@ function goHit(h){
 let _sT = null;
 sinput.addEventListener("input",()=>{
   const q=sinput.value.trim();
-  if(!q){sres.classList.remove("open");return;}
+  if(!q){clearTimeout(_sT);sres.classList.remove("open");return;}  /* v118：清空分支也要取消挂起防抖，否则 110ms 内清空后旧结果被重新弹出 */
   clearTimeout(_sT);
   _sT=setTimeout(()=>renderHits(searchHits(q),q),110);
 });

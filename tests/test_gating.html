@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script>window.__NOTILES__=1;/* 测试密封：不拉外网瓦片 */</script>
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=117">
+<link rel="stylesheet" href="css/main.css?v=118">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
@@ -19,21 +19,22 @@
 <div id="tl"></div><div id="tlPlay"></div><div id="boot"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap"></pre>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=117" defer></script>
-<script src="js/map.js?v=117" defer></script>
-<script src="js/panels.js?v=117" defer></script>
-<script src="js/rail.js?v=117" defer></script>
-<script src="js/search.js?v=117" defer></script>
-<script src="js/reader.js?v=117" defer></script>
-<script src="js/bookmarks.js?v=117" defer></script>
-<script src="js/fulltext.js?v=117" defer></script>
-<script src="js/app.js?v=117" defer></script>
-<script src="js/modes.js?v=117" defer></script>
+<script src="js/config.js?v=118" defer></script>
+<script src="js/map.js?v=118" defer></script>
+<script src="js/panels.js?v=118" defer></script>
+<script src="js/rail.js?v=118" defer></script>
+<script src="js/search.js?v=118" defer></script>
+<script src="js/reader.js?v=118" defer></script>
+<script src="js/bookmarks.js?v=118" defer></script>
+<script src="js/ft_core.js?v=118" defer></script>
+<script src="js/fulltext.js?v=118" defer></script>
+<script src="js/app.js?v=118" defer></script>
+<script src="js/modes.js?v=118" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
 function done(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";
-  document.title=log.every(function(l){return l.indexOf("PASS")>=0})?"ALL-PASS":"HAS-FAIL";}
+  document.title=log.some(function(l){return l.indexOf("FAIL")>=0})?"HAS-FAIL":"ALL-PASS";}
 window.addEventListener("load",function(){
   setTimeout(function(){
     try{
