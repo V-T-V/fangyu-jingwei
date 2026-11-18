@@ -34,13 +34,11 @@ last = out.split("\n")[-1] if out else ""
 results.append((n, ok, f"{dt:.1f}s", last))
 print(f"  {'✓' if ok else '✗'} {n:12s} {dt:5.1f}s  {last}")
 
-# ③ audit.py
-n, ok, dt, out = run("坐标审计", [sys.executable, "audit.py"])
+# ③ audit.py —— 信息性：坐标可疑榜无通过/失败语义，不参与 ok 判定，也不打假绿 ✓
+n, _, dt, out = run("坐标审计", [sys.executable, "audit.py"])
 # audit 不设退出码，取第一行
 first = out.split("\n")[0] if out else ""
-ok = "0" in first or "零" in first or True  # audit 总是输出，视为信息性
-results.append((n, True, f"{dt:.1f}s", first))
-print(f"  ✓ {n:12s} {dt:5.1f}s  {first}")
+print(f"  ◦ {n:12s} {dt:5.1f}s  {first}")
 
 # ④ git status
 r = subprocess.run(["git", "status", "-sb"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10)

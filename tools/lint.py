@@ -185,15 +185,26 @@ for f in sorted(_g2.glob('js/*.js') + _g2.glob('tools/*.py')):
         # 超 3 行连续注释（可能是用注释代替代码）
 check(len(todo_hits) <= 3, f"TODO/FIXME/HACK ≤3（实得 {len(todo_hits)}：{todo_hits[:3]}）")
 
-# ── L13: CI 吞错禁用（教训 20：竖线竖线 true 把「确定坏了」变「随机坏」——镜像迁移日全灭根因）──
-print("── 13. CI 吞错")
-swallow = []
+# ── L13: 吞错禁用（教训 20：竖线竖线 true 把「确定坏了」变「随机坏」——镜像迁移日全灭根因）──
+print("── 13. 吞错禁用（CI + Python 工具）")
+SW1 = '||' + ' true'                        # 拼接写法：规则字面量不自指（同「竖线竖线 true」表述案）
+SW2 = '||' + ' exit 0'
+PY_OT = re.compile(r'\bor\s+Tr' + r'ue\b')  # or True 恒真分支；拼接同上（两段都 raw，\b 才是词边界）
+swallow, py_swallow = [], []
 for f in sorted(glob.glob('.github/workflows/*.yml')):
     for i, line in enumerate(open(f, encoding='utf-8'), 1):
         code = line.split('#')[0]        # 剥注释：禁止令的文档表述不算违规（git mv -q 自指案同款）
-        if '|| true' in code or '|| exit 0' in code:
+        if SW1 in code or SW2 in code:
             swallow.append(f"{f}:{i}")
 check(not swallow, f"workflows 无吞错兜底（实得 {swallow}）")
+# 工具层曾是盲区（health.py 恒真案）：Python 源码同检——恒真分支 + subprocess shell 串里的吞错
+for f in sorted(glob.glob('tools/*.py')) + ['run_tests.py', 'verify.py', 'build_data.py',
+                                            'build_text.py', 'build_mentions.py', 'scrape.py', 'query.py']:
+    for i, line in enumerate(open(f, encoding='utf-8'), 1):
+        code = line.split('#')[0]        # 剥注释：同上
+        if PY_OT.search(code) or SW1 in code or SW2 in code:
+            py_swallow.append(f"{f}:{i}")
+check(not py_swallow, f"py 工具无恒真吞错兜底（实得 {py_swallow}）")
 
 # ── L14: CSS !important 棘轮（附录 A：specificity 军备竞赛）──
 print("── 14. CSS !important")

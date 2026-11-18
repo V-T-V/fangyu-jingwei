@@ -1,7 +1,8 @@
 import json, os, sys
 import os as _os
-_os.chdir(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
-p = r"d:\W_A_W\HHH\data\progress.json"
+ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+_os.chdir(ROOT)
+p = _os.path.join(ROOT, "data", "progress.json")
 if os.path.exists(p):
     d = json.load(open(p, "r", encoding="utf-8"))
     c = len(d["done_nums"])
