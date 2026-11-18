@@ -2,7 +2,7 @@
 <base href="../"><meta charset="UTF-8"><title>自动验证 · 检索 Worker</title>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=118"></head>
+<link rel="stylesheet" href="css/main.css?v=119"></head>
 <body class="m-舆图 nopanel">
 <div id="map"></div><div class="paper-wash"></div><div class="grain"></div>
 <header><div class="brand"><div class="seal">方</div><div><h1>方舆经纬</h1><p>读史方舆纪要</p></div></div>
@@ -15,20 +15,20 @@
 <pre id="testlog" style="position:fixed;z-index:999;background:#fff;font:12px/1.6 monospace">PENDING</pre>
 <script>window.onerror=function(m){document.title="R3D-ERR:"+m;return false;};</script>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=118" defer></script>
-<script src="js/map.js?v=118" defer></script>
-<script src="js/panels.js?v=118" defer></script>
-<script src="js/rail.js?v=118" defer></script>
-<script src="js/search.js?v=118" defer></script>
-<script src="js/reader.js?v=118" defer></script>
-<script src="js/bookmarks.js?v=118" defer></script>
-<script src="js/ft_core.js?v=118" defer></script>
-<script src="js/fulltext.js?v=118" defer></script>
-<script src="js/app.js?v=118" defer></script>
-<script src="js/modes.js?v=118" defer></script>
-<script src="js/analytics.js?v=118" defer></script>
-<script src="js/wenxin.js?v=118" defer></script>
-<script src="js/bian.js?v=118" defer></script>
+<script src="js/config.js?v=119" defer></script>
+<script src="js/map.js?v=119" defer></script>
+<script src="js/panels.js?v=119" defer></script>
+<script src="js/rail.js?v=119" defer></script>
+<script src="js/search.js?v=119" defer></script>
+<script src="js/reader.js?v=119" defer></script>
+<script src="js/bookmarks.js?v=119" defer></script>
+<script src="js/ft_core.js?v=119" defer></script>
+<script src="js/fulltext.js?v=119" defer></script>
+<script src="js/app.js?v=119" defer></script>
+<script src="js/modes.js?v=119" defer></script>
+<script src="js/analytics.js?v=119" defer></script>
+<script src="js/wenxin.js?v=119" defer></script>
+<script src="js/bian.js?v=119" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));document.title="R3DP:"+log.join(";");}
@@ -61,7 +61,25 @@ if(window._ftw){var _om=window._ftw.onmessage;}
               P("WX-WORKER/used"+window.__wxwUsed+"/rows"+rows+"/failed"+(window._ftwFailed===true)+"/prog"+(document.getElementById("wxProg")?document.getElementById("wxProg").textContent.slice(0,14):"-")+"/pbody"+document.getElementById("pbody").textContent.slice(0,10).trim(),window.__wxwUsed===true&&rows>=20&&shelf);
               P("MAIN-CLEAN",(typeof FYTEXT.beizhi==="undefined")&&(typeof FYTEXT.henan==="undefined"));
               log.push("WX-DT="+Math.round(performance.now()-__wxT0)+"ms(fu"+rows+")");
-              done();
+              /* WX-PARITY-HNFU：河南府简名撞省名——Worker 直算的该府计数/名次须与主线程分块路径
+                 完全一致（wxFuNames 省名集合传参回归：撞名回退全名，两路同数同名） */
+              var hnP=null,hnU=null;
+              FY.provinces.forEach(function(p){p.fu.forEach(function(u){if(u.n==="河南府"){hnP=p;hnU=u;}});});
+              var wW=(hnP&&hnU)?wxFuStat(hnP,hnU):null;
+              try{
+                ensureTextAll(null,function(){
+                  try{
+                    wxCompute(function(mc){
+                      try{
+                        var mF=mc.fuAll.filter(function(x){return x.fu==="河南府";})[0]||null;
+                        P("WX-PARITY-HNFU/w"+(wW?wW.n+"/#"+wW.rank:"-")+"/m"+(mF?mF.n+"/#"+(mc.fuAll.indexOf(mF)+1)+"/"+mF.bare:"-"),
+                          !!(window.__wxwUsed===true&&wW&&mF&&mF.bare==="河南府"&&mF.n===wW.n&&mc.fuAll.indexOf(mF)+1===wW.rank));
+                        done();
+                      }catch(e){P("WX-PARITY-ERR "+e,false);done();}
+                    });
+                  }catch(e){P("WX-PARITY-ERR "+e,false);done();}
+                });
+              }catch(e){P("WX-PARITY-ERR "+e,false);done();}
             }catch(e){P("WX-ERR "+e,false);done();}
           };
           wxChk();

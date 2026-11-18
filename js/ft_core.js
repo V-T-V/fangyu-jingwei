@@ -65,7 +65,7 @@ function wxStatic(corpus){
   var verbRows = corpus.provChars.map(function(x){
     var txt = corpus.provText[x.pid] || "";
     var total = WX_VERBS.reduce(function(s2, v){ return s2 + txt.split(v).length - 1; }, 0);
-    return { prov: x.prov, d: +(total * 10000 / x.chars).toFixed(1) };
+    return { prov: x.prov, d: +((x.chars ? total * 10000 / x.chars : 0).toFixed(1)) };
   }).sort(function(a, b){ return b.d - a.d; });
 
   var shanheTop = []

@@ -40,7 +40,7 @@ fetch("manifest.json").then(function(r){
     if (!settled){ settled = true; clearTimeout(t); S("SW-READY"); done(); }
   });
 }).catch(function(e){
-  log.push("ERR "+e); done();
+  P("ERR "+e,false); done();
 });
 </script>
 </body>

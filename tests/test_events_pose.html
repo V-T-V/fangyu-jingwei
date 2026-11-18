@@ -6,7 +6,7 @@
 <title>自动验证 · 事件定位</title>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=118">
+<link rel="stylesheet" href="css/main.css?v=119">
 </head>
 <body class="m-舆图 nopanel">
 <div id="map"></div>
@@ -27,17 +27,17 @@
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:460px;white-space:pre-wrap"></pre>
 
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=118" defer></script>
-<script src="js/map.js?v=118" defer></script>
-<script src="js/panels.js?v=118" defer></script>
-<script src="js/rail.js?v=118" defer></script>
-<script src="js/search.js?v=118" defer></script>
-<script src="js/reader.js?v=118" defer></script>
-<script src="js/bookmarks.js?v=118" defer></script>
-<script src="js/ft_core.js?v=118" defer></script>
-<script src="js/fulltext.js?v=118" defer></script>
-<script src="js/app.js?v=118" defer></script>
-<script src="js/modes.js?v=118" defer></script>
+<script src="js/config.js?v=119" defer></script>
+<script src="js/map.js?v=119" defer></script>
+<script src="js/panels.js?v=119" defer></script>
+<script src="js/rail.js?v=119" defer></script>
+<script src="js/search.js?v=119" defer></script>
+<script src="js/reader.js?v=119" defer></script>
+<script src="js/bookmarks.js?v=119" defer></script>
+<script src="js/ft_core.js?v=119" defer></script>
+<script src="js/fulltext.js?v=119" defer></script>
+<script src="js/app.js?v=119" defer></script>
+<script src="js/modes.js?v=119" defer></script>
 <script defer>
 window.addEventListener("error", (e) => {
   const el = document.getElementById("testlog");
@@ -47,6 +47,7 @@ window.addEventListener("error", (e) => {
 window.addEventListener("load", () => {
   const NL = String.fromCharCode(10);
   const log = [];
+  const P = (n, ok) => log.push(n + " " + (ok ? "PASS" : "FAIL"));
   const done = () => {
     document.getElementById("testlog").textContent = "TESTLOG" + NL + log.join("; ") + " ENDLOG";
     document.title = log.some(l => l.includes("FAIL")) ? "HAS-FAIL" : "ALL-PASS";
@@ -80,7 +81,7 @@ window.addEventListener("load", () => {
         L.circleMarker([29.72,113.62], {radius:18, weight:2.4, color:"#b23a2e", opacity:.9, fill:false}).addTo(eraLayer);
         L.circleMarker([29.72,113.62], {radius:9, weight:1.6, color:"#b23a2e", opacity:.6, fill:false}).addTo(eraLayer);
       }, 2600);
-    } catch (e) { log.push("ERR " + e); done(); }
+    } catch (e) { P("ERR " + e, false); done(); }
   }, 2500);
 });
 </script>

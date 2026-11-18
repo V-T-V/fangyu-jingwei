@@ -53,7 +53,7 @@ function wenxinCompute(){
   });
   var corpus = wxCorpus(provList, extraList);
   var st = wxStatic(corpus);
-  var names = wxFuNames(META.fus || [], Object.keys(META.provNames || {}));
+  var names = wxFuNames(META.fus || [], Object.values(META.provNames || {}));
   var fuAll = wxFuAll(corpus.bigText, names);
   var dens = wxDensities(corpus, st.vocab);
   return { provChars: corpus.provChars, extraChars: corpus.extraChars, totalChars: corpus.totalChars,

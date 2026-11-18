@@ -124,7 +124,7 @@ else:
 for _df in ("README.md", "PROJECT_REPORT.md"):
     with open(os.path.join(ROOT, _df), encoding="utf-8") as _fh:
         _txt = _fh.read()
-    for _key in ("53.9", "120 里"):
+    for _key in ("53.9 km", "里程中位 120 里"):
         if _key in _txt:
             print(f"  ✓ 文档锚 {_df} 含「{_key}」")
         else:

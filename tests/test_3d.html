@@ -16,9 +16,9 @@
 <script>window.onerror=function(m){document.title="R3D-ERR:"+m;return false;};</script>
 <script src="data/site_data.js" defer></script>
 <script src="data/mentions.js" defer></script>
-<script src="js/config.js?v=118" defer></script>
+<script src="js/config.js?v=119" defer></script>
 <script src="vendor/maplibre-gl.js" defer></script>
-<script src="js/map3d.js?v=118" defer></script>
+<script src="js/map3d.js?v=119" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));document.title="R3DP:"+log.join(";");}
@@ -86,23 +86,23 @@ function eraChain(){
                                 window.applyDeepLink3("#cam=110.0,35.0,7.5,60,15");
                                 P("CAM-DEEP",Math.abs(window.__m3.getZoom()-7.5)<0.01&&Math.abs(window.__m3.getPitch()-60)<0.5);
                                 done();
-                              }catch(e){log.push("ERRD1 "+e);done();}
+                              }catch(e){P("ERRD1 "+e,false);done();}
                             };
                             flyChk();
-                          }catch(e){log.push("ERRD0 "+e);done();}
+                          }catch(e){P("ERRD0 "+e,false);done();}
                         },600);
-                      }catch(e){log.push("ERR9 "+e);done();}
+                      }catch(e){P("ERR9 "+e,false);done();}
                     },1700);
-                  }catch(e){log.push("ERR8 "+e);done();}
+                  }catch(e){P("ERR8 "+e,false);done();}
                 };
                 gwait();
-              }catch(e){log.push("ERR7 "+e);done();}
+              }catch(e){P("ERR7 "+e,false);done();}
             },500);
-          }catch(e){log.push("ERR6 "+e);done();}
+          }catch(e){P("ERR6 "+e,false);done();}
         },300);
-      }catch(e){log.push("ERR5 "+e);done();}
+      }catch(e){P("ERR5 "+e,false);done();}
     },600);
-  }catch(e){log.push("ERRC "+e);done();}
+  }catch(e){P("ERRC "+e,false);done();}
 }
 window.addEventListener("load",function(){
   var waited=0;
@@ -155,10 +155,10 @@ window.addEventListener("load",function(){
                 try{
                   var body=document.getElementById("c3body").textContent;
                   P("CARD/qrf"+hit.length,document.getElementById("card3d").classList.contains("open")&&body.indexOf("开封")>=0);
-                }catch(e){log.push("ERR4 "+e);}
+                }catch(e){P("ERR4 "+e,false);}
                 eraChain();
               },300);
-            }catch(e){log.push("ERR2 "+e);eraChain();}
+            }catch(e){P("ERR2 "+e,false);eraChain();}
           };
           /* 一次性守卫：地形早挂载（并行探测优化）后 idle 真会触发，
              与 1500ms 超时双保险叠加 → fireFn 双跑 → eraChain 交错假失败（CI 36 断言案）。
@@ -167,9 +167,9 @@ window.addEventListener("load",function(){
           var fireOnce=function(){ if(firedOnce) return; firedOnce=true; fireFn(); };
           window.__m3.once("idle",fireOnce);
           setTimeout(fireOnce,1500);
-        }catch(e){log.push("ERR3 "+e);eraChain();}
+        }catch(e){P("ERR3 "+e,false);eraChain();}
       },4800);
-    }catch(e){log.push("ERR "+e);done();}
+    }catch(e){P("ERR "+e,false);done();}
   },400);
 });
 </script>

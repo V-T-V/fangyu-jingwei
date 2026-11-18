@@ -2,7 +2,7 @@
 <base href="../"><meta charset="UTF-8"><title>自动验证 · 底图切换</title>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <script src="vendor/leaflet.js"></script>
-<link rel="stylesheet" href="css/main.css?v=118"></head>
+<link rel="stylesheet" href="css/main.css?v=119"></head>
 <body class="m-舆图 nopanel">
 <div id="map"></div>
 <button id="bmtoggle">影像</button><div class="paper-wash"></div><div class="grain"></div>
@@ -15,13 +15,17 @@
 <div id="tl"></div><div id="tlPlay"></div><div id="boot"></div>
 <pre id="testlog" style="position:fixed;left:8px;top:8px;z-index:999;background:#fff;border:2px solid #b23a2e;padding:8px;font:12px/1.6 monospace;max-width:480px;white-space:pre-wrap"></pre>
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=118" defer></script><script src="js/map.js?v=118" defer></script><script src="js/panels.js?v=118" defer></script><script src="js/rail.js?v=118" defer></script><script src="js/search.js?v=118" defer></script><script src="js/reader.js?v=118" defer></script><script src="js/bookmarks.js?v=118" defer></script><script src="js/ft_core.js?v=118" defer></script><script src="js/fulltext.js?v=118" defer></script><script src="js/app.js?v=118" defer></script><script src="js/modes.js?v=118" defer></script><script src="js/analytics.js?v=118" defer></script><script src="js/wenxin.js?v=118" defer></script><script src="js/bian.js?v=118" defer></script>
+<script src="js/config.js?v=119" defer></script><script src="js/map.js?v=119" defer></script><script src="js/panels.js?v=119" defer></script><script src="js/rail.js?v=119" defer></script><script src="js/search.js?v=119" defer></script><script src="js/reader.js?v=119" defer></script><script src="js/bookmarks.js?v=119" defer></script><script src="js/ft_core.js?v=119" defer></script><script src="js/fulltext.js?v=119" defer></script><script src="js/app.js?v=119" defer></script><script src="js/modes.js?v=119" defer></script><script src="js/analytics.js?v=119" defer></script><script src="js/wenxin.js?v=119" defer></script><script src="js/bian.js?v=119" defer></script>
 <script defer>
 var NL=String.fromCharCode(10),log=[];
 function P(n,ok){log.push(n+" "+(ok?"PASS":"FAIL"));}
 function done(){document.getElementById("testlog").textContent="TESTLOG"+NL+log.join("; ")+NL+"ENDLOG";}
 window.addEventListener("load",function(){
-  setTimeout(function(){
+  /* 就绪门控：等 map._loaded 真信号再断言（至多 10s，超时让断言诚实红）——
+     固定 2500ms 在系统负载下会先于地图/绑定初始化完成，点击落入未初始化窗口造成假红（v119 全量回归实录） */
+  var _t0=Date.now();
+  (function _go(){
+    if(!(window.map&&window.map._loaded)&&Date.now()-_t0<10000){setTimeout(_go,200);return;}
     try{
       var btn=document.getElementById("bmtoggle");
       P("BTN",!!btn&&/^(影像|地形)$/.test(btn.textContent));
@@ -34,7 +38,7 @@ window.addEventListener("load",function(){
       btn.click();
       P("BACK-PHYS",!document.body.classList.contains("imgbasemap")&&localStorage.getItem("fybasemap")==="physical");
       done();
-    }catch(e){log.push("ERR "+e);done();}
-  },2500);
+    }catch(e){P("ERR "+e,false);done();}
+  })();
 });
 </script></body></html>

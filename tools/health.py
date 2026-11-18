@@ -35,10 +35,10 @@ results.append((n, ok, f"{dt:.1f}s", last))
 print(f"  {'✓' if ok else '✗'} {n:12s} {dt:5.1f}s  {last}")
 
 # ③ audit.py —— 信息性：坐标可疑榜无通过/失败语义，不参与 ok 判定，也不打假绿 ✓
-n, _, dt, out = run("坐标审计", [sys.executable, "audit.py"])
-# audit 不设退出码，取第一行
+n, aok, dt, out = run("坐标审计", [sys.executable, "audit.py"])
+# audit 不设退出码语义，取第一行；子进程非零退出（如崩溃）行首 △ 提示——仍信息性，不参与 all_ok
 first = out.split("\n")[0] if out else ""
-print(f"  ◦ {n:12s} {dt:5.1f}s  {first}")
+print(f"  {'◦' if aok else '△'} {n:12s} {dt:5.1f}s  {first}")
 
 # ④ git status
 r = subprocess.run(["git", "status", "-sb"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10)

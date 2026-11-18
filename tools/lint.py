@@ -173,6 +173,37 @@ for f in CORE_FILES:
         bare_feature.append(f + ':' + m.group(1))
 check(not bare_feature, f"核心链无特性函数裸引用（实得 {bare_feature}）——一律 typeof 守卫（AGENTS 架构分层）")
 
+# done() 完成判定必须 FAIL 反查（v118 教训：正向 PASS 包含遇 SKIP-PASS/局部失败即假绿，
+# 本轮 11 页改反向判定，此检查防复发；R3D 标题协议两页豁免——协议不同，同 run_tests.py CDP_PAGES）
+# 同条扩展（I2）：catch 里裸 log.push("…ERR…"+e) 不含 FAIL——异常吞行同样过 done() 假绿，一律 P(x,false)
+R3D_PAGES = {'tests/test_3d.html', 'tests/test_ft_worker.html'}
+POS_PASS = re.compile(r'\.(?:in' + r'cludes|in' + r'dexOf)\(\s*["\']P' + r'ASS["\']\s*\)')
+BARE_ERR_PUSH = re.compile(r'log\s*\.\s*' + r'push\s*\(\s*[`"\'][^`"\']*E' + r'RR')   # 拼接防自指
+pos_pass = [f for f in sorted(glob.glob('tests/*.html'))
+            if f not in R3D_PAGES and POS_PASS.search(open(f, encoding='utf-8').read())]
+err_push = [f + ':' + str(i + 1) for f in sorted(glob.glob('tests/*.html'))
+            for i, ln in enumerate(open(f, encoding='utf-8').read().splitlines())
+            if BARE_ERR_PUSH.search(ln)]
+check(not pos_pass and not err_push,
+      f"完成判定 FAIL 反查＋异常行 P 化（正向包含违 {pos_pass[:3]}，裸 ERR push 违 {err_push[:3]}）"
+      "——正向包含遇 SKIP 即假绿，catch 裸 ERR push 无 FAIL 同假绿（v118 教训）")
+
+# 数据全局加载一致性（「文柱空转」教训：js 引用数据全局，载它的入口页必须同载对应
+# data 脚本——test_3d 自载语料曾致测试恒绿而生产断链；引用与加载必须同页成对）
+DATA_PAIRS = [(r'FY_' + 'MENTIONS', 'data/me' + 'ntions.js'),             # 拼接：规则字面量不自指
+              (r'(?<![A-Za-z0-9_])FY(?![A-Za-z0-9_])', 'data/site_' + 'data.js')]
+missing_data = []
+for page in ('index.html', '3d.html'):
+    html = open(page, encoding='utf-8').read()
+    for jf in re.findall(r'<script src="js/([\w.-]+\.js)', html):
+        if not os.path.exists('js/' + jf):
+            continue
+        src = open('js/' + jf, encoding='utf-8').read()
+        for gpat, dscript in DATA_PAIRS:
+            if re.search(gpat, src) and dscript not in html:
+                missing_data.append(f"{page} 载 {jf} 缺 {dscript}")
+check(not missing_data, f"数据全局与入口加载成对（缺 {missing_data[:3]}）——FY_MENTIONS→mentions.js · FY→site_data.js（文柱空转教训）")
+
 # ── L12: 借口注释（Lauren Tan 实践 3 的温和版）──
 print("── 12. 借口注释")
 import glob as _g2
