@@ -9,7 +9,7 @@
 python -m http.server 9200 &          # 起本地服务
 python tools/lint.py                   # 16 类确定性检查（先跑这个）
 python verify.py                       # 数据完整性
-python run_tests.py                    # 全套回归（含 lint · 14 页 · 哨兵 · CLI）
+python run_tests.py                    # 全套回归（含 lint · 16 页 · 哨兵 · CLI）
 ```
 
 ## 验证技能（改完代码必须自证，证据不过关=没完成）
@@ -35,7 +35,7 @@ data/
   mentions.js                # 府名被引（build_mentions.py 生成）
   text/*.js                  # 260 万字全文（懒加载，18 文件）
 vendor/                      # Leaflet + MapLibre（自托管）
-tests/                       # 断言页（14 页）+ pose 页
+tests/                       # 断言页（16 页）+ pose 页
 tools/                       # lint · 哨兵 · 健康检查
 docs/                        # 论文 PDF · 配套数据 · 截图
 ```

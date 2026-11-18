@@ -75,7 +75,7 @@ python build_mentions.py
 # S3: paper_stats.js 《》正则
 ```
 
-**口径声明**：一切数字出自站点语料（`data/text/*.js`，xu + fu 全文纯文本），不含 JS 对象键名。口径纪律见论文 §2.5。
+**口径声明**：语料分两源——S1/S3/S4 出自站点语料（`data/text/*.js`，xu + fu 全文纯文本，不含 JS 对象键名，`paper_stats.js` 口径）；S2 出自 `build_mentions.py`，其语料为 `data/volumes/*.txt` 全书 154 卷抓取原文（`data/text/*.js` 即由该 154 卷经 `build_text.py` 解析生成，同书不同切分）；S5 为坐标推算产物（`tools/build_s5.py` 就 `data/site_data.js` 计算，非文本语料）。口径纪律见论文 §2.5。
 
 ## S5_county_distances.csv
 

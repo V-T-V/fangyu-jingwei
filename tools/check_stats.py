@@ -120,9 +120,19 @@ if _m2 and int(_m2.group(1)) == 120:
 else:
     fails.append(f"原书里程中位 120 里（空间锚）: 实得 {_m2.group(1) if _m2 else '无'}")
 
+# ── 文档锚（2026-11-18 补：README/报告数字曾脱钩无人守，关键口径锚住防再漂）──
+for _df in ("README.md", "PROJECT_REPORT.md"):
+    with open(os.path.join(ROOT, _df), encoding="utf-8") as _fh:
+        _txt = _fh.read()
+    for _key in ("53.9", "120 里"):
+        if _key in _txt:
+            print(f"  ✓ 文档锚 {_df} 含「{_key}」")
+        else:
+            fails.append(f"文档锚 {_df} 缺「{_key}」——文档与哨兵口径脱钩")
+
 print()
 if fails:
     for f_ in fails: print("✗", f_)
     print(f"数字哨兵：{len(fails)} 项漂移 —— 论文数字与语料不一致，请复核 ANALYSIS.md")
     sys.exit(1)
-print(f"数字哨兵：{len(CHECKS)}+3 项锚定全部一致 ✓")
+print(f"数字哨兵：{len(CHECKS)}+3 空间 +4 文档 项锚定全部一致 ✓")
