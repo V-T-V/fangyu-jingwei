@@ -38,7 +38,19 @@ window.addEventListener("load",function(){
   setTimeout(function(){
     try{
       P("FT-RUN",typeof ftRun==="function");
-      ftRun("形胜");
+      /* WPROG：v120 wprog 接线回归锚。ftWorkerReady() 同步建 worker 并 postMessage(init)，
+         同一同步块内主线程不处理任何 worker 消息→紧随的 ftWorkerProgress 必先于首条 wprog 挂上；
+         worker 侧 18 条 wprog 全部先于 ready 发出（FIFO），故 .then 触发时样本已收满。
+         ftRun 移入 then：_ftwReady 已 true，ftRun 内部 ftWorkerReady() 走快路径——
+         避免二次 new Worker 覆盖 _ftw（ftWorkerReady 无 pending 去重）使 wprog 沦死信 */
+      var wS=[];
+      ftWorkerReady().then(function(ok){
+        var L=wS[wS.length-1];
+        P("WPROG/ok"+ok+"/n"+wS.length+"/last"+(L?L[0]+"/"+L[1]:"none"),
+          wS.length>=1&&L[0]===L[1]&&L[1]===18);
+        ftRun("形胜");
+      });
+      ftWorkerProgress(function(i,total){wS.push([i,total]);});
       var n=0;
       var iv=setInterval(function(){
         n++;

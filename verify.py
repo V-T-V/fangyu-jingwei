@@ -116,7 +116,7 @@ print("── 8. 指纹对账（SHA256SUMS）")
 if not os.path.exists("SHA256SUMS"):
     check(False, "SHA256SUMS 账本存在（仓库根）")
 else:
-    lines = [l for l in open("SHA256SUMS", encoding="utf-8").read().splitlines() if l.strip()]
+    lines = [l for l in open("SHA256SUMS", encoding="utf-8-sig").read().splitlines() if l.strip()]   # utf-8-sig：容忍 Windows 编辑器 BOM（无 BOM 行为不变）
     check(len(lines) > 0, f"SHA256SUMS 非空（{len(lines)} 行）")
     fmt_bad, gone, hash_bad, listed = [], [], [], set()
     for i, line in enumerate(lines, 1):

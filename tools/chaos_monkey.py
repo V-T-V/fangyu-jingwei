@@ -110,8 +110,10 @@ def main():
         os.makedirs(os.path.join(ROOT, "docs", "evidence"), exist_ok=True)
         png = os.path.join(ROOT, "docs", "evidence", "chaos-after.png")
         open(png, "wb").write(base64.b64decode(shot["data"]))
+        # alive 跨世界判定：v119 深度审计实录——混沌点击可把应用点进 3D 巡游（window.map 没了），
+        # 纯 2D 探针会对存活的 3D 世界误报 false；ok 判据仍只看错误数，不变
         out = {"clicks": clicks, "errors": errs[:10], "n_errors": len(errs),
-               "alive": bool(ev("!!(window.map && window.map._loaded)")),
+               "alive": bool(ev("!!((window.map && window.map._loaded) || window.__m3ready === true)")),
                "evidence": png, "ok": len(errs) == 0}
         print(json.dumps(out, ensure_ascii=False, indent=1))
         sys.exit(0 if out["ok"] else 1)
