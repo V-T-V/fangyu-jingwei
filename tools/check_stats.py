@@ -81,9 +81,48 @@ for name, pat, exp, tol in CHECKS:
     else:
         print(f"  ✓ {name} = {v}")
 
+# ── 空间锚（2026-11-18 补：数据考古新数字此前裸奔无守）──
+import subprocess as _sp, re as _re2, os as _os2
+ROOT2 = _os2.path.dirname(_os2.path.dirname(_os2.path.abspath(__file__)))
+NODE_COV = (
+    'const s = require("fs").readFileSync("data/site_data.js", "utf8");'
+    'const FY = new Function(s + "; return FY;")();'
+    'let tot = 0, have = 0;'
+    'for (const p of FY.provinces) for (const u of p.fu) {'
+    '  for (const nm of [...(u.xian||[]), ...(u.zx||[]).flatMap(z=>z.x||[])]) {'
+    '    tot++;'
+    '    if ((u.xianc||{})[nm.split("\u3014")[0]]) have++;'
+    '  }'
+    '}'
+    'console.log(have + " " + tot);'
+)
+try:
+    _r = _sp.run(["node", "-e", NODE_COV], capture_output=True, text=True, encoding="utf-8", errors="replace",
+                 timeout=60, cwd=ROOT2)
+    _have, _tot = map(int, _r.stdout.split())
+    if _have == 1109 and _tot == 1111:
+        print("  ✓ 县治覆盖 1109/1111（空间锚）")
+    else:
+        fails.append(f"县治覆盖 1109/1111（空间锚）: 实得 {_have}/{_tot}——build_data 回归即红")
+except Exception as _e:
+    fails.append(f"空间锚不可执行: {_e}")
+_env2 = dict(_os2.environ, PYTHONIOENCODING="utf-8")   # 子进程输出统一 UTF-8（-I 会无视此变量——教训 22 同族）
+_r2 = _sp.run([sys.executable, "tools/county_dist.py"], capture_output=True, text=True, encoding="utf-8", errors="replace",
+              timeout=120, cwd=ROOT2, env=_env2)
+_m = _re2.search(r"中位 ([\d.]+)", _r2.stdout or "")
+if _m and abs(float(_m.group(1)) - 53.9) < 0.05:
+    print("  ✓ 县距中位 53.9 km（空间锚）")
+else:
+    fails.append(f"县距中位 53.9 km（空间锚）: 实得 {_m.group(1) if _m else '无'}")
+_m2 = _re2.search(r"里程 n=\d+ 中位 (\d+) 里", _r2.stdout or "")
+if _m2 and int(_m2.group(1)) == 120:
+    print("  ✓ 原书里程中位 120 里（空间锚·勘误口径）")
+else:
+    fails.append(f"原书里程中位 120 里（空间锚）: 实得 {_m2.group(1) if _m2 else '无'}")
+
 print()
 if fails:
     for f_ in fails: print("✗", f_)
     print(f"数字哨兵：{len(fails)} 项漂移 —— 论文数字与语料不一致，请复核 ANALYSIS.md")
     sys.exit(1)
-print(f"数字哨兵：{len(CHECKS)} 项锚定全部一致 ✓")
+print(f"数字哨兵：{len(CHECKS)}+3 项锚定全部一致 ✓")
