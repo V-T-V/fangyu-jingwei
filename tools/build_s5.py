@@ -3,35 +3,20 @@
 
 县治距府治直线距离全量底账（n=962，论文 §三 / 表 1 之源）。
 列：省, 府, 县, 直线km, 原书方位, 原书里程(里)。
-UTF-8-BOM，Excel 中文直开；与 tools/county_dist.py 同一口径。
+UTF-8-BOM，Excel 中文直开；口径唯一来源 tools/fy_geo.py（county_dist.py 同源）。
 """
 import csv
 import json
-import math
 import os
 import re
+
+from fy_geo import cn2num, county_km
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "docs", "supplementary", "S5_county_distances.csv")
 
 src = open(os.path.join(ROOT, "data", "site_data.js"), encoding="utf-8").read()
 FY = json.loads(re.search(r"const FY = (.+);$", src, re.S).group(1))
-
-CN = {"零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4,
-      "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
-
-def cn2num(s):
-    n = cur = 0
-    for ch in s:
-        if ch == "百":
-            n += (cur or 1) * 100; cur = 0
-        elif ch == "十":
-            n += (cur or 1) * 10; cur = 0
-        elif ch in CN:
-            cur = CN[ch]
-        else:
-            return None
-    return n + cur
 
 rows = []
 for p in FY["provinces"]:
@@ -42,9 +27,7 @@ for p in FY["provinces"]:
             if d.get("type") == "附郭":
                 continue
             la1, lo1 = d["c"]; la2, lo2 = u["c"]
-            dx = (lo2 - lo1) * math.cos(math.radians((la1 + la2) / 2)) * 111.32
-            dy = (la2 - la1) * 110.57
-            km = math.hypot(dx, dy)
+            km = county_km(la1, lo1, la2, lo2)
             li = cn2num(str(d.get("li", ""))) if d.get("li") else None
             rows.append([p["name"], u["n"], nm, round(km, 2), d.get("dir", ""), li if li else ""])
 

@@ -5,11 +5,13 @@
   2. site_data 计数与坐标域（193 府 / 187 州 / ≥1000 县，坐标落中国框）
   3. 摘录洁净（无半/全角外来字符、无未替换缺字符）
   4. 全文覆盖（各府名录 → data/text 有对应全文，别名归一，白名单除外）
-  5. 卷首七篇齐备
-  6. JS 语法（node --check）
+  5. 县治推算（≥700 点，坐标落域）
+  6. 卷首七篇齐备
+  7. JS 语法（node --check）
+  8. 指纹对账（SHA256SUMS 逐行 sha256 实测；哈希不符/文件缺失/data 缺行即失败）
 退出码 0=全过 / 1=有失败。
 """
-import json, os, re, glob, subprocess, sys
+import hashlib, json, os, re, glob, subprocess, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 os.chdir(ROOT)
@@ -108,6 +110,40 @@ for f in sorted(glob.glob("js/*.js")):
     if r.returncode:
         bad_js.append(f)
 check(not bad_js, f"js/*.js 语法（坏 {bad_js}）")
+
+print("── 8. 指纹对账（SHA256SUMS）")
+# 静态指纹账本（sha256sum 格式：hash␣␣相对路径）。拦静默漂移：不符即失败，不做 warning。
+if not os.path.exists("SHA256SUMS"):
+    check(False, "SHA256SUMS 账本存在（仓库根）")
+else:
+    lines = [l for l in open("SHA256SUMS", encoding="utf-8").read().splitlines() if l.strip()]
+    check(len(lines) > 0, f"SHA256SUMS 非空（{len(lines)} 行）")
+    fmt_bad, gone, hash_bad, listed = [], [], [], set()
+    for i, line in enumerate(lines, 1):
+        parts = line.split("  ", 1)
+        rel = parts[1].strip().replace("\\", "/") if len(parts) == 2 else ""
+        if len(parts) != 2 or not re.fullmatch(r"[0-9a-f]{64}", parts[0]) or not rel:
+            fmt_bad.append(f"第{i}行格式"); continue
+        if rel in listed:
+            fmt_bad.append(f"第{i}行重复 {rel}"); continue
+        listed.add(rel)
+        if not os.path.isfile(rel):
+            gone.append(rel); continue
+        h = hashlib.sha256()
+        with open(rel, "rb") as fh:
+            for chunk in iter(lambda: fh.read(65536), b""):
+                h.update(chunk)
+        if h.hexdigest() != parts[0]:
+            hash_bad.append(f"{rel}（重算更行：sha256sum {rel}）")
+    check(not fmt_bad, f"账本行格式（坏 {len(fmt_bad)}：{fmt_bad[:3]}）")
+    check(not gone, f"账上文件俱在（失 {len(gone)}：{gone[:3]}）")
+    check(not hash_bad, f"指纹全符 {len(listed) - len(hash_bad)}/{len(listed)}"
+                        f"（不符 {len(hash_bad)}：{hash_bad[:2]}）")
+    off_books = sorted(
+        rel for rel in (os.path.relpath(os.path.join(dp, fn)).replace("\\", "/")
+                        for dp, _, fns in os.walk("data") for fn in fns)
+        if rel not in listed)
+    check(not off_books, f"data/ 全目录在账（缺行 {len(off_books)}：{off_books[:3]}）")
 
 print()
 for w in warns:
