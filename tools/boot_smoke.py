@@ -119,7 +119,8 @@ def main():
 
         shot = send("Page.captureScreenshot", {"format": "png"})
         os.makedirs(os.path.join(ROOT, "docs", "evidence"), exist_ok=True)
-        png = os.path.join(ROOT, "docs", "evidence", "smoke-index.png")
+        # 证据按页命名（与 pick_steps 同款判别）：避免 3d 跑完覆盖 index 截图（v119 审计实录）
+        png = os.path.join(ROOT, "docs", "evidence", "smoke-3d.png" if "3d.html" in TARGET else "smoke-index.png")
         open(png, "wb").write(base64.b64decode(shot["data"]))
         report["total_errors"] = len(errs)
         report["ok"] = len(errs) == 0

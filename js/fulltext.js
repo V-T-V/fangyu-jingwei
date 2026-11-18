@@ -1,5 +1,5 @@
 /* ═══════════ 方舆经纬 · 全书全文检索 ═══════════
-   输入任意词句 → 按需加载 data/text/*.js（17 文件）→ 扫描全部原文
+   输入任意词句 → 按需加载 data/text/*.js（18 文件）→ 扫描全部原文
    → 结果片段列表 → 点击直达原文命中段落。
    countHits/ftSnippet 纯函数在 js/ft_core.js（与 Worker 共用）。 */
 
@@ -42,6 +42,9 @@ function ftWorkerReady(){
       _ftw.onmessage = e => {
         const m = e.data || {};
         if (m.ready){ _ftwReady = true; clearTimeout(okTimer); res(true); }
+        else if (m.type === "wprog" && _ftw._prog){
+          _ftw._prog(m.i, m.total);   /* v4.2 起的死信接线：装载进度回调自 v120 起真正生效 */
+        }
         else if (m.type === "wenxin" && _ftw._wxHandler){
           const h = _ftw._wxHandler; _ftw._wxHandler = null; h(m.cache);
         }
