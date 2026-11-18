@@ -108,7 +108,7 @@ python audit.py   # 以原书四至八到交叉验证坐标：277 条可解析�
 ## 校验与验证体系
 
 ```
-python verify.py      # 数据完整性：文件/计数/坐标域/摘录洁净/全文覆盖/卷首/JS 语法
+python verify.py      # 数据完整性：文件/计数/坐标域/摘录洁净/全文覆盖/卷首/JS 语法/指纹对账
 python run_tests.py   # 无头回归：16 断言页（14 无头 + 2 CDP）+ lint 16 类 + 哨兵 + CLI
 make all              # lint · verify · test · health 一键
 ```

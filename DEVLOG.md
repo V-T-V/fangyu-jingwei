@@ -313,3 +313,54 @@ heredoc 反斜杠塌成 \x01 控制符吃掉 <script src=——按字节修复 1
 = 机器慢，**绝不 --no-verify**——耐心环每 5 分钟试，绿了才落。
 
 七件验证兵器：perf · drive · boot_smoke · offline · audit · heap · chaos
+
+---
+
+## 第十六纪：多 agent 深度梳理与两轮加固（2026-11-18）
+
+v7.2.0 之后本地积压 9 提交（b4256b4→fb243a7，三次 bump 至 v119），成于
+多 agent 深度梳理：第一轮修生产、收编存量；第二轮只读审查反哺确定性。
+
+**第一轮：修复 · 收编 · 上闸**
+
+1. **3D 文柱生产空转**（6709f04）：被引柱自 v1.x 起空转——3d.html 漏载
+   mentions.js，而 test_3d 自载语料故测试恒绿。新漏网模式：**测试页比生产页
+   更完整，绿的不是被测对象**。→ 现在谁在拦：lint L11「数据全局与入口
+   加载成对」（引 FY_MENTIONS 的 js 所在入口页必须同载 mentions.js）
+2. **陈年烂断言收编**（785ad1c）：test_edge / test_visual_verify 从回归圈外
+   收编（12→14 无头页，计 16 页）——圈外两页带着 v1.7.0 起的烂断言活了七版：
+   搜索防抖时序（EDGE-nofind 等 110ms）、关隘 z≥5 门控（Z4-GATE-0 对齐 +
+   新增 Z6-GATE-50 精确数）。教训：**不进 run_tests 的断言页只是摆设**
+3. **health or True 假绿**（dee8011）：audit 节恒真分支永绿 → 改诚实信息性
+   （◦/△ 不入 all_ok）；lint L13 吞错扫描扩至 py 工具——工具层曾是盲区
+4. **文档数字漂移**（5f65b5f）：README/REPORT 15 处归位（53.9km/120里/
+   1111 县/1109 县治/v7.2.0/chaos 口径）+ S2 语料分源声明；哨兵 +4 文档锚
+   （15+3+4=22）——文档数字此前无守护，现在 check_stats 锚住
+5. **SHA256SUMS 入闸**（f283284）：186 行账本从摆设变闸门——verify 第 8 节
+   五道闸（账本在/行格式/文件俱在/指纹重算/data 全目录在账，纯 py 不符即红）；
+   同案县距口径抽 tools/fy_geo.py 唯一来源（county_dist↔build_s5 字节级对拍）
+
+**第二轮：DRY · 只读审查 · 可移植**
+
+6. **防抖残留**（b0d48fd）：110ms 内清空输入，挂起防抖照旧弹出旧结果——
+   search.js 清空分支补 clearTimeout；新锚 EDGE-clear110 撤修复负向对照验证
+   （断言先证明自己会红）。同案 11 测试页 done() 改反向 FAIL 判定——
+   正向「包含 PASS」遇 SKIP/局部失败即假绿
+7. **ft_core 合一**（b0d48fd）：全文/文心双拷贝收敛为纯核 ft_core.js——
+   wenxin 461→386 · ftworker 185→93 · fulltext 227→208，双调度器保留，
+   parity 6 项直过。教训：**抄两份的代码必分叉，分叉必有一份是错的**
+8. **只读审查三案**（fb243a7）：C1 指纹锚定本机 CRLF 工作区字节，Linux CI
+   checkout 必红 47 条 → .gitattributes eol=lf + 全账本按 LF 重算；I1 Worker
+   传省名集合误用 Object.keys（键≠值，河南府简名撞省名）→ 三府计数分叉 →
+   Object.values + WX-PARITY-HNFU 双路全等断言；I2 全仓 32 行 catch 裸
+   ERR push 无 FAIL 同样假绿 → 一律 P 化，lint L11 上链拦截
+9. **兵器可移植**（c3f3266）：FY_BROWSER/FY_BASE/FY_CDP_PORT 八处可注入
+   （Hyper-V 保留段实吞 9333——缺省之外必须有逃生门）；收尸抽 tools/fy_reap.py
+   六探针复用（reap 后 2s 进程归零实测）
+10. **总闸门自己也过闸**：run_cdp_test 误删 _sp 导入即 NameError（工具改完
+    必须真跑一遍）；test_basemap 固定 2500ms 在系统负载下先于初始化完成，
+    点击落入未初始化窗口造成假红 → 就绪门控等 map._loaded 真信号（10s 上限
+    诚实红）。教训：**等待要等真信号，不是等够秒数**
+
+两轮共上链：lint L11 净增三子检查、verify 第 8 节、22 锚哨兵、三回归锚、
+八兵器可移植——RULES-EXECUTORS 已逐条登记（每条先读代码核实执行者）。

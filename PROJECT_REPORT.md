@@ -95,7 +95,7 @@ site_data.js 160KB 首屏 · mentions.js 3KB · config.js（九朝/七水/50 关
 
 | 层 | 工具 | 终态 |
 |---|---|---|
-| 数据 | verify.py | 7 节 + PWA 基建/版本同步校验 |
+| 数据 | verify.py | 8 节 + PWA 基建/版本同步校验 |
 | 功能 | run_tests.py | 14 无头页 + CLI 7 用例 |
 | 真实时间 | CDP 通道 | test_3d（19 断言）+ test_ft_worker（3 断言） |
 | 端到端 | test_journey | 9 步链路（检索→…→全文/Worker） |

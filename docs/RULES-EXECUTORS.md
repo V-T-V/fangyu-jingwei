@@ -19,6 +19,7 @@
 | 大文件预警 | lint L9 | lint |
 | 危险 API：`map.fire("click")` / `innerHTML.indexOf` 验证 / `git mv -q` | lint L10 | lint |
 | Worker 无 DOM · 核心模块不引特性 DOM ID · defer 序 | lint L11 | lint |
+| done() 完成判定 FAIL 反查（正向 PASS 包含遇断言名含 PASS 即假绿）· 数据全局与入口加载成对（FY_MENTIONS→mentions.js，文柱空转教训）· catch 裸 ERR push 拦截（异常吞行成 ALL-PASS） | lint L11 三子检查（R3D 标题协议页豁免） | lint |
 | 借口注释（TODO/FIXME/HACK ≤3） | lint L12 | lint |
 | CI 吞错（`|| true` / `|| exit 0`）· 教训 20 | lint L13 | lint（注释豁免） |
 | CSS `!important` ≤25 棘轮（附录 A，按出现次数） | lint L14 | lint（只减不增） |
@@ -38,6 +39,12 @@
 | 瓦片断供降级（3 错→绢底，矢量不受影响） | 运行时兜底 + `test_basemap` | 自动 |
 | DEM 不可达（4s 超时→demnote 重试；记忆快径） | map3d.js 运行时 + `test_3d` | 自动 |
 | 首访瓦片抢跑枚举正确性（像素≠瓦片） | Node 先验（开发纪律，见 DEVLOG 十一纪） | 改抢跑脚本时 |
+| 指纹对账（SHA256SUMS 186 行，fail 级无 warn 通道）：五道闸——账本在且非空 / 行格式与重复 / 账上文件俱在 / 指纹逐行 sha256 重算 / data 全目录在账 | `verify.py` 第 8 节 | `python verify.py` |
+| 指纹跨平台一致：账本与 `data/**`、`docs/supplementary/**` 统一 LF——教训：指纹若锚定本机 CRLF 工作区字节，Linux CI checkout 必红 47 条 | `.gitattributes`（eol=lf）+ 第 8 节按工作区字节重算 | git checkout / verify |
+| 回归锚三枚：EDGE-clear110（搜索防抖清空残留，撤修复负向对照）· WX-PARITY-HNFU（Worker↔主线程掂量河南府双路全等——Object.keys/values 简名分叉教训）· Z6-GATE-50（z≥5 关隘 50 处精确断言） | tests/test_edge.html · test_ft_worker.html · test_visual_verify.html | `python run_tests.py` |
+| 口径单一来源：县距/中文里程＝`tools/fy_geo.py`（county_dist 与 build_s5 字节级对拍，53.9km 哨兵锚联动即红）；全文/文心纯核＝`js/ft_core.js`（主线程 defer 链与 Worker importScripts 共一份，禁 DOM） | 对拍复算 + `check_stats.py` 空间锚 | 改口径时 |
+| 兵器可移植：FY_BROWSER / FY_BASE / FY_CDP_PORT 三环境变量（缺省不变）+ 收尸统一 | `tools/control_fy.py` 等 7 工具 + `run_tests.py`（共 8 处）+ `tools/fy_reap.py`（六探针复用） | 换机 / CI 注入 |
+| 测试页就绪门控：断言前等 `map._loaded` 真信号（固定 2500ms 在系统负载下先于初始化完成 → 假红实录） | tests/test_basemap.html 门控环（200ms 轮询，10s 上限诚实红） | `python run_tests.py` |
 
 ## L5 流程（CI · 隔夜 · 约定）
 
@@ -48,6 +55,7 @@
 | 改数据先跑管线（可重入） | `build_data.py` / `build_mentions.py` | 手动 |
 | 隔夜循环可判停 + 决策日志 | `docs/OVERNIGHT-CONTRACT.md` + `decisions.tsv` | 隔夜任务 |
 | 纠正两次同类错误 → 当场上链 | 本表 + DEVLOG 教训编号（1-21） | 评审时 |
+| health 汇总 audit 节诚实信息性（◦/△ 行首，不入 all_ok，不打假绿 ✓——or True 恒真案） | `tools/health.py` + lint L13（py 恒真吞错扫描） | `python tools/health.py` |
 
 ## 已知「只有散文在管」的项（降层候选）
 
