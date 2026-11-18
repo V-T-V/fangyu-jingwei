@@ -7,7 +7,7 @@
 |---|---|---|---|
 | 1 | 启动与三模式（舆图/形势/川渎） | [map-modes.md](map-modes.md) | test_auto · test_filter · test_events |
 | 2 | 层级门控与县治 | [gating.md](gating.md) | test_gating · test_counties · test_journey |
-| 3 | 检索与全文 Worker | [search.md](search.md) | test_ft_worker · test_cli |
+| 3 | 检索与全文 Worker | [search.md](search.md) | test_ft_worker · test_cli · test_edge |
 | 4 | 文心（文本计量） | [wenxin.md](wenxin.md) | test_wenxin |
 | 5 | 阅读器（原文/TTS/夜读） | [reader.md](reader.md) | test_night · test_tts |
 | 6 | 九边专题 | [bian.md](bian.md) | test_bian |
@@ -15,5 +15,6 @@
 | 8 | 三维形胜（3D） | [mode3d.md](mode3d.md) | test_3d |
 | 9 | 实用件（量距·导出·对照·分享） | [utilities.md](utilities.md) | test_events(MEASURE) · test_filter |
 
-全量回归：`python run_tests.py`（14 页 + lint + 哨兵 + CLI）。
+全量回归：`python run_tests.py`（16 页 = 14 无头 + 2 CDP 真实时间（test_3d · test_ft_worker）+ lint + 哨兵 + CLI）。
  pose 页（`tests/*_pose.html`）为视觉摆拍辅助，不算断言。
+ test_visual_verify（z4-z7 挂载门控 + 形势/川渎要素可见性终检）跨第 1/2 域，随全量回归扫掠。
