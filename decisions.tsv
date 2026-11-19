@@ -1,3 +1,4 @@
 2026-11-18T09:00+08:00	audit	维持 clean	锚点全在活体绿	audit_features.py --live 输出 state:clean（9 域 + run_tests 14 页）	done
 2026-11-18T09:30+08:00	deep-audit	八兵器全绿	boot 0错×2 · 离线8验 · heap stable(4.6→5.9MB) · chaos 100拳0错 · 带宽100%免	boot_smoke/offline_check/heap_probe/chaos_monkey/bandwidth_probe	done
 2026-11-19T00:09+08:00	v119-audit	v119 八兵器真跑重立基线全绿	boot 0错×2 · 离线8验全文18/18「襄阳」471处/38篇 · 带宽首访709294B(38请求)复访0B免100% · 2D FCP1104ms/DCL1286ms/load8560ms · 3D m3ready达成17112ms/DEM15张896→16934ms · heap 4.57→6.62MB verdict=stable · chaos 200拳0错(alive=false系误入巡游模式截图证实非崩溃) · perf×2无ok字段属测量型exit=0 · doctor 6/6@9205(sw=v119)	FY_BASE/FY_CDP_PORT 七兵器+doctor全认(9205/9460实地+源码双验) · smoke-index.png(注意:3d跑覆盖index截图)/offline-index.png/chaos-after.png · perf/heap/bandwidth仅stdout无文件证据	done
+2026-11-19T09:00+08:00	audit	维持 clean	锚点全在活体绿	audit_features.py --live state:clean（9域+14页）	done
