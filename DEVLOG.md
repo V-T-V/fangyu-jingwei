@@ -374,3 +374,12 @@ chaos 200 拳 0 错、带宽省 100%，decisions.tsv 六列落账。v120 接回 
 线；教训：**接线完整性也是断言对象**，WPROG 锚收尾）；boot_smoke 证据按页
 命名（覆盖事故实录）；chaos alive 跨世界探针；指纹账本 BOM 容忍（负向对照
 注入 BOM 仍全绿）。
+
+**又续（同日 · 第六波）**：audit.yml 落库承载周六深度审计（此前仅本机计划任务）。
+为 workflow 走查 boot_smoke 3D 时发现设计级假绿：裸相对 URL 被 CDP 拒导航、停在
+about:blank，空守卫步骤零错误——两份证据 PNG 字节级同白，靠 PIL 像素统计才验出
+真身。修好 URL 拼接，假绿立即带出真 bug：3D 冷启动 ~40% 掷 MapLibre
+"Attempting to run(), but is already running"——根因是镜头 ease 飞行中 setTerrain，
+渲染任务内爆 TaskQueue（run 无 finally，_currentlyRunning 永久卡真）；修法＝地形
+等 idle 再挂（map3d.js demAttach），×5+1 全 0 错。教训：**证据必须像素级验真；
+探针修真之后，它自己会带出下一步**。

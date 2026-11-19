@@ -49,6 +49,8 @@
 | boot_smoke 证据按页命名（3d 跑完覆盖 index 截图实录） | tools/boot_smoke.py（smoke-3d.png / smoke-index.png 并存） | 每次冒烟 |
 | chaos alive 探针跨世界（2D `map._loaded` ∥ 3D `__m3ready`——混沌点击误入巡游不误报失活；ok 判据仍只看 JS 错误数） | tools/chaos_monkey.py | 混沌测试 |
 | 指纹账本 BOM 容忍（`utf-8-sig` 读入——Windows 编辑器给账本加 BOM 不再触发双重 confusing red；负向对照：注入 BOM 仍全绿） | verify.py 第 8 节 | `python verify.py` |
+| boot_smoke 相对 URL 自动拼 BASE（裸相对 URL 被 CDP 拒导航→空白页零错误假绿，两份证据 PNG 同白实录）+ 采集器捕获错误堆栈 | tools/boot_smoke.py（与 control_fy 同款拼接） | 每次冒烟 |
+| 3D 地形挂载 idle 门控：镜头 ease 飞行中禁 setTerrain（MapLibre v4.7.1 不补 _prepareElevation，渲染任务爆 TaskQueue → 每帧 already running，~40% 复现） | js/map3d.js demAttach（isMoving 则 once("idle") 重排） | boot_smoke 3D ×5 |
 
 ## L5 流程（CI · 隔夜 · 约定）
 
