@@ -299,7 +299,17 @@ m3.on("load", () => {
       duration: 5200, curve: 1.45, essential: true });
     m3.once("dragstart", () => { if (m3.isMoving()) m3.stop(); });   /* 空闲时 stop() 会毒化后续缓动 */
   }
-  const demAttach = () => { m3.setTerrain({ source: "dem", exaggeration: 1.4 }); window.__m3terrain = true; };
+  /* 地形不得挂上飞行中的镜头：ease 先于 setTerrain 起跑时 MapLibre（v4.7.1）不补
+     _prepareElevation，下一缓动帧 _updateElevation 读未初始化的 _elevationCenter 即掷
+     "reading 'wrap'"——该异常在渲染任务内爆掉 TaskQueue（run 无 finally，_currentlyRunning
+     永久卡真），此后每帧 "already running"（多数被 .catch 静吞、地图冻结；容器 resize 的
+     同步 redraw() 则令其裸抛）。错开窗口：镜头在飞就等 idle 再挂，异常源头即消失。 */
+  const demAttach = () => {
+    if (window.__m3terrain) return;
+    if (m3.isMoving()){ m3.once("idle", demAttach); return; }
+    m3.setTerrain({ source: "dem", exaggeration: 1.4 });
+    window.__m3terrain = true;
+  };
   if (demRemembered){ demAttach(); return; }
   demProbe.then(ok => {
     if (ok){ demAttach(); return; }

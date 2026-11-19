@@ -22,6 +22,8 @@ from fy_reap import reap_browser
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
 TARGET = sys.argv[1] if len(sys.argv) > 1 else BASE + "index.html"
+if not TARGET.startswith("http"):   # 裸相对 URL 会被 CDP 拒导航→停在 about:blank→空守卫步骤零错误假绿
+    TARGET = BASE + TARGET.lstrip("/")   # （2026-11-19 实录：两份证据 PNG 同白；与 control_fy.py 同款拼接）
 PORT = int(os.environ.get("FY_CDP_PORT", "9334"))   # 缺省 9334（现状）：与其余探针 9333 错峰
 
 CANDS = [
@@ -35,9 +37,20 @@ EDGE = next((c for c in CANDS if c and os.path.exists(c)), None)
 if not EDGE:
     print("X 未找到浏览器（FY_BROWSER 可指定）"); sys.exit(2)
 
-TRAP = """window.__errs = [];
-window.onerror = function(m, s, l, c, e){ window.__errs.push((e && e.name || 'Error') + ': ' + m + ' @' + (l||0)); return false; };
-window.addEventListener('unhandledrejection', function(e){ window.__errs.push('Rejection: ' + (e.reason && e.reason.message || e.reason)); });"""
+TRAP = r"""window.__errs = [];
+function __stk(err){   // 错误应带堆栈：取首两行缀于消息，否则只知"错在"不知"谁掷"
+  var st = (err && err.stack) || '';
+  return st ? ' | ' + st.split('\n').slice(0, 2).join(' <= ') : '';
+}
+window.onerror = function(m, s, l, c, e){
+  var err = (e && e.error) || e;   // onerror 第5参本是 Error 本体；容错 event.error 双形态
+  window.__errs.push((err && err.name || 'Error') + ': ' + m + ' @' + (l||0) + __stk(err));
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e){
+  var r = e.reason;
+  window.__errs.push('Rejection: ' + (r && r.message || r) + __stk(r));
+});"""
 
 STEPS = [
     ("boot-cover-dismiss", "document.querySelector('#boot .go') ? document.querySelector('#boot .go').click() : 0", 1200),
