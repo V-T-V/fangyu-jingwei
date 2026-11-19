@@ -117,6 +117,54 @@ function toggleFuHeat(){
   if (btn){ btn.textContent = "✓ 已着色 · 关闭"; btn.title = "点此关闭被引着色"; }
 }
 
+/* ── 引水经注互查（水道经纬站际桥）───────────────────
+   数据 data/sjz_xref.js 懒加载（仿 reader.js 动态注入惯例，build_sjz_xref.py 生成）；
+   展示按省引用计数 + 样例引文，「↗ 循水」深链姊妹站循水而读。 */
+let _sjzOpen = null;
+function sjzRender(){
+  const host = document.getElementById("wxSjz");
+  if (!host || !window.FY_SJZ) return;
+  const d = window.FY_SJZ;
+  const provs = Object.entries(d.byProv);
+  const mx = provs.length ? provs[0][1].n : 1;
+  host.innerHTML = `<div class="wx-row" style="margin-bottom:4px">
+      <span class="wx-nm">全书</span><div class="wx-track"></div>
+      <span class="wx-val">${d.total} 次 · ${provs.length} 省卷</span></div>` +
+    provs.map(([p, v]) => `
+    <div class="wx-row"><span class="wx-nm" data-sjz="${p}" style="cursor:pointer;color:var(--azur-d)">${p}</span>
+      <div class="wx-track"><div class="wx-fill" style="width:${(v.n/mx*100).toFixed(1)}%;background:linear-gradient(90deg,#4a7a9b,#2f5d70)"></div></div>
+      <span class="wx-val">${v.n} 次</span></div>
+    <div class="sjzcites" data-for="${p}" style="display:none"></div>`).join("");
+  host.querySelectorAll(".wx-nm[data-sjz]").forEach(el => el.onclick = () => {
+    const box = host.querySelector(`.sjzcites[data-for="${el.dataset.sjz}"]`);
+    if (box.style.display === "none"){
+      const v = d.byProv[el.dataset.sjz];
+      box.innerHTML = (v.cites || []).map(ct => `
+        <div style="font-size:11.5px;line-height:1.8;color:var(--ink-mid);padding:4px 6px;border-left:2px solid rgba(74,122,155,.5);margin:3px 0;background:rgba(245,238,218,.5)">
+          …${ct.ctx}…
+          ${ct.water ? `<a href="${ct.href}" target="_blank" rel="noopener" style="color:var(--cinnabar-d);text-decoration:none;border-bottom:1px dotted">↗ 循水·${ct.water}</a>`
+                     : `<a href="${ct.href}" target="_blank" rel="noopener" style="color:var(--ink-faint);text-decoration:none;border-bottom:1px dotted">↗ 水道经纬</a>`}
+        </div>`).join("");
+      box.style.display = "block";
+    } else box.style.display = "none";
+  });
+}
+function sjzLoad(){
+  if (window.FY_SJZ){ sjzRender(); return; }
+  if (_sjzOpen) return;
+  _sjzOpen = new Promise(ok => {
+    const s = document.createElement("script");
+    s.src = "data/sjz_xref.js?v=122";
+    s.onload = ok; s.onerror = ok;
+    document.head.appendChild(s);
+  }).then(() => {
+    _sjzOpen = null;
+    const host = document.getElementById("wxSjz");
+    if (!window.FY_SJZ && host) host.innerHTML = `<div class="wx-note">互查数据未载入（离线首访）——联网后重开文心即可。</div>`;
+    sjzRender();
+  });
+}
+
 function openWenxin(){
   vset("文心", "计量");
   vseal.textContent = "笔墨";
@@ -298,6 +346,11 @@ function wxRender(c){
       <span class="wx-val">${x[1]} 次</span></div>`).join("")}
   <div class="wx-note">书例引用近万处——水经注居首，正史地理志（汉/隋/唐/宋）成链；城邑考、舆程记当属顾氏自著或家学所辑。</div>
 
+  <div class="wx-title">引水经注 · 跨千年互文</div>
+  <div id="wxSjz">载入互查数据…</div>
+  <div class="wx-note">顾祖禹遍引前世地志，《水经注》为其中古地理之冠——每一处引文都是明末史家对北魏注家的一次借用。
+  点省名展开引文样例；点「↗ 循水」赴姊妹站<b>水道经纬</b>沿河而读（v-t-v.github.io/shuidao-jingwei）。</div>
+
   <div class="wx-title">天下之 X · 人身喻天下</div>
   <div class="chips">${(c.tianxiaTop || []).map(x =>
     `<span class="chip" title="${x[1]} 处">天下之${x[0]}</span>`).join("")}</div>
@@ -361,6 +414,7 @@ function wxRender(c){
 
   const wh = document.getElementById("wxheat");
   if (wh) wh.onclick = () => toggleFuHeat();
+  sjzLoad();   /* 引水经注互查（懒加载数据） */
   const db = document.getElementById("densbtn");
   if (db) db.onclick = () => {
     if (densLayer) flipDensMode();
