@@ -119,15 +119,16 @@ make all              # lint · verify · test · health 一键
 |---|---|---|
 | perf_probe | 性能 | 瓦片抢跑 -38% · 3D 地形回访 13× |
 | control_fy | 驱动 | 验证技能 CLI（serve/doctor/drive/screenshot/perf/cleanup） |
-| boot_smoke | 启动 | 真页心电图：本地/生产/移动 0 错 |
+| boot_smoke | 启动 | 真页心电图 0 错×2（2D 十步 / 3D 五步；2026-11-19 复立：修正相对 URL 空白页假绿、根治 DEM 挂载竞态后 5/5 全 0 错） |
 | offline_check | 离线 | 断网重载三验 + 全文检索 18/18 |
 | audit_features | 地图 | 9 域锚点自审计（每日 09:00 自动） |
-| heap_probe | 内存 | 180 轮 UI 循环稳定 |
-| chaos_monkey | 混沌 | 工具默认 200 拳；周六深度审计实跑 100 拳 0 错（种子 42 可复现，decisions.tsv 落账） |
-| bandwidth_probe | 带宽 | 再访 0 字节（SW 全命中） |
+| heap_probe | 内存 | 180 轮 stable（末段 0.02MB/60 轮） |
+| chaos_monkey | 混沌 | 200 拳 0 错（2026-11-19 实跑；alive 误入巡游已改跨世界探针；种子 42 可复现，decisions.tsv 落账） |
+| bandwidth_probe | 带宽 | 首访 709KB → 复访 0B，省 100%（SW 全命中） |
 
-自动化：每日 09:00 地图审计（三态 clean/changed/blocked，decisions.tsv 落账）；
-周六 09:30 深度审计（八兵器全跑）。工作流与证据形态见 `.zcode/skills/verify-fy/`。
+自动化：周六深度审计现有仓库内承载 [.github/workflows/audit.yml](.github/workflows/audit.yml)
+（周六 09:30 CST 自动 + 可手动触发，Linux Chrome）；每日 09:00 地图审计仍为本机计划任务
+（三态 clean/changed/blocked，decisions.tsv 落账）。工作流与证据形态见 `.zcode/skills/verify-fy/`。
 
 底栏「关于 · 校勘记」列数据源流、校勘约定与已知之阙。
 

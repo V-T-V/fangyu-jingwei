@@ -22,7 +22,7 @@
 | 阅读 | 原典互链 · 夜读 · TTS · 打印/PDF · 漫游模式 |
 | 可用性 | PWA 三级缓存离线全书（可安装）；移动端几何探针零重叠；file:// 兼容 |
 | 质量 | 16 页断言 + lint 16 类 + 数字哨兵 22 锚 + 文档哨兵 + CI 全绿 |
-| 验证 | **八件兵器**：boot_smoke（真页心电图 0 错）· offline_check（断网三验+全文 18/18）· heap_probe（180 轮稳定）· chaos_monkey（默认 200 拳·深度审计实跑 100 拳 0 错）· bandwidth_probe（再访 0 字节）· perf_probe · control_fy · audit_features |
+| 验证 | **八件兵器**：boot_smoke（真页心电图 0 错×2）· offline_check（断网三验+全文 18/18）· heap_probe（180 轮稳定）· chaos_monkey（默认 200 拳·深度审计实跑 200 拳 0 错，2026-11-19）· bandwidth_probe（再访 0 字节）· perf_probe · control_fy · audit_features |
 | 自动化 | 每日 09:00 地图审计（三态，decisions.tsv 落账）；周六 09:30 深度审计（八兵器全跑） |
 | 论文 | 9 页 4 图 12 表 · S1-S5 五表配套（县距逐县底账 S5 · 41KB）· v7.2.0 发版附件含论文+五表 |
 
@@ -97,7 +97,7 @@ site_data.js 160KB 首屏 · mentions.js 3KB · config.js（九朝/七水/50 关
 |---|---|---|
 | 数据 | verify.py | 8 节 + PWA 基建/版本同步校验 |
 | 功能 | run_tests.py | 14 无头页 + CLI 7 用例 |
-| 真实时间 | CDP 通道 | test_3d（19 断言）+ test_ft_worker（3 断言） |
+| 真实时间 | CDP 通道 | test_3d（19 断言）+ test_ft_worker（8 断言） |
 | 端到端 | test_journey | 9 步链路（检索→…→全文/Worker） |
 | 视觉 | pose 截图 + 视觉模型 + 像素统计 | RGB/σ 量化核验 |
 | 几何 | 移动端探针 | 元素重叠面积归零 |
