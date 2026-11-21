@@ -383,3 +383,39 @@ about:blank，空守卫步骤零错误——两份证据 PNG 字节级同白，�
 渲染任务内爆 TaskQueue（run 无 finally，_currentlyRunning 永久卡真）；修法＝地形
 等 idle 再挂（map3d.js demAttach），×5+1 全 0 错。教训：**证据必须像素级验真；
 探针修真之后，它自己会带出下一步**。
+
+**第十七纪：经纬互查——站际反向桥补双向（2026-11-22）**
+
+姊妹站单向桥（霞客经纬→HHH、寰宇经纬→HHH）补成双向，本站新增
+「🧭 互查」底栏入口（霞客/寰宇双页签）。架构沿用引水经注案（db27d06）：
+构建期烘焙 data/xrev.js（tools/build_xrev.py，91KB，SHA256SUMS 在账 188 行）、
+前端 js/xrev.js 懒加载挂 ?v=124、SW 外壳增收 xrev.js、核心层零侵入
+（app.js 仅 typeof 守卫绑定）。三条新纪律落地：
+
+1. **反向桥构建期对账**：build_xrev.py 复用姊妹站匹配法逐锚重算
+   （同名基名 → 省域消歧 → 250km 同名异地防线），复得 300/175/125 与
+   XXK 发布数全等——不等即红。姊妹站数据独立演进时，两站匹配法漂移
+   在本站构建期即暴露，不会静默错账
+2. **两口径并存要写明方向**：寰宇宋侧 361 州（含无对 179）与明侧 193 府
+   （无源 84）是同一批数据的两个视角，徽标图例与统计条并列双口径，
+   避免「无对应 179」被误读为明府缺档
+3. **多步交互截图用 wait 表达式编排**（control_fy screenshot 仅单步
+   --click）：去序幕→openXrev→展开省/府全塞进 --wait 副作用表达式；
+   坑：标志位若在动作成功前置位，defer 链未完成时首跑抛错即永久跳过——
+   必须 try/catch 成功后置位（本纪实测 45s 假超时教训）
+
+数字全出自脚本：霞客 7 省 30 府（湖广 51 锚居首，衡州/桂林各 24）；
+寰宇同名 14/升府 34/改名 49/明属州 72/存疑 13/无对 179，明侧有源 109/84。
+深链相对兄弟路径 ../XXK/ ../TPHY/ 双场景（父目录同根服务 · GitHub Pages
+项目页）README 注明。姊妹站目录零写入（git clean 双验）。凡改动：
+lint 全过 · verify 0 警 · 16 页回归全绿 · bump v123→v124；
+证据 docs/img/xrev-xk.png、xrev-hy.png（像素统计 0% 白 + 视觉模型
+双验内容）。
+
+**顺手修复既存 CI 红（教训 C1 复发案）**：查 gh run list 发现 9d595e6 的
+CI 已 failure——根因是 db27d06 把 data/sjz_xref.js 按**本机 CRLF 字节**
+记入 SHA256SUMS，而 .gitattributes `data/** eol=lf` 使 Linux checkout
+得 LF，指纹必红。本批一并归位：sjz_xref.js 工作区转 LF（与库内归一字节
+零 diff）、账本两行（sjz/xrev）按 LF 重算（188/188 全符）、两个构建脚本
+（build_sjz_xref / build_xrev）写入显式 newline 防 CRLF 复发。教训重申：
+**指纹账本的字节口径必须等于库内归一字节（LF），本机生成物先归一再入账**。

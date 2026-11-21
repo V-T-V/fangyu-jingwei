@@ -65,7 +65,7 @@
 })();
 </script>
 <script src="vendor/leaflet.js" defer></script>
-<link rel="stylesheet" href="css/main.css?v=123">
+<link rel="stylesheet" href="css/main.css?v=124">
 </head>
 <body class="m-舆图 nopanel">
 
@@ -117,6 +117,7 @@
   <button class="ftool" id="analyticslink" title="全书空间统计——距离·面积·分布">📊 透视</button>
   <button class="ftool" id="wenxinlink" title="文本计量——书架·战略词·被引">🖋 文心</button>
   <button class="ftool" id="bianlink" title="九边防线专题">⚔ 九边</button>
+  <button class="ftool" id="xrevlink" title="站际互查——霞客行踪（徐霞客游记）· 寰宇溯源（太平寰宇记）">🧭 互查</button>
   <button class="ftool" id="tdlink" title="三维形胜——真地形上观天下">⛰ 形胜</button>
   <span class="sep"></span><span id="modelabel">舆图</span><span class="sep"></span>
   <span id="modenote">十五布政使司 · 府州县治所见于图</span>
@@ -141,20 +142,21 @@
 
 <!-- 加载链：解析数据 → 配置 → 地图 → 面板/纲目/检索 → 启动 → 模式与深链 -->
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=123" defer></script>
-<script src="js/map.js?v=123" defer></script>
-<script src="js/panels.js?v=123" defer></script>
-<script src="js/rail.js?v=123" defer></script>
-<script src="js/search.js?v=123" defer></script>
-<script src="js/reader.js?v=123" defer></script>
-<script src="js/bookmarks.js?v=123" defer></script>
-<script src="js/ft_core.js?v=123" defer></script>
-<script src="js/fulltext.js?v=123" defer></script>
-<script src="js/app.js?v=123" defer></script>
-<script src="js/modes.js?v=123" defer></script>
-<script src="js/analytics.js?v=123" defer></script>
-<script src="js/wenxin.js?v=123" defer></script>
-<script src="js/bian.js?v=123" defer></script>
+<script src="js/config.js?v=124" defer></script>
+<script src="js/map.js?v=124" defer></script>
+<script src="js/panels.js?v=124" defer></script>
+<script src="js/rail.js?v=124" defer></script>
+<script src="js/search.js?v=124" defer></script>
+<script src="js/reader.js?v=124" defer></script>
+<script src="js/bookmarks.js?v=124" defer></script>
+<script src="js/ft_core.js?v=124" defer></script>
+<script src="js/fulltext.js?v=124" defer></script>
+<script src="js/app.js?v=124" defer></script>
+<script src="js/modes.js?v=124" defer></script>
+<script src="js/analytics.js?v=124" defer></script>
+<script src="js/wenxin.js?v=124" defer></script>
+<script src="js/bian.js?v=124" defer></script>
+<script src="js/xrev.js?v=124" defer></script>
 <script>
 /* PWA：HTTP(S) 下注册 Service Worker（file:// 静默跳过，注册失败不影响站点） */
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {

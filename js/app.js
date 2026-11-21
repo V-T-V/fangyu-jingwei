@@ -106,6 +106,9 @@ if (_wx) _wx.onclick = function(){ if (typeof openWenxin === "function") openWen
 var _bl = document.getElementById("bianlink");
 if (_bl) _bl.onclick = function(){ if (typeof openBian === "function") openBian(); };
 
+var _xr = document.getElementById("xrevlink");
+if (_xr) _xr.onclick = function(){ if (typeof openXrev === "function") openXrev(); };
+
 var _td = document.getElementById("tdlink");
 if (_td) _td.onclick = function(){
   /* 携上下文：正在看府 → 飞该府；形势模式 → 带朝代；否则入山河全景 */

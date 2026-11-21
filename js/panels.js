@@ -83,7 +83,7 @@ function openIntro(){
      <span class="chip jschip" data-i="6">州域形势纪要序</span>
    </div>
    <div class="p-cap">使用</div>
-   <div class="hint">舆图模式点府治印鉴观四至八到与沿革，点空白处取消省选；形势模式历览九朝，←/→ 翻卷或 ▶ 自动播放（带旁白）；川渎模式循七水。顶栏检索千余州县名（回车直达），「在全书原文中检索」遍检 260 万字。底栏五门：⚑ 漫游随机入卷 · 📊 透视观空间统计 · 🖋 文心计笔墨浓淡（文↔地互跳，府卡直显被引名次）· ⚔ 九边专题 · ⛰ 形胜入三维山河（飞览/文柱/九朝推演，正看某府则直飞其地）。府详情可阅原卷全文（正文地名可点、夜读、朗读、Ctrl+P 存 PDF）。左上「影像」切卫星底图观山川。Shift+两点量距；Esc 收面板，? 唤出本页。首访后全书离线可用（◼ 离线徽标），可安装为应用。</div>`;
+   <div class="hint">舆图模式点府治印鉴观四至八到与沿革，点空白处取消省选；形势模式历览九朝，←/→ 翻卷或 ▶ 自动播放（带旁白）；川渎模式循七水。顶栏检索千余州县名（回车直达），「在全书原文中检索」遍检 260 万字。底栏六门：⚑ 漫游随机入卷 · 📊 透视观空间统计 · 🖋 文心计笔墨浓淡（文↔地互跳，府卡直显被引名次）· ⚔ 九边专题 · 🧭 互查跨站对读（霞客行踪 · 寰宇溯源）· ⛰ 形胜入三维山河（飞览/文柱/九朝推演，正看某府则直飞其地）。府详情可阅原卷全文（正文地名可点、夜读、朗读、Ctrl+P 存 PDF）。左上「影像」切卫星底图观山川。Shift+两点量距；Esc 收面板，? 唤出本页。首访后全书离线可用（◼ 离线徽标），可安装为应用。</div>`;
   pbody.querySelectorAll("[data-go]").forEach(el=>el.onclick=()=>setMode(el.dataset.go));
   pbody.querySelectorAll(".jschip[data-i]").forEach(c=>c.onclick=()=>openJuanshou(+c.dataset.i));
   const tl2 = pbody.querySelector("#tolink");
@@ -292,7 +292,7 @@ function openAbout(){
       <div class="st"><b>2+1</b><span>二维·三维·沙盘</span></div>
     </div>
     <div class="p-cap">源流</div>
-    <div class="hint">文本取自国学导航分卷页面（GB2312 转 UTF-8），凡 130 卷并卷首；机器解析 193 府、187 属州、1111 县，整编 380 处治所今地坐标、50 处关隘。底图 Esri（地形/影像可切），三维 MapLibre + AWS 高程（皆自托管）；首访后经 Service Worker 全书离线，可安装。另有量距（Shift+两点）、GeoJSON/KML/CSV 导出与五套专题（透视/文心/九边/形胜/古今对照）。</div>
+    <div class="hint">文本取自国学导航分卷页面（GB2312 转 UTF-8），凡 130 卷并卷首；机器解析 193 府、187 属州、1111 县，整编 380 处治所今地坐标、50 处关隘。底图 Esri（地形/影像可切），三维 MapLibre + AWS 高程（皆自托管）；首访后经 Service Worker 全书离线，可安装。另有量距（Shift+两点）、GeoJSON/KML/CSV 导出与六套专题（透视/文心/九边/互查/形胜/古今对照）。</div>
     <div class="p-cap">校勘约定</div>
     <div class="hint">损坏句淡显点线而不删原文；句内外来字符代以 □；县名〔今废〕〔新改〕等注皆原书自注；同地异写（军民府／州府）归一匹配。</div>
     <div class="p-cap">已知之阙</div>

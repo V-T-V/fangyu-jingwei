@@ -75,7 +75,7 @@ def main():
         "total": total,
         "byProv": dict(sorted(by_prov.items(), key=lambda kv: -kv[1]["n"])),
     }
-    with io.open(os.path.join(ROOT, "data", "sjz_xref.js"), "w", encoding="utf-8") as f:
+    with io.open(os.path.join(ROOT, "data", "sjz_xref.js"), "w", encoding="utf-8", newline="") as f:
         f.write("/* 方舆经纬 · 引水经注互查数据 · build_sjz_xref.py 生成，勿手改 */\n")
         f.write("window.FY_SJZ = " + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";\n")
     print(f"《水经注》被引 {total} 次 · {len(by_prov)} 省 → data/sjz_xref.js")
