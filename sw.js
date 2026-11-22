@@ -1,27 +1,27 @@
 /* ═══════════ 方舆经纬 · Service Worker ═══════════
    三级缓存：SHELL 外壳预存 · TEXTS 全文懒存（首查后整本书离线）
              TILES 瓦片限额存（stale-while-revalidate）
-   VERSION 与 index.html 的 ?v 同步递增（当前 v124）。 */
+   VERSION 与 index.html 的 ?v 同步递增（当前 v125）。 */
 
-const VERSION = "v124";
+const VERSION = "v125";
 const SHELL = `fy-${VERSION}-shell`;
 const TEXTS = `fy-${VERSION}-texts`;
 const TILES = `fy-${VERSION}-tiles`;
 const TILE_CAP = 1200;          // 瓦片上限（约 40MB），超限整体重置
 const SHELL_FILES = [
   "./", "./index.html", "./manifest.json",
-  "./css/main.css?v=124",
+  "./css/main.css?v=125",
   "./vendor/leaflet.js", "./vendor/leaflet.css",
   "./data/site_data.js", "./data/mentions.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png",
-  "./js/config.js?v=124", "./js/map.js?v=124", "./js/panels.js?v=124",
-  "./js/rail.js?v=124", "./js/search.js?v=124", "./js/reader.js?v=124",
-  "./js/bookmarks.js?v=124", "./js/ft_core.js?v=124", "./js/fulltext.js?v=124", "./js/app.js?v=124",
-  "./js/modes.js?v=124", "./js/analytics.js?v=124",
-  "./js/wenxin.js?v=124",
+  "./js/config.js?v=125", "./js/map.js?v=125", "./js/panels.js?v=125",
+  "./js/rail.js?v=125", "./js/search.js?v=125", "./js/reader.js?v=125",
+  "./js/bookmarks.js?v=125", "./js/ft_core.js?v=125", "./js/fulltext.js?v=125", "./js/app.js?v=125",
+  "./js/modes.js?v=125", "./js/analytics.js?v=125",
+  "./js/wenxin.js?v=125",
   "./js/ftworker.js",
-  "./js/bian.js?v=124",
-  "./js/xrev.js?v=124",
+  "./js/bian.js?v=125",
+  "./js/xrev.js?v=125",
 ];
 
 self.addEventListener("install", e => {

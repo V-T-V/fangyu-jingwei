@@ -1,6 +1,7 @@
 /* ═══════════ 方舆经纬 · 经纬互查（站际反向桥） ═══════════
    姊妹站单向桥（霞客经纬→方舆 · 寰宇经纬→方舆）补成双向：
-   「霞客」徐霞客游记 300 锚按省府到访分布 · 「寰宇」太平寰宇记宋 361 州
+   「霞客」徐霞客游记日条锚点按省府到访分布（计数随 data/xrev.js 重建更新）
+   · 「寰宇」太平寰宇记宋 361 州对应明府分档。数据 data/xrev.js 构建期烘焙
    对应明府分档。数据 data/xrev.js 构建期烘焙（tools/build_xrev.py 生成，
    懒加载仿 sjzLoad 惯例，URL 挂 ?v 防缓存钉死）；深链为相对兄弟路径
    ../XXK/ ../TPHY/（父目录同根服务与 GitHub Pages 项目页两场景皆成立）。
@@ -14,7 +15,7 @@ function xrevLoad(cb){
   if (_xrevLoading){ _xrevLoading.then(cb); return; }
   _xrevLoading = new Promise(ok => {
     const s = document.createElement("script");
-    s.src = "data/xrev.js?v=124";
+    s.src = "data/xrev.js?v=125";
     s.onload = ok; s.onerror = ok;
     document.head.appendChild(s);
   }).then(() => {
