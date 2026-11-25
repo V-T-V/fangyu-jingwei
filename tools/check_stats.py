@@ -116,9 +116,22 @@ else:
     fails.append(f"县距中位 53.9 km（空间锚）: 实得 {_m.group(1) if _m else '无'}")
 _m2 = _re2.search(r"里程 n=\d+ 中位 (\d+) 里", _r2.stdout or "")
 if _m2 and int(_m2.group(1)) == 120:
-    print("  ✓ 原书里程中位 120 里（空间锚·勘误口径）")
+    print("  ✓ 原书里程中位 120 里（空间锚·原书自载口径）")
 else:
     fails.append(f"原书里程中位 120 里（空间锚）: 实得 {_m2.group(1) if _m2 else '无'}")
+# 县距的公里 / 明里换算（2026-11-24 补）：曾把「直线 ÷ 驿路系数」得到的公里数标成明里，
+# 又据此在论文里写了一条反把正确说法当成错误的「勘误」。直线 53.9 km ÷ 0.62（驿路系数，
+# tools/audit.py 标定）= 驿路约 87 km；再 ÷ 0.576 km/明里 = 约 151 明里（与量距工具、「透视」面板同口径）
+_m3 = _re2.search(r"驿路路程 ≈ (\d+) km", _r2.stdout or "")
+if _m3 and int(_m3.group(1)) == 87:
+    print("  ✓ 驿路路程 87 km（空间锚）")
+else:
+    fails.append(f"驿路路程 87 km（空间锚）: 实得 {_m3.group(1) if _m3 else '无'}")
+_m4 = _re2.search(r"折算明里 ≈ (\d+) 里", _r2.stdout or "")
+if _m4 and int(_m4.group(1)) == 151:
+    print("  ✓ 折算明里 151 里（空间锚）")
+else:
+    fails.append(f"折算明里 151 里（空间锚）: 实得 {_m4.group(1) if _m4 else '无'}")
 
 # ── 文档锚（2026-11-18 补：README/报告数字曾脱钩无人守，关键口径锚住防再漂）──
 for _df in ("README.md", "PROJECT_REPORT.md"):
@@ -135,4 +148,4 @@ if fails:
     for f_ in fails: print("✗", f_)
     print(f"数字哨兵：{len(fails)} 项漂移 —— 论文数字与语料不一致，请复核 ANALYSIS.md")
     sys.exit(1)
-print(f"数字哨兵：{len(CHECKS)}+3 空间 +4 文档 项锚定全部一致 ✓")
+print(f"数字哨兵：{len(CHECKS)}+5 空间 +4 文档 项锚定全部一致 ✓")

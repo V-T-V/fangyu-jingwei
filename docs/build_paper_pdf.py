@@ -43,6 +43,8 @@ AW = W - 2 * M
 S = {
   "title":  ParagraphStyle("t",  fontName="KaiTi",  fontSize=24, leading=34, alignment=TA_CENTER, textColor=TEXT_PRIMARY, wordWrap="CJK"),
   "sub":    ParagraphStyle("s",  fontName="KaiTi",  fontSize=13, leading=20, alignment=TA_CENTER, textColor=TEXT_MUTED,  wordWrap="CJK"),
+  # 注意：不要给标题开 keepWithNext——标题后若是当页放不下的大表 / 图，会连标题一起被推到下一页，
+  # 9 页涨成 11 页且页尾照样留孤悬标题（2026-11-25 试过又撤）。孤悬标题须另有办法。
   "h1":     ParagraphStyle("h1", fontName="KaiTi",  fontSize=16, leading=24, textColor=ACCENT, spaceBefore=16, spaceAfter=6, wordWrap="CJK"),
   "h2":     ParagraphStyle("h2", fontName="KaiTi",  fontSize=13, leading=20, textColor=TEXT_PRIMARY, spaceBefore=10, spaceAfter=4, wordWrap="CJK"),
   "body":   ParagraphStyle("b",  fontName="YaHei",  fontSize=10.5, leading=17.5, alignment=TA_JUSTIFY, textColor=TEXT_PRIMARY, spaceAfter=5, wordWrap="CJK", firstLineIndent=21),
@@ -135,7 +137,7 @@ E += [P("二、材料与方法", "h1"),
 
 # ── 三、空间格局 ──
 E += [P("三、空间格局：县治距府治的分布", "h1"),
-      P("样本为 962 个非附郭县（数字源 tools/county_dist.py，逐县底账见配套 S5）。总体分布如表 1：中位数 53.9 km，原书里程中位 120 里——县的设置以府城一日管辖为度，是为「一日可达」原则（勘误：初稿「约 150 明里」系与方位里程 P95 混淆）。"),
+      P("样本为 962 个非附郭县（数字源 tools/county_dist.py，逐县底账见配套 S5）。总体分布如表 1：中位数 53.9 km，原书里程中位 120 里——县的设置以府城一日管辖为度，是为「一日可达」原则。两者口径不同：前者为治所坐标的直线距离（按驿路系数 0.62 折合路程约 87 km，再按 1 明里 = 0.576 km 折算约 150 明里），后者直接取原书自载的县→府里程。"),
       tbl(["统计量", "中位数", "均值", "标准差", "P25—P75", "P95", "极值 (km)"],
           [["值", "53.9", "69.3", "51.9", "32.2—91.5", "162.8", "3.6（大名）—437.2（永兴·郴州）"]],
           [.16, .13, .12, .12, .16, .11, .20], "表 1　县治距府治直线距离分布（n=962）"),

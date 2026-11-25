@@ -29,9 +29,13 @@ for p in FY['provinces']:
             la1, lo1 = d['c']; la2, lo2 = u['c']
             hg.append(county_km(la1, lo1, la2, lo2))
 hg.sort(); print(f"{hg[len(hg)//2]:.0f} km")
-print(f"中位明里 ≈ {ds[n//2] / 0.62:.0f} 里（驿路系数 0.62）")
+# 直线 → 驿路路程（÷ 驿路系数 0.62：tools/audit.py 以 277 条四至标定的「直线 / 驿路」比）
+#      → 折算明里（1 明里 = 0.576 km，与 audit.py、站点量距工具及「透视」面板同口径）。
+# 此前把「÷ 0.62」的结果直接标成「中位明里 ≈ 87 里」：87 是公里，不是里（2026-11-24 更正）。
+_road_km = ds[n//2] / 0.62
+print(f"驿路路程 ≈ {_road_km:.0f} km（直线 ÷ 驿路系数 0.62）· 折算明里 ≈ {_road_km / 0.576:.0f} 里")
 
-# 原书里程中位（论文「中位 120 里」口径·勘误后）——cn2num 见 fy_geo
+# 原书自载里程中位（论文「原书里程中位 120 里」口径——直接引自原书，与上面的坐标推算口径不同）——cn2num 见 fy_geo
 lis = []
 for p in FY['provinces']:
     for u in p['fu']:
