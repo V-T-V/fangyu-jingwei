@@ -170,9 +170,8 @@ function openWenxin(){
   vseal.textContent = "笔墨";
   document.body.classList.remove("nopanel");
   panel.classList.add("open");
-  panel.style.width = "min(720px, calc(100vw - 20px))";
-  panel.style.top = "76px";
-  panel.style.bottom = "52px";
+  panelWide(true);
+  pbody.scrollTop = 0;
 
   if (_wxCache){ wxRender(_wxCache); return; }
   if (_wxBusy) return;
@@ -396,7 +395,7 @@ function wxRender(c){
       el.onclick = () => ftRun(el.dataset.w);
   });
   /* 文→地联动：省名入舆图观省域；府行 ➤ 直飞该府 */
-  const wxReset = () => { panel.style.width=""; panel.style.top=""; panel.style.bottom=""; };
+  const wxReset = () => { panelWide(false); };
   pbody.querySelectorAll(".wx-nm[data-pid]").forEach(el => el.onclick = () => {
     const p = FY.provinces.find(x => x.id === el.dataset.pid);
     if (!p) return;
@@ -434,7 +433,7 @@ function wxRender(c){
     setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   };
   document.getElementById("wxBack").onclick = () => {
-    panel.style.width = ""; panel.style.top = ""; panel.style.bottom = "";
+    panelWide(false);
     openIntro();
   };
 }

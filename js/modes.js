@@ -24,7 +24,7 @@ function setMode(m){
   if (typeof stopTTS === "function") stopTTS();
   if (typeof eraPlaying !== "undefined" && eraPlaying) toggleEraPlay();
   syncHash(m, null);
-  if(m==="舆图"){fuLayer.addTo(map);applyZoomGates();railYutu();safeFly([[17,96],[44,129]],{duration:1});}
+  if(m==="舆图"){fuLayer.addTo(map);applyZoomGates();railYutu();safeFly([[17,96],[44,129]],{duration:1,raw:true});}
   if(m==="形势"){eraLayer.addTo(map);railXingshi();buildEra(0);openEra(0);highlightRail("形势",0);}
   if(m==="川渎"){riverLayer.addTo(map);railChuandu();const r=buildRivers("大江");openRiver(r);highlightRail("川渎","大江");}
 }

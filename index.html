@@ -65,7 +65,7 @@
 })();
 </script>
 <script src="vendor/leaflet.js" defer></script>
-<link rel="stylesheet" href="css/main.css?v=125">
+<link rel="stylesheet" href="css/main.css?v=126">
 </head>
 <body class="m-舆图 nopanel">
 
@@ -104,6 +104,7 @@
   <div class="rt" id="railtitle">十五省纲目<small>府一百九十三</small></div>
   <div id="raillist"></div>
 </aside>
+<button id="railtoggle" title="纲目——十五省 / 九朝 / 诸水">纲目</button>
 
 <section id="panel">
   <button id="pclose" title="收起">✕</button>
@@ -113,19 +114,19 @@
 
 <footer>
   <span class="ftools-label">探索</span>
-  <button class="ftool" id="wanderlink" title="随机游历帝国一隅">⚑ 漫步</button>
-  <button class="ftool" id="analyticslink" title="全书空间统计——距离·面积·分布">📊 透视</button>
-  <button class="ftool" id="wenxinlink" title="文本计量——书架·战略词·被引">🖋 文心</button>
-  <button class="ftool" id="bianlink" title="九边防线专题">⚔ 九边</button>
-  <button class="ftool" id="xrevlink" title="站际互查——霞客行踪（徐霞客游记）· 寰宇溯源（太平寰宇记）">🧭 互查</button>
-  <button class="ftool" id="tdlink" title="三维形胜——真地形上观天下">⛰ 形胜</button>
-  <span class="sep"></span><span id="modelabel">舆图</span><span class="sep"></span>
+  <button class="ftool" id="wanderlink" title="随机游历帝国一隅"><i class="fico" data-ic="walk"></i>漫步</button>
+  <button class="ftool" id="analyticslink" title="全书空间统计——距离·面积·分布"><i class="fico" data-ic="chart"></i>透视</button>
+  <button class="ftool" id="wenxinlink" title="文本计量——书架·战略词·被引"><i class="fico" data-ic="brush"></i>文心</button>
+  <button class="ftool" id="bianlink" title="九边防线专题"><i class="fico" data-ic="wall"></i>九边</button>
+  <button class="ftool" id="xrevlink" title="站际互查——霞客行踪（徐霞客游记）· 寰宇溯源（太平寰宇记）"><i class="fico" data-ic="xref"></i>互查</button>
+  <button class="ftool" id="tdlink" title="三维形胜——真地形上观天下"><i class="fico" data-ic="mount"></i>形胜</button>
+  <span class="sep"></span><span id="modelabel">舆图</span><span class="sep sep-note"></span>
   <span id="modenote">十五布政使司 · 府州县治所见于图</span>
   <span class="sep"></span><span class="fb" id="bookstat"></span>
-  <div class="right"><span id="swstate" title="Service Worker 就绪后：整本书与已览瓦片离线可用" style="display:none;color:var(--azur-d);cursor:default"></span><span id="tablelink" style="cursor:pointer">古今对照</span><span id="aboutlink" style="cursor:pointer">关于 · 校勘记</span><span>文本 · 国学导航</span><span>底图 · Esri World Physical</span></div>
+  <div class="right"><span id="swstate" title="Service Worker 就绪后：整本书与已览瓦片离线可用" style="display:none;color:var(--azur-d);cursor:default"></span><span id="tablelink" style="cursor:pointer">古今对照</span><span id="aboutlink" style="cursor:pointer">关于 · 校勘记</span><span>文本 · 国学导航</span><span>底图 · Esri<span class="cr-long"> World Physical</span></span></div>
 </footer>
 
-<div id="tl"></div><div id="tlPlay" style="position:fixed;right:24px;bottom:110px;z-index:23"><select id="eraSpeed" style="appearance:none;font-family:KaiTi,serif;font-size:11px;letter-spacing:1px;color:var(--ink-mid);background:var(--silk-3);border:1px solid var(--line);padding:5px 8px;margin-right:6px;outline:none">
+<div id="tl"></div><div id="tlPlay"><select id="eraSpeed" style="appearance:none;font-family:KaiTi,serif;font-size:11px;letter-spacing:1px;color:var(--ink-mid);background:var(--silk-3);border:1px solid var(--line);padding:5px 8px;margin-right:6px;outline:none">
     <option value="8000">慢</option>
     <option value="4000" selected>中</option>
     <option value="2000">快</option>
@@ -136,27 +137,27 @@
   <div class="bseal">方舆</div>
   <h2>方舆经纬</h2>
   <p>读史方舆纪要 · 一百三十卷 · 顾祖禹</p>
-  <p style="letter-spacing:2px;font-size:11px">十五省 · 193 府 · 1096 县 · 50 关隘 · 260 万字全文 · 三维山河</p>
+  <p class="bstats" id="bootstats">15&nbsp;省&nbsp;·&nbsp;193&nbsp;府&nbsp;·&nbsp;1111&nbsp;县&nbsp;·&nbsp;50&nbsp;关隘&nbsp;·&nbsp;260&nbsp;万字全文&nbsp;·&nbsp;三维山河</p>
   <div class="go">展 卷</div>
 </div>
 
 <!-- 加载链：解析数据 → 配置 → 地图 → 面板/纲目/检索 → 启动 → 模式与深链 -->
 <script src="data/site_data.js" defer></script>
-<script src="js/config.js?v=125" defer></script>
-<script src="js/map.js?v=125" defer></script>
-<script src="js/panels.js?v=125" defer></script>
-<script src="js/rail.js?v=125" defer></script>
-<script src="js/search.js?v=125" defer></script>
-<script src="js/reader.js?v=125" defer></script>
-<script src="js/bookmarks.js?v=125" defer></script>
-<script src="js/ft_core.js?v=125" defer></script>
-<script src="js/fulltext.js?v=125" defer></script>
-<script src="js/app.js?v=125" defer></script>
-<script src="js/modes.js?v=125" defer></script>
-<script src="js/analytics.js?v=125" defer></script>
-<script src="js/wenxin.js?v=125" defer></script>
-<script src="js/bian.js?v=125" defer></script>
-<script src="js/xrev.js?v=125" defer></script>
+<script src="js/config.js?v=126" defer></script>
+<script src="js/map.js?v=126" defer></script><script src="js/territory.js?v=126" defer></script>
+<script src="js/panels.js?v=126" defer></script>
+<script src="js/rail.js?v=126" defer></script>
+<script src="js/search.js?v=126" defer></script>
+<script src="js/reader.js?v=126" defer></script>
+<script src="js/bookmarks.js?v=126" defer></script>
+<script src="js/ft_core.js?v=126" defer></script>
+<script src="js/fulltext.js?v=126" defer></script>
+<script src="js/app.js?v=126" defer></script>
+<script src="js/modes.js?v=126" defer></script>
+<script src="js/analytics.js?v=126" defer></script>
+<script src="js/wenxin.js?v=126" defer></script>
+<script src="js/bian.js?v=126" defer></script>
+<script src="js/xrev.js?v=126" defer></script>
 <script>
 /* PWA：HTTP(S) 下注册 Service Worker（file:// 静默跳过，注册失败不影响站点） */
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {

@@ -43,6 +43,78 @@ function dismissBoot(cb){
 }
 var _bt = document.getElementById("boot"); if (_bt) _bt.onclick=()=>dismissBoot(()=>openIntro());
 
+/* ── 版面同步：把页脚实际高度、面板实际占位写进 CSS 变量 ──
+   贴边固定件（纲目 / 面板 / 时间轴 / 右缘控件列）的偏移一律读 --fh 与 --ctl-r，
+   页脚换行、面板宽度变化、窗口缩放都自动跟上——不再靠各处手写的 52 / 58 / 64px。
+   centered === true：仅由取景动画结束时调用（map.js safeFly）——手机低倍图 / 平板 z4 改以取景目标的中心对齐可见区。 */
+function syncChrome(centered){
+  const fh = document.querySelector("footer"), pn = document.getElementById("panel");
+  const rt = document.documentElement.style;
+  if (fh){
+    const bottom = parseFloat(getComputedStyle(fh).bottom) || 0;
+    rt.setProperty("--fh", (fh.offsetHeight + bottom).toFixed(1) + "px");
+  }
+  if (pn){
+    const sheet = innerWidth <= 640;                 // 手机：面板是底部抽屉，控件列不必让位
+    const base = innerWidth <= 1080 ? (sheet ? 8 : 10) : 24;
+    const open = pn.classList.contains("open");
+    rt.setProperty("--ctl-r", (!sheet && open ? Math.max(base, innerWidth - pn.offsetLeft + 18) : base) + "px");
+    /* 手机低倍图：抽屉开着时量出「页眉底—抽屉顶」这条可见带，地图容器据此上移（见 css：body.z4:not(.z6) #map）——
+       抽屉没开、或可见带太窄（不足 80px，抬了也看不见）都不移。平时上移到「容器中心」落在可见带正中；
+       取景刚结束时则以取景目标（map._fyFocus）的中心为准，整段疆域 / 水道居中而不只是地图中心线居中。
+       只在取景结束的那一刻对一次：用户随后手动拖动，不再跟着挪（否则拖了等于没拖） */
+    let shift = 0;
+    const hd = document.querySelector("header");
+    if (sheet && open && hd){
+      const top = hd.getBoundingClientRect().bottom, strip = pn.offsetTop - top;
+      if (strip > 80){
+        const cy = (centered === true && map._fyFocus) ? map.latLngToContainerPoint(map._fyFocus).y : innerHeight / 2;
+        shift = Math.max(0, Math.round(cy - (top + strip / 2)));
+      }
+    }
+    rt.setProperty("--sheet-shift", shift + "px");
+    /* 平板 / 窄窗（≤1080，面板是右侧卷宗）的横向同理：z4 时地图中心钉在容器正中，形势、川渎的主体落到卷宗后面。
+       卷宗开着、且卷宗左侧可见区够宽（> 120px）时，地图容器等宽左移，让取景目标落在可见区正中
+       （见 css：body.z4:not(.z5) #map；z5 起横向已可自由平移，取景留白本就生效） */
+    let sx = 0;
+    if (!sheet && open && innerWidth <= 1080){
+      const rr = document.getElementById("rail"), l = (rr ? rr.getBoundingClientRect().right : 0) + 12, r = pn.getBoundingClientRect().left - 12;
+      if (r - l > 120){
+        const fx = (centered === true && map._fyFocus) ? map.latLngToContainerPoint(map._fyFocus).x : innerWidth / 2;
+        sx = Math.max(0, Math.round(fx - (l + r) / 2));
+      }
+    }
+    rt.setProperty("--map-shift-x", sx + "px");
+    /* 时间轴可用宽度不足（平板竖屏上夹在纲目与卷宗之间约 170px，九个朝代名叠成一团）时只留圆点 */
+    const tl = document.getElementById("tl");
+    if (tl) document.body.classList.toggle("tl-tight", tl.offsetWidth < 300);
+    /* 容器因上面两项挪动过（.35s 过渡）：挪完重排一次地图标签，否则标签还按挪动前的位置避让界面
+       （平板竖屏实录：南京的标签被卷宗切掉一半） */
+    if (centered === true && (shift || sx) && typeof layoutLabels === "function") setTimeout(layoutLabels, 400);
+  }
+}
+if (typeof ResizeObserver === "function" && document.querySelector("footer")){
+  new ResizeObserver(() => syncChrome()).observe(document.querySelector("footer"));
+}
+addEventListener("resize", syncChrome);
+syncChrome();
+
+/* 封面统计行与底栏同源（此前写死「1096 县」——数据考古后早已不是这个数）。
+   数字与单位、分隔点与前项之间用不断行空格：手机上折成两行时，断点落在分隔点之后，不会把「50」和「关隘」拆开 */
+(function(){
+  const bs = document.getElementById("bootstats");
+  if (bs) bs.textContent = [ST.pf + "\u00a0省", ST.f + "\u00a0府", ST.x + "\u00a0县", PASSES.length + "\u00a0关隘", "260\u00a0万字全文", "三维山河"].join("\u00a0· ");
+})();
+/* 页脚图标占位 → 线性 SVG（图标定义在 config.js，单一来源） */
+document.querySelectorAll("i.fico[data-ic]").forEach(el => { el.outerHTML = fyIcon(el.dataset.ic); });
+
+/* 手机：纲目抽屉开关。抽屉滑完（.3s）后让地图标签重新避让——否则抽屉底下的标签在左缘露出半截字 */
+var _rt = document.getElementById("railtoggle");
+if (_rt) _rt.onclick = () => {
+  document.body.classList.toggle("rail-open");
+  setTimeout(() => { syncChrome(); layoutLabels(); }, 330);
+};
+
 /* 快捷键：Esc 收面板；形势模式 ←/→ 翻卷 */
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){

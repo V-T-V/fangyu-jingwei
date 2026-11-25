@@ -4,21 +4,39 @@ const panel=document.getElementById("panel"),
       pbody=document.getElementById("pbody"),
       vname=document.getElementById("vname"),
       vseal=document.getElementById("vseal");
-function showPanel(){panel.classList.add("open");document.body.classList.remove("nopanel");}
+/* 宽面板（透视 / 文心 / 互查）：以类代内联样式——手机媒体查询可直接覆盖，无需 !important */
+function panelWide(on){
+  panel.classList.toggle("panel-wide", !!on);
+  if (typeof syncChrome === "function") syncChrome();
+}
+function showPanel(){
+  panel.classList.add("open");document.body.classList.remove("nopanel");
+  panel.classList.remove("panel-wide");   /* 常规面板一律常规宽——宽面板的尺寸不再可能「泄漏」进来 */
+  pbody.scrollTop = 0;                     /* 内容切换即回顶：此前滚动位置跨面板残留——读完一卷按 Esc，再开任何面板都从底部开始 */
+  document.body.classList.remove("rail-open");   /* 手机：面板抽屉打开即收起纲目 */
+  if (typeof syncChrome === "function") syncChrome();
+}
 function hidePanel(){
   panel.classList.remove("open");document.body.classList.add("nopanel");
-  /* 透视页等设置的内联尺寸一并清除，避免泄漏到后续面板 */
-  panel.style.width="";panel.style.top="";panel.style.bottom="";
-}
-document.getElementById("pclose").onclick=()=>{
-  hidePanel();
+  panel.classList.remove("panel-wide");
+  /* 关面板即清地图上的府域辅助层（原先只有点 ✕ 才清：Esc 或换面板后，领属线与域晕会留在图上） */
   if (typeof clearJurisdiction === "function") clearJurisdiction();
   if (typeof clearFuHull === "function") clearFuHull();
   if (typeof clearCountyTerritories === "function") clearCountyTerritories();
+  if (typeof syncChrome === "function") syncChrome();
+}
+document.getElementById("pclose").onclick=()=>{
+  hidePanel();
   if(mode==="舆图")selectProv(null);
 };
 
 function vset(name,seal){vname.textContent=name;vseal.textContent=seal||"纪要";}
+/* 卷题排版：源数据里序号与首个篇名粘连（「历代州域形势九明」「形势一唐虞三代」），篇间用全角空格——
+   统一成「历代州域形势九 · 明」「川渎五 · 大江 · 盘江」（2026-11-24 实录：面板题头原样显示粘连的卷题） */
+function fyTitle(t){
+  return String(t || "").replace(/(形势|川渎)([一二三四五六七八九十]+)(?=[^\s\u3000])/, "$1$2 · ")
+    .replace(/\u3000/g, " · ");
+}
 
 function openIntro(){
   vset("方舆经纬","总叙");
@@ -34,9 +52,9 @@ function openIntro(){
      </div>
      <div class="p-cap">选择一种方式开始</div>
      <ul class="ful">
-       <li data-go="舆图"><span class="fn" style="font-size:16px">🗺 舆图</span><span class="fnow">十五省治所 · 点击探索</span><span class="arrow">➤</span></li>
-       <li data-go="形势"><span class="fn" style="font-size:16px">📜 形势</span><span class="fnow">九朝疆域推演</span><span class="arrow">➤</span></li>
-       <li data-go="川渎"><span class="fn" style="font-size:16px">🌊 川渎</span><span class="fnow">七大水系沿流</span><span class="arrow">➤</span></li>
+       <li data-go="舆图"><span class="fn" style="font-size:16px">${fyIcon({"舆图":"map","形势":"scroll","川渎":"river"}["舆图"])} 舆图</span><span class="fnow">十五省治所 · 点击探索</span><span class="arrow">➤</span></li>
+       <li data-go="形势"><span class="fn" style="font-size:16px">${fyIcon({"舆图":"map","形势":"scroll","川渎":"river"}["形势"])} 形势</span><span class="fnow">九朝疆域推演</span><span class="arrow">➤</span></li>
+       <li data-go="川渎"><span class="fn" style="font-size:16px">${fyIcon({"舆图":"map","形势":"scroll","川渎":"river"}["川渎"])} 川渎</span><span class="fnow">七大水系沿流</span><span class="arrow">➤</span></li>
      </ul>
      <div style="text-align:center;padding:20px 0">
        <button class="readfull" id="skipIntro" style="font-size:15px;padding:10px 28px">直接开始探索 ⟩</button>
@@ -83,7 +101,7 @@ function openIntro(){
      <span class="chip jschip" data-i="6">州域形势纪要序</span>
    </div>
    <div class="p-cap">使用</div>
-   <div class="hint">舆图模式点府治印鉴观四至八到与沿革，点空白处取消省选；形势模式历览九朝，←/→ 翻卷或 ▶ 自动播放（带旁白）；川渎模式循七水。顶栏检索千余州县名（回车直达），「在全书原文中检索」遍检 260 万字。底栏六门：⚑ 漫游随机入卷 · 📊 透视观空间统计 · 🖋 文心计笔墨浓淡（文↔地互跳，府卡直显被引名次）· ⚔ 九边专题 · 🧭 互查跨站对读（霞客行踪 · 寰宇溯源）· ⛰ 形胜入三维山河（飞览/文柱/九朝推演，正看某府则直飞其地）。府详情可阅原卷全文（正文地名可点、夜读、朗读、Ctrl+P 存 PDF）。左上「影像」切卫星底图观山川。Shift+两点量距；Esc 收面板，? 唤出本页。首访后全书离线可用（◼ 离线徽标），可安装为应用。</div>`;
+   <div class="hint">舆图模式点府治印鉴观四至八到与沿革，点空白处取消省选；形势模式历览九朝，←/→ 翻卷或 ▶ 自动播放（带旁白）；川渎模式循七水。顶栏检索千余州县名（回车直达），「在全书原文中检索」遍检 260 万字。底栏六门：漫游随机入卷 · 透视观空间统计 · 文心计笔墨浓淡（文↔地互跳，府卡直显被引名次）· 九边专题 · 互查跨站对读（霞客行踪 · 寰宇溯源）· 形胜入三维山河（飞览/文柱/九朝推演，正看某府则直飞其地）。府详情可阅原卷全文（正文地名可点、夜读、朗读、Ctrl+P 存 PDF）。右缘「影像」切卫星底图观山川。Shift+两点量距；Esc 收面板，? 唤出本页。首访后全书离线可用（◼ 离线徽标），可安装为应用。</div>`;
   pbody.querySelectorAll("[data-go]").forEach(el=>el.onclick=()=>setMode(el.dataset.go));
   pbody.querySelectorAll(".jschip[data-i]").forEach(c=>c.onclick=()=>openJuanshou(+c.dataset.i));
   const tl2 = pbody.querySelector("#tolink");
@@ -170,10 +188,10 @@ function openFu(p,u){
       ? (()=>{ const st = wxFuStat(p,u);
           return st
             ? `<div class="p-cap">文心 · 掂量</div><div class="chips"><span class="chip jschip" id="wxjump" title="点开文心观全书排名">全书被引 ${st.n} 次 · 第 ${st.rank} 位 ➤</span></div>`
-            : `<div class="p-cap">文心 · 掂量</div><div class="chips"><span class="chip small" id="wxcalc" style="cursor:pointer" title="载入全书原文后统计此府被引次数">🖋 掂量此府（载入原文约数秒）…</span></div>`; })()
+            : `<div class="p-cap">文心 · 掂量</div><div class="chips"><span class="chip small" id="wxcalc" style="cursor:pointer" title="载入全书原文后统计此府被引次数">${fyIcon("brush")} 掂量此府（载入原文约数秒）…</span></div>`; })()
       : ""}
     <div class="readrow" style="margin-top:8px">
-      <button class="readfull" id="shareFu" title="复制此景链接，发给朋友">🔗 分享此景</button>
+      <button class="readfull" id="shareFu" title="复制此景链接，发给朋友">${fyIcon("link")} 分享此景</button>
     </div>
     <div class="p-cap">出处</div>
     <div class="hint">《读史方舆纪要》${p.name}方舆纪要 · ${p.vols.join("、")}。县名后〔今废〕〔新改〕等注记皆原书自注。</div>`;
@@ -200,7 +218,7 @@ function openFu(p,u){
       wxCompute(() => openFu(p, u));          // 完成 → 重开本卡（已有统计）
     });
   };
-  if(u.c) safeFlyTo(u.c,7,{duration:1.1});
+  if(u.c) safeFlyTo(u.c,7,{duration:1.1}, true);
   const shBtn = pbody.querySelector("#shareFu");
   if (shBtn) shBtn.onclick = () => {
     const url = location.origin + location.pathname +
@@ -208,7 +226,7 @@ function openFu(p,u){
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).then(() => {
         shBtn.textContent = "✓ 已复制";
-        setTimeout(() => shBtn.textContent = "🔗 分享此景", 1600);
+        setTimeout(() => shBtn.innerHTML = fyIcon("link") + " 分享此景", 1600);
       });
     } else {
       // fallback
@@ -216,7 +234,7 @@ function openFu(p,u){
       ta.value = url; document.body.appendChild(ta);
       ta.select(); document.execCommand("copy"); ta.remove();
       shBtn.textContent = "✓ 已复制";
-      setTimeout(() => shBtn.textContent = "🔗 分享此景", 1600);
+      setTimeout(() => shBtn.innerHTML = fyIcon("link") + " 分享此景", 1600);
     }
   };
   if (typeof showJurisdiction === "function") showJurisdiction(p, u);
@@ -231,7 +249,7 @@ function openEra(ei){
   const e=ERAS[ei], xs=FY.xingshi[ei];
   vset(e.label,"形势");
   pbody.innerHTML = `
-    <div class="p-kicker">${xs.title} · ${xs.f.replace(".txt","")}</div>
+    <div class="p-kicker">${fyTitle(xs.title)} · ${xs.f.replace(".txt","")}</div>
     <div class="p-ju">${e.time}</div>
     <div class="p-cap">都城（朱印）</div>
     <div class="chips">${e.caps.map(c=>`<span class="chip fg">${c[0]}</span>`).join("")}</div>
@@ -263,7 +281,7 @@ function openRiver(r){
   const xs = FY.chuandu.find(c=>c.title.includes(r.key)) || {title:"川渎 · "+r.key,ex:""};
   vset(r.key,"川渎");
   pbody.innerHTML = `
-    <div class="p-kicker">${xs.title.replace(/\u3000/g," · ")} · ${r.vols}</div>
+    <div class="p-kicker">${fyTitle(xs.title)} · ${r.vols}</div>
     <div class="rv-meta">
       <span class="p-ju" style="margin:0">水道</span>
     </div>
@@ -332,13 +350,15 @@ function openTable(level){
     <div class="tabbar">
       <button class="tb ${isFu?"on":""}" data-l="fu">府州 ${isFu?rows.length:""}</button>
       <button class="tb ${!isFu?"on":""}" data-l="xian">县 ${!isFu?rows.length:""}</button>
-      <button class="readfull" id="kmldl" style="margin-left:auto" title="Google Earth 格式">⤓ KML</button>
-      <button class="readfull" id="geojsondl" title="全部治所点位（府/州/县）">⤓ GeoJSON</button>
-      <button class="readfull" id="csvdl">⤓ CSV</button>
+      <div class="texport">
+        <button class="readfull" id="kmldl" title="Google Earth 格式">⤓ KML</button>
+        <button class="readfull" id="geojsondl" title="全部治所点位（府/州/县）">⤓ GeoJSON</button>
+        <button class="readfull" id="csvdl">⤓ CSV</button>
+      </div>
     </div>
     <input id="tfilter" type="text" placeholder="表内筛选：县名 / 省名 / 隶属…" autocomplete="off">
     <div class="tfcount" id="tfcount">${rows.length} 行</div>
-    <div class="fywrap"><table class="fytable">
+    <div class="fywrap"><table class="fytable ${isFu ? "isfu" : "isxian"}">
       <thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead>
       <tbody>${body}</tbody></table></div>
     <div class="hint" style="margin-top:10px">${isFu

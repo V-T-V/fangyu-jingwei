@@ -67,7 +67,7 @@ const XR_STYLE = `
   .xr-nonechips .xr-chip:hover{color:var(--ink-faint);border-color:var(--line)}`;
 
 /* 面板尺寸复位（府详情等复用面板前，防 720px 内联泄漏——wenxin wxReset 同款） */
-function xrReset(){ panel.style.width=""; panel.style.top=""; panel.style.bottom=""; }
+function xrReset(){ panelWide(false); }
 
 function xrGoFu(pid, fu){
   const p = FY.provinces.find(x => x.id === pid);
@@ -190,9 +190,8 @@ function openXrev(sub){
   vseal.textContent = "互查";
   document.body.classList.remove("nopanel");
   panel.classList.add("open");
-  panel.style.width = "min(720px, calc(100vw - 20px))";
-  panel.style.top = "76px";
-  panel.style.bottom = "52px";
+  panelWide(true);
+  pbody.scrollTop = 0;
   pbody.innerHTML = `
   <style>${XR_STYLE}</style>
   <div class="p-kicker">读史方舆纪要 · 站际互查</div>

@@ -37,9 +37,8 @@ function openAnalytics(){
   vseal.textContent = "统计";
   document.body.classList.remove("nopanel");
   panel.classList.add("open");
-  panel.style.width = "min(720px, calc(100vw - 20px))";
-  panel.style.top = "76px";
-  panel.style.bottom = "52px";
+  panelWide(true);
+  pbody.scrollTop = 0;
 
   // ── 数据准备 ──
   const dists = [];
@@ -92,13 +91,11 @@ function openAnalytics(){
     })).sort((a,b) => a.median - b.median);
 
   // ── 渲染 ──
-  const histBars = Object.keys(bins).sort((a,b) => +a - +b).map(b => {
-    const h = (bins[b] / maxBin) * 100;
-    return `<div class="hist-col" title="${b}-${+b+19}km: ${bins[b]}县">
-      <div class="hist-bar" style="height:${h}%"></div>
-      <span class="hist-lab">${+b < 100 ? b : ''}</span>
-    </div>`;
-  }).join("");
+  const histKeys = Object.keys(bins).sort((a,b) => +a - +b);
+  const histBars = histKeys.map(b =>
+    `<div class="hist-col" title="${b}–${+b+19} km：${bins[b]} 县"><div class="hist-bar" style="height:${(bins[b] / maxBin) * 100}%"></div></div>`
+  ).join("");
+  const histAxis = histKeys.map(b => `<span>${+b % 40 === 0 ? b : ''}</span>`).join("");   // 每 40 km 一个刻度
 
   const provBars = provStats.map((s, i) => {
     const w = (s.median / provStats[provStats.length-1].median) * 100;
@@ -126,10 +123,11 @@ function openAnalytics(){
     .ana-stat{text-align:center;padding:10px 4px;background:rgba(47,93,112,.05);border:1px solid var(--line)}
     .ana-stat b{display:block;font-family:KaiTi,serif;font-size:24px;color:var(--azur-d)}
     .ana-stat span{font-size:10px;letter-spacing:2px;color:var(--ink-faint)}
-    .hist-wrap{display:flex;align-items:flex-end;gap:2px;height:120px;padding:0 4px;border-bottom:1px solid var(--line);margin-bottom:4px}
-    .hist-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+    .hist-wrap{display:flex;align-items:flex-end;gap:2px;height:120px;padding:0 4px;border-bottom:1px solid var(--line)}
+    .hist-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}   /* 柱子自基线向上——此前缺 justify-content，柱子从顶边往下垂 */
     .hist-bar{width:100%;background:linear-gradient(180deg,#5a8368,#3d6b52);border-radius:1px 1px 0 0;min-height:1px}
-    .hist-lab{font-size:9px;color:var(--ink-faint);margin-top:2px}
+    .hist-axis{display:flex;gap:2px;padding:3px 4px 0;margin-bottom:6px}
+    .hist-axis span{flex:1;text-align:center;font-size:9.5px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
     .prov-row{display:flex;align-items:center;gap:8px;padding:3px 0}
     .prov-nm{width:60px;font-size:13px;letter-spacing:1px;text-align:right;flex:none}
     .prov-track{flex:1;height:14px;background:rgba(90,72,44,.08);position:relative}
@@ -166,13 +164,13 @@ function openAnalytics(){
   <div class="ana-section">
     <div class="ana-title">县→府直线距离分布（每格 20 km）</div>
     <div class="hist-wrap">${histBars}</div>
-    <div style="font-size:10px;color:var(--ink-faint);text-align:right">km</div>
+    <div class="hist-axis">${histAxis}</div>
   </div>
 
   <div class="ana-section">
     <div class="ana-title">分省中位距离（浙江最密 → 湖广最疏）</div>
     ${provBars}
-    <div class="ana-note">南北密度梯度：江南水乡（浙江 ${provStats[0]?.median.toFixed(0)} km）→ 西北边疆（湖广 ${provStats[provStats.length-1]?.median.toFixed(0)} km），递增近一倍。</div>
+    <div class="ana-note">府辖半径自江南水乡（浙江 ${provStats[0]?.median.toFixed(0)} km）向山地边疆（${provStats[provStats.length-1]?.prov} ${provStats[provStats.length-1]?.median.toFixed(0)} km）递增近一倍，与地形破碎度同构。</div>
   </div>
 
   <div class="ana-section">
@@ -247,9 +245,7 @@ function openAnalytics(){
     setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
   };
   document.getElementById("anaBack").onclick = () => {
-    panel.style.width = "";
-    panel.style.top = "";
-    panel.style.bottom = "";
+    panelWide(false);
     openIntro();
   };
 }

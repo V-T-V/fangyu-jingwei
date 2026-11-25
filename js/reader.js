@@ -175,7 +175,7 @@ function renderText(title, kicker, raw, backFn, ctxPid, toc){
     <div class="p-kicker">${kicker}</div>
     <button class="tback" id="tback">⟨ 返回详情</button>
     <div class="tmeta">《${title}》全篇 · ${raw.length.toLocaleString()} 字
-      <span class="tbtns"><button class="tfsb" data-d="-1" title="缩小">A−</button><button class="tfsb" data-d="1" title="放大">A+</button><button class="tfsb" id="tdl" title="存为文本">⤓ 文本</button><button class="tfsb" id="tnight" title="夜读">☾</button><button class="tfsb" id="ttsb" title="朗读">🔊</button></span>
+      <span class="tbtns"><button class="tfsb" data-d="-1" title="缩小">A−</button><button class="tfsb" data-d="1" title="放大">A+</button><button class="tfsb" id="tdl" title="存为文本">⤓ 文本</button><button class="tfsb" id="tnight" title="夜读">☾</button><button class="tfsb" id="ttsb" title="朗读">${fyIcon("sound")}</button></span>
       <span class="tlegend">淡显句为源本编码损坏 · 地名可点</span></div>
     ${tocHtml}
     <div class="twrap" style="font-size:${tfs}px">${body}</div>`;
@@ -274,7 +274,7 @@ function openEraText(ei, q){
   renderText._q = q || null;
   BM.setLast({kind:"era", i:ei});
   const back = ()=>openEra(ei);
-  const meta = FY.xingshi[ei].title.replace(/\u3000/g," · ");
+  const meta = fyTitle(FY.xingshi[ei].title);
   loadTextFile("xingshi", ok=>{
     const t = ok && FYTEXT.xingshi && FYTEXT.xingshi[ei];
     if (t) renderText(ERAS[ei].label+"纪", meta, t, back);
@@ -288,7 +288,7 @@ function openRiverText(r, q){
   BM.setLast({kind:"cd", i:Math.max(ci,0)});
   const back = ()=>openRiver(r);
   const i = FY.chuandu.findIndex(c=>c.title.includes(r.key));
-  const meta = i>=0 ? FY.chuandu[i].title.replace(/\u3000/g," · ") : r.key;
+  const meta = i>=0 ? fyTitle(FY.chuandu[i].title) : r.key;
   loadTextFile("chuandu", ok=>{
     const t = ok && FYTEXT.chuandu && FYTEXT.chuandu[i>=0?i:0];
     if (t) renderText(r.key, meta, t, back);

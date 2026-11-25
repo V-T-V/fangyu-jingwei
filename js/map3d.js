@@ -6,6 +6,12 @@ window.__m3ready = false;
 window.__m3fail = "";
 window.__m3counts = {};
 
+/* 页眉 / 朝代条上的图标占位 → 线性 SVG（定义在 config.js，与二维页同一套）。
+   此前是系统 emoji（🔖 🔊 🔇）：各平台形态不一，彩色形也与绢本墨色不合 */
+if (typeof fyIcon === "function"){
+  document.querySelectorAll("i.fico[data-ic]").forEach(el => { el.outerHTML = fyIcon(el.dataset.ic); });
+}
+
 function glOK(){
   try{
     const c = document.createElement("canvas");
@@ -85,6 +91,13 @@ m3.on("error", e => {
 
 /* ── 悬浮信息卡 ── */
 const card3 = document.getElementById("card3d");
+/* 卡片开合同步到 body：手机上卡片开着时，朝代条与飞览条让位（它们浮在卡片上，压住了卡片底部的大事与入卷按钮）。
+   见 3d.html 样式 body.c3open */
+if (card3 && typeof MutationObserver === "function"){
+  new MutationObserver(() => {
+    document.body.classList.toggle("c3open", card3.classList.contains("open"));
+  }).observe(card3, {attributes:true, attributeFilter:["class"]});
+}
 function openCard3(kicker, html){
   document.getElementById("c3kick").textContent = kicker;
   document.getElementById("c3body").innerHTML = html;
@@ -270,7 +283,10 @@ let mentOn = true;
 if (mentBtn) mentBtn.onclick = () => {
   mentOn = !mentOn;
   m3.setLayoutProperty("ment", "visibility", mentOn ? "visible" : "none");
-  mentBtn.textContent = mentOn ? "◧ 文柱 ✓" : "◧ 文柱";
+  /* 只动状态勾——整段 textContent 重写会抹掉图标（断言页的精简 DOM 没有 #mentstate，照旧退回整段文字） */
+  const ms = document.getElementById("mentstate");
+  if (ms) ms.textContent = mentOn ? "✓" : "";
+  else mentBtn.textContent = mentOn ? "◧ 文柱 ✓" : "◧ 文柱";
 };
 
 /* 高程懒探测：与地图装载并行起跑（原在 load 后串行，白等一个 map boot；
@@ -473,7 +489,7 @@ function narrateEra(e){
 const narrBtn = document.getElementById("narrbtn");
 if (narrBtn) narrBtn.onclick = () => {
   narrOn = !narrOn;
-  narrBtn.textContent = narrOn ? "🔊" : "🔇";
+  narrBtn.innerHTML = typeof fyIcon === "function" ? fyIcon(narrOn ? "sound" : "mute") : (narrOn ? "🔊" : "🔇");
   if (!narrOn){ try{ speechSynthesis.cancel(); }catch(_){} }
 };
 

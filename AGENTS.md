@@ -29,7 +29,7 @@ python tools/control_fy.py cleanup
 ```
 index.html · 3d.html        # 两个世界（入口）
 js/                          # 前端模块（defer 链有严格顺序——lint 校验）
-  config → map → panels → rail → search → reader → bookmarks → ft_core → fulltext → app → modes → analytics → wenxin → bian
+  config → map → territory → panels → rail → search → reader → bookmarks → ft_core → fulltext → app → modes → analytics → wenxin → bian → xrev
 data/
   site_data.js               # 结构化数据（build_data.py 生成，勿手改）
   mentions.js                # 府名被引（build_mentions.py 生成）

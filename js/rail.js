@@ -3,6 +3,18 @@
 const rail = document.getElementById("raillist");
 const railtitle = document.getElementById("railtitle");
 
+/* 滚动位置 → 首尾渐隐开关（css：#raillist.scrolled / .at-end）。
+   列表内容换了、窗口变了、滚动了都要重算；列表刚填完要等一帧才有正确的 scrollHeight */
+function railSyncEdge(){
+  if (!rail) return;
+  rail.classList.toggle("scrolled", rail.scrollTop > 4);
+  rail.classList.toggle("at-end", rail.scrollTop + rail.clientHeight > rail.scrollHeight - 4);
+}
+if (rail){
+  rail.addEventListener("scroll", railSyncEdge, {passive:true});
+  addEventListener("resize", railSyncEdge);
+}
+
 function railYutu(){
   railtitle.innerHTML = `十五省纲目<small>府一百九十三</small>`;
   rail.innerHTML = FY.provinces.map(p=>
@@ -17,6 +29,7 @@ function railYutu(){
   rail.querySelectorAll(".ri[data-p]").forEach(el=>el.onclick=()=>selectProv(el.dataset.p));
   const br = rail.querySelector("#bianrow");
   if (br) br.onclick = ()=>{ if (typeof openBian === "function") openBian(); };
+  requestAnimationFrame(railSyncEdge);
 }
 function railXingshi(){
   railtitle.innerHTML = `历代州域形势<small>凡九卷</small>`;
@@ -27,6 +40,7 @@ function railXingshi(){
     highlightRail("形势",+el.dataset.e);
     buildEra(+el.dataset.e);openEra(+el.dataset.e);
   });
+  requestAnimationFrame(railSyncEdge);
 }
 function railChuandu(){
   railtitle.innerHTML = `川渎异同<small>水道六卷附海道 · 分野一卷</small>`;
@@ -41,6 +55,7 @@ function railChuandu(){
     if(el.dataset.r==="分野"){openFenye();return;}
     const r=buildRivers(el.dataset.r);openRiver(r);
   });
+  requestAnimationFrame(railSyncEdge);
 }
 function openFenye(){
   const xs=FY.chuandu[6];
@@ -52,10 +67,16 @@ function openFenye(){
   showPanel();
 }
 function highlightRail(m,key){
+  let on = null;
   rail.querySelectorAll(".ri").forEach(el=>{
     const v = m==="形势"?el.dataset.e:el.dataset.p||el.dataset.r;
-    el.classList.toggle("on",String(v)===String(key));
+    const hit = String(v)===String(key);
+    el.classList.toggle("on",hit);
+    if (hit) on = el;
   });
+  /* 选中项若落在纲目可视区外（排在末尾的省被底边遮住），把它带进来——否则点了没回响。
+     手机上纲目是收起的抽屉（移出屏外），不滚 */
+  if (on && rail.getBoundingClientRect().right > 0) on.scrollIntoView({block:"nearest"});
 }
 
 /* ── 省选择：高亮本省印章，淡出他省，飞至省域 ──
@@ -71,7 +92,7 @@ function selectProv(pid){
   if (typeof showProvinceVoronoi === "function") showProvinceVoronoi(p);
     highlightRail("舆图",pid);
     const b=L.latLngBounds(p.fu.filter(u=>u.c).map(u=>u.c)).pad(.22);
-    safeFly(b,{duration:1.1});
+    safeFly(b,{duration:1.1}, true);
     syncHash("舆图", "p=" + pid);
     openProv(p);
   }else{

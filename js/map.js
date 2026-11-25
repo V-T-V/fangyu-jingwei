@@ -24,18 +24,20 @@ function setBasemap(kind){
   if (btn) btn.textContent = conf.btn;
   if (window.__NOTILES__) return;   /* 测试密封：断言页不拉外网瓦片——时长不被 CDN 天气绑架（test_basemap 是真网络金丝雀，不设此旗） */
   tileLayer = L.tileLayer(conf.url,{maxZoom:12,maxNativeZoom:conf.maxNative}).addTo(map);
-  /* 瓦片断供兜底：>5 张 404 → 隐瓦片层，绢底自足（矢量数据不受影响） */
+  let tileOk = 0;
+  tileLayer.on("tileload", ()=>{ tileOk++; });
+  /* 瓦片断供兜底。判据为「连败 6 张且一张未成」——
+     此前「累计 3 张失败」即撤层：网络稍抖，几十张里错 3 张，底图就被整场撤掉；
+     且提示条贴在 top:12px，正被页眉盖住，用户只见底图消失、不见任何说明 */
   tileLayer.on("tileerror", ()=>{
     tileErrs++;
-    if (tileErrs === 3){
+    if (tileErrs >= 6 && tileOk === 0){
       map.removeLayer(tileLayer);
       document.getElementById("map").style.background =
         "radial-gradient(ellipse 130% 100% at 50% 30%, #efe6cf 0%, #e7dcbc 50%, #ddd0ae 100%)";
       const note = document.createElement("div");
-      note.style.cssText = "position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:500;" +
-        "background:rgba(245,238,218,.95);border:1px solid var(--line,#8b765a);padding:4px 14px;" +
-        "font:11px KaiTi,serif;letter-spacing:3px;color:#8b8069;pointer-events:none";
-      note.textContent = "底图离线 · 标记与数据不受影响";
+      note.className = "tile-offline-note";
+      note.textContent = "底图暂不可达 · 标记与数据不受影响";
       document.getElementById("map").appendChild(note);
     }
   });
@@ -77,43 +79,101 @@ function applyProvDim(){
   }
 }
 
-/* 容器未完成布局（尺寸为 0）时飞行动画会算出 NaN —— 就绪前延迟重试 */
-function safeFly(bounds, opts){
-  if(map.getSize().x > 40){
-    try{ map.flyToBounds(bounds, opts); }
-    catch(e){ map.fitBounds(bounds); }
-  }else{
-    setTimeout(()=>safeFly(bounds, opts), 250);
+/* 面板 / 纲目遮挡下的可视留白（容器像素）。取景时把目标让到未被遮挡的区域——
+   此前一律按整幅地图居中：选省后该省的东半部正被右侧面板盖住，形势、川渎同理。
+   open：true = 随后必开面板；false / 省略 = 按面板当前开合状态。
+   手机（≤640）面板是底部抽屉 → 让下；否则是右侧卷宗 → 让右。两侧留白合计过半时按比例收，保住取景面积。 */
+function viewInsets(open){
+  const sz = map.getSize(), sheet = innerWidth <= 640, ins = {l:24, t:80, r:76, b:90};
+  const rr = document.getElementById("rail");
+  if (rr){ const right = rr.getBoundingClientRect().right; if (right > 0) ins.l = Math.max(ins.l, right + 24); }
+  const pn = document.getElementById("panel");
+  if (pn && (open === true || (open !== false && pn.classList.contains("open")))){
+    if (sheet) ins.b = Math.max(ins.b, sz.y - pn.offsetTop + 16);
+    else ins.r = Math.max(ins.r, sz.x - pn.offsetLeft + 24);
   }
+  if (ins.l + ins.r > sz.x * .58){ const k = sz.x * .58 / (ins.l + ins.r); ins.l *= k; ins.r *= k; }
+  if (ins.t + ins.b > sz.y * .6){ const k = sz.y * .6 / (ins.t + ins.b); ins.t *= k; ins.b *= k; }
+  return ins;
 }
-function safeFlyTo(center, zoom, opts){
-  if(map.getSize().x > 40){
-    try{ map.flyTo(center, zoom, opts); }
-    catch(e){ map.setView(center, zoom); }
-  }else{
-    setTimeout(()=>safeFlyTo(center, zoom, opts), 250);
-  }
+/* 随后必开面板的取景（safeFly / safeFlyTo 的 open === true）：视图停稳后请 app.js 以取景目标（map._fyFocus）
+   的中心为准，再对一次手机低倍图的可见带（app.js syncChrome(true)）。
+   「停稳」须防抖：飞行只认留白、不受 maxBounds 约束；飞完那一刻 Leaflet 自带的 _panInsideMaxBounds 会紧接着
+   用约 0.26s 把视图拉回边界内——挂在第一次 moveend 上量到的是回弹前的位置（2026-11-24 踩过）。
+   只在取景后 600ms 的窗口内认这件事，用户随后手动拖动不受干预。监听在飞行开始之后才挂
+   （新飞行会打断旧动画并同步触发一次 moveend）；飞行异常收场则 2.5 秒后撤掉监听。 */
+function fyFocusSync(){
+  let tmr = 0, born = 0;
+  const again = () => {
+    born = born || Date.now();
+    if (Date.now() - born > 600){ map.off("moveend", again); return; }
+    clearTimeout(tmr);
+    tmr = setTimeout(() => { map.off("moveend", again); if (typeof syncChrome === "function") syncChrome(true); }, 380);
+  };
+  map.on("moveend", again);
+  setTimeout(() => map.off("moveend", again), 2500);
+}
+/* 容器未完成布局（尺寸为 0）时飞行动画会算出 NaN —— 就绪前延迟重试 */
+function safeFly(bounds, opts, open, extra){
+  const run = () => {
+    const o = Object.assign({duration:1.1}, opts);
+    if (!o.raw){          // raw：按整幅地图居中（首屏总览用，与初始取景一致）
+      const i = viewInsets(open), k = extra || 0;
+      o.paddingTopLeft = [i.l + k, i.t + k];
+      o.paddingBottomRight = [i.r + k, i.b + k];
+    }
+    delete o.raw;
+    try{ map.flyToBounds(bounds, o); }
+    catch(e){ map.fitBounds(bounds); }
+    if (open === true){
+      /* 对齐中心取投影后的像素中点，而非经纬度中点——墨卡托下二者差几像素，南北跨度大的朝代会把最北的都城顶到页签下 */
+      const sw = map.project(bounds.getSouthWest()), ne = map.project(bounds.getNorthEast());
+      map._fyFocus = map.unproject(sw.add(ne).divideBy(2));
+      fyFocusSync();
+    }
+  };
+  if (map.getSize().x > 40) run();
+  else setTimeout(run, 250);
+}
+function safeFlyTo(center, zoom, opts, open){
+  const run = () => {
+    let target = center;
+    if (open === true){                 // 仅对「随后必开面板」的调用让位
+      const i = viewInsets(true), p = map.project(center, zoom);
+      p.x -= (i.l - i.r) / 2; p.y -= (i.t - i.b) / 2;
+      target = map.unproject(p, zoom);
+    }
+    try{ map.flyTo(target, zoom, opts); }
+    catch(e){ map.setView(target, zoom); }
+    if (open === true){
+      map._fyFocus = center;
+      fyFocusSync();
+    }
+  };
+  if (map.getSize().x > 40) run();
+  else setTimeout(run, 250);
 }
 
 /* ── 舆图模式：府治印章 ── */
-function bindFuTip(m, permanent){
-  if(!m._fu) return;                  // 属州标记自持 tooltip，不参与名录切换
+const FU_OFF = {right:[12,0], left:[-12,0], top:[0,-12], bottom:[0,12]};
+/* 是否府治标记。县标记也带 _fu，但那是府名字符串而非府对象——
+   此前各处只判 _fu 真值：县标记被当成府，取不到 u.n，选省时绑出一批内容为 undefined 的空标签 */
+function isFuMark(m){ return !!m._fu && typeof m._fu === "object"; }
+function bindFuTip(m, permanent, dir){
+  if(!isFuMark(m)) return;                  // 属州标记自持 tooltip，不参与名录切换
   m.unbindTooltip();
   const p=m._prov,u=m._fu,i=m._i||0;
   if(permanent){
-    // 相邻府治标签左右/上下交替，避让叠压
-    const dir=["right","left","bottom","right"][i%4];
-    const off={right:[11,0],left:[-11,0],bottom:[0,9],top:[0,-9]}[dir];
-    m.bindTooltip(u.n,{permanent:true,direction:dir,offset:off,className:"fulab"});
+    // 首选朝向随相邻府治左右/上下交替；实际朝向由 layoutLabels 按避让结果给出
+    dir = dir || ["right","left","bottom","right"][i%4];
+    m.bindTooltip(u.n,{permanent:true,direction:dir,offset:FU_OFF[dir],className:"fulab"});
   }else{
     m.bindTooltip(`<b style="font-family:KaiTi,serif;font-size:14px;letter-spacing:2px">${u.n}</b><br>
       <span style="font-size:10px;letter-spacing:1px;color:#57503f">${p.name}${u.now?" · 今 "+u.now:""}</span>`,
       {direction:"top",offset:[0,-6],opacity:.95,className:"ftip"});
   }
 }
-function setFuLabels(pid){
-  for(const id in fuMarkers) fuMarkers[id].forEach(m=>bindFuTip(m, !!pid && id===pid));
-}
+function setFuLabels(pid){ layoutLabels(); }
 function buildFu(){
   fuLayer.clearLayers(); zhouLayer.clearLayers(); countyLayer.clearLayers();
   for(const pid in fuMarkers) delete fuMarkers[pid];
@@ -126,7 +186,7 @@ function buildFu(){
         html:`<div class="fuseal" style="--pc:${col}" title="${u.n}"></div>`});
       const m = L.marker(u.c,{icon:ic}).addTo(fuLayer);
       m._pid=p.id; m._fu=u; m._prov=p; m._i=ui;
-      bindFuTip(m,false);
+      bindFuTip(m,false); m._lab = "hov";
       m.on("click",()=>{ openFu(p,u); });
       m.on("mouseover",()=>{const el=m.getElement()&&m.getElement().querySelector(".fuseal");el&&el.classList.add("hot");});
       m.on("mouseout",()=>{const el=m.getElement()&&m.getElement().querySelector(".fuseal");el&&el.classList.remove("hot");});
@@ -164,7 +224,7 @@ function buildFu(){
         xm._tipHtml = `<b style="font-family:KaiTi,serif;font-size:13px;letter-spacing:2px">${nm}</b><br>
           <span style="font-size:10px;letter-spacing:1px;color:#57503f">隶 ${u.n}</span><br>
           <span style="font-size:10px;letter-spacing:1px;color:${typ==="附郭"?"#9a6b3f":"#8b8069"}">${dirStr?dirStr+" ·":""} ${typ}${liStr?" · "+liStr:""}</span>`;
-        bindXianTip(xm);
+        bindXianTip(xm); xm._lab = "hov";
         xm.on("click",e=>openCountyCard(p,u,nm,d,e.latlng));
         fuMarkers[p.id].push(xm);
       });
@@ -183,31 +243,100 @@ map.on("zoomend",()=>{
   document.body.classList.toggle("z5", map.getZoom()>=5);
   document.body.classList.toggle("z4", map.getZoom()>=4);
   document.body.classList.toggle("z8", map.getZoom()>=8);
+  document.body.classList.toggle("z9", map.getZoom()>=9);
   applyZoomGates();
-  // zoom≥8：县名常显（带碰撞检测——近距离县名只显示一个，其余退回富信息悬停）
-  if(map.getZoom()>=8){
-    const all = Object.values(fuMarkers).flat().filter(m=>m._xian);
-    const shown = [];
-    all.forEach(m=>{
-      m.unbindTooltip();
-      const pt = map.latLngToContainerPoint(m.getLatLng());
-      const too = shown.some(s=>{
-        const p2 = map.latLngToContainerPoint(s.getLatLng());
-        return Math.abs(pt.x-p2.x)<45 && Math.abs(pt.y-p2.y)<18;
-      });
-      if(!too){
-        m.bindTooltip(m._xian.replace(/县$/,""),{permanent:true,direction:"right",offset:[8,0],className:"xianlab"});
-        shown.push(m);
-      }else{
-        bindXianTip(m);          // 被避让的县仍可悬停看富信息
-      }
-    });
-  } else {
-    Object.values(fuMarkers).flat().forEach(m=>{
-      if(m._xian){ m.unbindTooltip(); bindXianTip(m); }
-    });
-  }
+  layoutLabels();
 });
+map.on("moveend", layoutLabels);
+
+/* ── 标签排布（zoomend / moveend）──────────────────────────────
+   优先级：都城 > 要地（形势）；府名 > 县名（舆图）。先到者占位，后到者逐个让位。
+   · 府名：z≥6 常显；选了省则该省府名在任何缩放都显。此前府名只在「选省」或「点府」之后才出现——
+     z8 下满屏县名，府治却是不具名的菱章；且县名盖在府名上。
+   · 县名：z≥8 常显，只排视界内的，让位府名 / 印面 / 先到的县名。
+   · 形势：都城、要地标签依次试 右→左→上→下，四面皆压的退回悬停。
+     此前都城标签按奇偶定朝向（洛邑朝左，正撞上镐京朝右的标签），要地标签一律朝右（压在都城印上）。
+   状态没变的标记不重绑（_lab 缓存）——平移时不必重建上千个 tooltip。 */
+const LAB_DIR = ["right", "left", "top", "bottom"];
+function labRect(pt, dir, off, w, h){
+  const x0 = pt.x + off[0], y0 = pt.y + off[1];
+  return dir === "right" ? [x0, y0 - h / 2, x0 + w, y0 + h / 2]
+       : dir === "left"  ? [x0 - w, y0 - h / 2, x0, y0 + h / 2]
+       : dir === "top"   ? [x0 - w / 2, y0 - h, x0 + w / 2, y0]
+       :                   [x0 - w / 2, y0, x0 + w / 2, y0 + h];
+}
+function setLabel(m, st, dir, off){
+  const key = st + (dir ? ":" + dir : "");
+  if (m._lab === key) return;
+  m._lab = key;
+  m.unbindTooltip();
+  if (m._cap || m._plc){
+    if (st === "per") m.bindTooltip(m._cap || m._plc, {permanent:true, direction:dir, offset:off,
+      className:m._cap ? "caplab" : "plclab"});
+    else m.bindTooltip(m._cap || m._plc, {direction:"top", offset:[0,-8], opacity:.95, className:"ftip"});
+    } else if (m._xian){
+      if (st === "per") m.bindTooltip(m._xian.replace(/县$/,""), {permanent:true, direction:dir || "right", offset:off || [8,0], className:"xianlab"});
+      else bindXianTip(m);
+  } else if (isFuMark(m)) bindFuTip(m, st === "per", dir);
+}
+/* 版面遮挡区（容器像素）：标签不得压在固定界面之下——纲目、页眉三块、页脚、右缘控件列、面板、时间轴。
+   此前标签只避让彼此：贴着纲目右缘的县名被切成半截字（2026-11-24 z8 实录）。手机上纲目收起（移出屏外）即不计。 */
+const CHROME_SEL = "#rail,#railtoggle,.brand,#modes,#searchwrap,footer,#map .leaflet-control-zoom,#bmtoggle,.north,#panel,#tl,#tlPlay,#sresults";
+function chromeRects(){
+  const o = map.getContainer().getBoundingClientRect(), out = [];
+  document.querySelectorAll(CHROME_SEL).forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2 || r.right <= o.left || r.bottom <= o.top || r.left >= o.right || r.top >= o.bottom) return;
+    out.push([r.left - o.left - 3, r.top - o.top - 3, r.right - o.left + 3, r.bottom - o.top + 3]);
+  });
+  return out;
+}
+function layoutLabels(){
+  if (!map._loaded) return;
+  const z = map.getZoom(), sz = map.getSize(), M = 80, placed = [], chrome = chromeRects();
+  const hit = r => (placed.some(p => r[0] < p[2] && r[2] > p[0] && r[1] < p[3] && r[3] > p[1])
+                 || chrome.some(p => r[0] < p[2] && r[2] > p[0] && r[1] < p[3] && r[3] > p[1]));
+  const ptOf = m => map.latLngToContainerPoint(m.getLatLng());
+  const inView = pt => pt.x > -M && pt.y > -M && pt.x < sz.x + M && pt.y < sz.y + M;
+  const rot = (arr, first) => [first].concat(arr.filter(d => d !== first));
+  /* 试放：按 dirs 顺序取第一个不相压的朝向；四面皆压退回悬停 */
+  const place = (m, text, dirs, offs, cw, h) => {
+    if (inView(ptOf(m))){
+      const w = text.length * cw + 12;
+      for (const d of dirs){
+        const r = labRect(ptOf(m), d, offs[d], w, h);
+        if (!hit(r)){ placed.push(r); setLabel(m, "per", d, offs[d]); return; }
+      }
+    }
+    setLabel(m, "hov");
+  };
+
+  if (document.body.classList.contains("m-形势")){
+    const caps = [], plcs = [];
+    eraLayer.eachLayer(l => { if (l._cap) caps.push(l); else if (l._plc) plcs.push(l); });
+    caps.forEach(m => { const p = ptOf(m); placed.push([p.x - 14, p.y - 14, p.x + 14, p.y + 14]); });   // 都城印面：谁都不得压
+    plcs.forEach(m => { const p = ptOf(m); placed.push([p.x - 6, p.y - 6, p.x + 6, p.y + 6]); });
+    caps.forEach(m => place(m, m._cap, LAB_DIR, {right:[16,0], left:[-16,0], top:[0,-18], bottom:[0,16]}, 15.5, 22));
+    plcs.forEach(m => place(m, m._plc, LAB_DIR, {right:[7,0], left:[-7,0], top:[0,-8], bottom:[0,8]}, 14.5, 18));
+    return;
+  }
+  const order = selPid && fuMarkers[selPid] ? [selPid] : [];          // 选中省的府名排最前
+  for (const id in fuMarkers) if (id !== selPid) order.push(id);
+  order.forEach(id => fuMarkers[id].forEach(m => {
+    if (isFuMark(m)){ const p = ptOf(m); placed.push([p.x - 10, p.y - 10, p.x + 10, p.y + 10]); }   // 印面：县名不得盖印
+  }));
+  order.forEach(id => fuMarkers[id].forEach(m => {
+    if (!isFuMark(m)) return;
+    if (id === selPid || (z >= 6 && !selPid))     // 选了省：只标本省（邻省印章已淡出，标签也不该抢眼）
+      place(m, m._fu.n, rot(LAB_DIR, ["right","left","bottom","right"][(m._i||0)%4]), FU_OFF, 14, 20);
+    else setLabel(m, "hov");
+  }));
+  order.forEach(id => fuMarkers[id].forEach(m => {
+    if (!m._xian) return;
+    if (z >= 8) place(m, m._xian.replace(/县$/,""), ["right", "left"], {right:[8,0], left:[-8,0]}, 13, 18);   // 右侧压到版面（控件列 / 面板）则改标左侧
+    else setLabel(m, "hov");
+  }));
+}
 
 /* ── 形势模式 ── */
 /* 凸包（Andrew 单调链）：据本卷都邑实时生成疆域示意，非考证边界 */
@@ -269,19 +398,19 @@ function buildEra(ei){
     L.polyline(e.caps.map(c=>[c[1],c[2]]),{color:"#b23a2e",weight:2.2,
       opacity:.65,dashArray:"2 8",lineCap:"round"}).addTo(eraLayer);
   }
+  // 要地 / 都城：标签由 layoutLabels 排布（右→左→上→下试放避让），此处只挂名
   e.plcs.forEach(n=>{
-    L.marker([n[1],n[2]],{icon:L.divIcon({className:"",iconSize:[8,8],
-      html:`<div class="plc"></div>`})}).addTo(eraLayer)
-      .bindTooltip(n[0],{permanent:true,direction:"right",className:"plclab",offset:[7,0]});
+    const m = L.marker([n[1],n[2]],{icon:L.divIcon({className:"",iconSize:[8,8],
+      html:`<div class="plc"></div>`})}).addTo(eraLayer);
+    m._plc = n[0];
   });
-  e.caps.forEach((n,i)=>{
-    const dir = i%3===1 ? "left" : (i%3===2 ? "bottom" : "right");
-    const off = {right:[16,0], left:[-16,0], bottom:[0,14]}[dir];
-    L.marker([n[1],n[2]],{icon:L.divIcon({className:"",iconSize:[26,26],
-      html:`<div class="cap">${n[0][0]}</div>`}),zIndexOffset:900}).addTo(eraLayer)
-      .bindTooltip(n[0],{permanent:true,direction:dir,className:"caplab",offset:off});
+  e.caps.forEach(n=>{
+    const m = L.marker([n[1],n[2]],{icon:L.divIcon({className:"",iconSize:[26,26],
+      html:`<div class="cap">${n[0][0]}</div>`}),zIndexOffset:900}).addTo(eraLayer);
+    m._cap = n[0];
   });
-  safeFly(eraBounds(e),{duration:1.1,padding:[130,130]});
+  layoutLabels();
+  safeFly(eraBounds(e),{duration:1.1}, true, 50);
 }
 function eraBounds(e){
   const all=[...e.caps,...e.plcs].map(c=>[c[1],c[2]]);
@@ -331,7 +460,7 @@ function buildRivers(sel){
     });
   });
   const r = RIVERS.find(x=>x.key===sel)||RIVERS[0];
-  safeFly(r._line.getBounds().pad(.08),{duration:1.1});
+  safeFly(r._line.getBounds().pad(.08),{duration:1.1}, true);
   return r;
 }
 
@@ -345,7 +474,7 @@ function buildFrontier(){
     const line = L.polyline(sorted.map(q=>q.c), {
       color:"#b23a2e", weight:4, dashArray:"12 8", opacity:.7,
       lineCap:"round", interactive:false}).addTo(fuLayer);
-    // 两端标签
+    // 两端标签（钉在端点关隘的坐标上；样式把它抬到关隘三角之上——此前居中压字，见 css .fronlab）
     const west = sorted[0], east = sorted[sorted.length-1];
     if (west) L.marker(west.c, {icon:L.divIcon({className:"",iconSize:[60,18],
       html:`<div class="fronlab">九边西端·${west.n}</div>`}), interactive:false})
@@ -432,141 +561,6 @@ function clearFuHull(){
   if (fuHull){ map.removeLayer(fuHull); fuHull = null; }
 }
 
-/* 省级 Voronoi：全省所有县治同时分区，按府着色深浅交替 */
-function showProvinceVoronoi(p){
-  clearCountyTerritories();
-  const bounds = { south: 99, north: 0, west: 199, east: 0 };
-  const allPts = [];
-  p.fu.forEach((u, fi) => {
-    if (!u.c) return;
-    const col = PCOLORS[p.id] || "#2f5d70";
-    // 府治也作为一个点参与 Voronoi
-    allPts.push({ pos: u.c, fu: fi, col, isFu: true });
-    Object.keys(u.xianc || {}).forEach(nm => {
-      const d = u.xianc[nm];
-      const pos = Array.isArray(d) ? d : d.c;
-      if (pos) allPts.push({ pos, fu: fi, col, isFu: false });
-    });
-    // 更新 bounds
-    const xc = u.xianc || {};
-    [u.c, ...Object.values(xc).map(d => Array.isArray(d) ? d : d.c)].forEach(pos => {
-      if (!pos) return;
-      bounds.south = Math.min(bounds.south, pos[0]);
-      bounds.north = Math.max(bounds.north, pos[0]);
-      bounds.west = Math.min(bounds.west, pos[1]);
-      bounds.east = Math.max(bounds.east, pos[1]);
-    });
-  });
-  if (allPts.length < 3) return;
-  const pad = 0.5;
-  bounds.south -= pad; bounds.north += pad;
-  bounds.west -= pad; bounds.east += pad;
-
-  allPts.forEach((pt, i) => {
-    // 邻居 = 最近的 12 个点
-    const dists = allPts.filter(o => o !== pt)
-      .map(o => ({ o, d: map.distance(pt.pos, o.pos) }))
-      .sort((a, b) => a.d - b.d)
-      .slice(0, 12)
-      .map(x => x.o.pos);
-    if (!dists.length) return;
-    // 附郭跳过
-    if (dists[0] && map.distance(pt.pos, dists[0]) < 2000 && pt.isFu) return;
-    const cell = voronoiCell(pt.pos, dists, bounds);
-    if (!cell || cell.length < 3) return;
-    // 同府交替深浅，不同府用同一省色
-    const shade = pt.isFu ? 0.02 : ((pt.fu + (i % 2)) % 2 === 0 ? 0.05 : 0.09);
-    const polygon = L.polygon(cell, {
-      color: pt.col, weight: pt.isFu ? 1.5 : 0.6,
-      opacity: pt.isFu ? 0.5 : 0.25,
-      fillColor: pt.col, fillOpacity: shade,
-      interactive: false
-    }).addTo(map);
-    countyCircles.push(polygon);
-  });
-}
-
-/* Voronoi 县域：精确多边形分区，县界完美拼合 */
-function voronoiCell(target, neighbors, bounds) {
-  // 半平面裁剪法：从大方框开始，逐一用与邻居的垂直平分线裁剪
-  let poly = [
-    [bounds.south, bounds.west], [bounds.north, bounds.west],
-    [bounds.north, bounds.east], [bounds.south, bounds.east]
-  ];
-  const [ty, tx] = target;
-  for (const [ny, nx] of neighbors) {
-    // 垂直平分线上的两个点 + 法向量
-    const my = (ty + ny) / 2, mx = (tx + nx) / 2;
-    const dx = nx - tx, dy = ny - ty;
-    const len = Math.sqrt(dx*dx + dy*dy);
-    if (len < 1) continue;
-    const nxn = dx / len, nyn = dy / len; // 单位法向量（指向邻居）
-    // 裁剪：保留 target 侧（点积 < 0 的一侧）
-    const newPoly = [];
-    for (let i = 0; i < poly.length; i++) {
-      const cur = poly[i], next = poly[(i+1) % poly.length];
-      const curSide = (cur[0]-my)*nxn + (cur[1]-mx)*nyn;
-      const nextSide = (next[0]-my)*nxn + (next[1]-mx)*nyn;
-      if (curSide <= 0) newPoly.push(cur);
-      if ((curSide < 0) !== (nextSide < 0)) {
-        const t = curSide / (curSide - nextSide);
-        newPoly.push([cur[0] + t*(next[0]-cur[0]), cur[1] + t*(next[1]-cur[1])]);
-      }
-    }
-    poly = newPoly;
-    if (poly.length < 3) return null;
-  }
-  return poly;
-}
-
-let countyCircles = [];
-function showCountyTerritories(p, u){
-  clearCountyTerritories();
-  const xc = u.xianc || {};
-  const names = Object.keys(xc);
-  if (names.length < 2) return;
-  const col = PCOLORS[p.id] || "#2f5d70";
-  const pts = names.map(nm => {
-    const d = xc[nm];
-    return { nm, pos: Array.isArray(d) ? d : d.c };
-  }).filter(x => x.pos);
-  if (u.c) pts.push({ nm: "__fu__", pos: u.c });
-  if (pts.length < 2) return;
-
-  // 找 bounds
-  let south=99, north=0, west=199, east=0;
-  pts.forEach(pt => {
-    south = Math.min(south, pt.pos[0]); north = Math.max(north, pt.pos[0]);
-    west = Math.min(west, pt.pos[1]); east = Math.max(east, pt.pos[1]);
-  });
-  const pad = 0.5;
-  const bounds = { south: south-pad, north: north+pad, west: west-pad, east: east+pad };
-
-  pts.forEach((pt, i) => {
-    // 邻居 = 距离 < 3x 最近距离的其他县
-    const dists = pts.filter(o => o !== pt).map(o => ({
-      o, d: map.distance(pt.pos, o.pos)
-    })).sort((a,b) => a.d - b.d);
-    if (!dists.length) return;
-    const minD = dists[0].d;
-    if (minD < 1000) return; // 附郭跳过
-    const neighbors = dists.filter(x => x.d < Math.max(minD * 3, 50000)).map(x => x.o.pos);
-    const cell = voronoiCell(pt.pos, neighbors, bounds);
-    if (!cell || cell.length < 3) return;
-    const shade = pt.nm === "__fu__" ? 0.03 : (i % 2 === 0 ? 0.06 : 0.10);
-    const polygon = L.polygon(cell, {
-      color: col, weight: 0.8, opacity: .3,
-      fillColor: col, fillOpacity: shade,
-      interactive: false
-    }).addTo(map);
-    countyCircles.push(polygon);
-  });
-}
-function clearCountyTerritories(){
-  countyCircles.forEach(c => map.removeLayer(c));
-  countyCircles = [];
-}
-
 /* 府→县领属线：选中一府时显示其行政辐射 */
 let jurLines = [];
 function showJurisdiction(p, u){
@@ -603,7 +597,7 @@ function revealCounty(pid, fuName, xianName){
   const d = u.xianc[xianName];
   const pos = Array.isArray(d) ? d : d.c;
   setTimeout(()=>{
-    safeFlyTo(pos, 8, {duration:1});
+    safeFlyTo(pos, 8, {duration:1}, true);
     // 打开县级信息卡
     if (typeof openCountyCard === "function") {
       setTimeout(()=>openCountyCard(p, u, xianName, d, null), 600);

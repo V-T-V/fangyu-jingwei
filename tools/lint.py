@@ -149,7 +149,7 @@ check(not feature_ids or not any(fid in core for fid in feature_ids),
 
 # 脚本加载顺序（defer 依赖链）
 scripts = re.findall(r'<script src="js/(\w+)\.js', idx)
-expected_order = ['config', 'map', 'panels', 'rail', 'search', 'reader',
+expected_order = ['config', 'map', 'territory', 'panels', 'rail', 'search', 'reader',
                   'bookmarks', 'ft_core', 'fulltext', 'app', 'modes', 'analytics', 'wenxin', 'bian']
 actual_order = [s for s in scripts if s in expected_order]
 check(actual_order == expected_order[:len(actual_order)],
@@ -242,7 +242,7 @@ print("── 14. CSS !important")
 imp = 0
 for f in sorted(glob.glob('css/*.css')):
     imp += open(f, encoding='utf-8').read().count('!important')
-check(imp <= 25, f"!important ≤25 棘轮（实得 {imp}，按出现次数计）——新增样式用特异性/媒体块；压厂商样式集中在允许区，只减不增")
+check(imp <= 6, f"!important ≤6 棘轮（实得 {imp}，按出现次数计）——新增样式用特异性/媒体块；压厂商样式集中在允许区，只减不增")
 
 # ── L15: subprocess 显式编码（教训 22：cp936 默认解码遇非 GBK 字符崩读线程 → 孤儿雪崩）──
 print("── 15. subprocess 编码")

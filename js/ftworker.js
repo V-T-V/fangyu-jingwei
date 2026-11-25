@@ -39,7 +39,9 @@ function scan(q){
 
 /* ── 文心计量：Worker 直算调度（纯核在 js/ft_core.js，与主线程 wxCompute 同口径） ── */
 function wenxinCompute(){
-  var provList = (META.keys || []).map(function(pid){
+  /* 只取省卷：META.keys 另含 juanshou / xingshi / chuandu（其文已由 extraList 计入 extraChars）——
+     此前一并入表，这三项没有省名、字数记 0，以原始键名混进「卷帙分布」图（与主线程 wxCompute 口径不一致） */
+  var provList = (META.keys || []).filter(function(pid){ return META.provNames && META.provNames[pid]; }).map(function(pid){
     var bag = FYTEXT[pid] || {};
     var parts = [];
     if (bag.xu) parts.push(bag.xu);
