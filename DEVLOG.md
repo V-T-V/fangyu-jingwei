@@ -500,3 +500,8 @@ boot_smoke 2D/3D 零错误 · offline 五步 OK · audit_features 九域 clean �
 已改：脚本标注、ANALYSIS.md §三、PDF 构建脚本并重排、README、PROJECT_REPORT。
 哨兵 +2 空间锚（驿路 87 km、折算 151 里）。教训：**下「勘误」结论前先回到
 标定脚本读原式，别拿换算后的数字当另一个单位的数字去否定初稿**。
+
+**部署竞态**（2026-11-25）：当天两次推送的 Pages 首次部署皆红——`upload-pages-artifact`
+刚报成功，`deploy-pages` 在同一秒去查产物列表得到「Found 0 artifact(s)」，重跑即绿。
+GitHub 侧产物登记有秒级延迟，不该靠人工重跑：部署前先轮询到产物可见（最多两分钟，
+仍不可见如实变红，不吞错）。

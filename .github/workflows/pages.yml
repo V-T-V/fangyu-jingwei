@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  actions: read        # 「等产物登记可见」那一步要读本 run 的产物列表
   pages: write
   id-token: write
 
@@ -25,5 +26,23 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
+      # 产物上传后，GitHub 侧登记有秒级延迟：deploy-pages 紧接着去查会得到「Found 0 artifact(s)」
+      # （2026-11-25 两次推送的首次部署皆因此红，重跑即绿）。先轮询到可见再部署；
+      # 两分钟仍不可见则如实变红，不吞错。
+      - name: 等产物登记可见（最多 2 分钟）
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          for i in $(seq 1 24); do
+            if gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --jq '.artifacts[].name' | grep -qx github-pages; then
+              echo "github-pages 产物已可见（第 $i 次查询，约 $(( (i - 1) * 5 )) 秒后）"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::产物 github-pages 在 120 秒内未登记可见，部署中止"
+          exit 1
       - uses: actions/deploy-pages@v4
         id: deployment
