@@ -127,20 +127,37 @@ def cmd_doctor():
 
 # ── CDP 通道 ──────────────────────────────────────────
 class CDP:
-    def __init__(self, page, wait_expr=None, timeout=45):
+    """单标签页的持久 CDP 会话。
+    连接在上下文存续期间保持——Emulation 视口模拟是**会话级**的：连接一断即失效
+    （2026-11-23 移动端审查踩过：逐次建连时模拟静默丢失，截到的仍是桌面布局）。
+
+    视口一律显式固定（默认 VIEWPORT，即 1440×900 窗口的内容区），不取窗口内容区的实时高度。
+    无头 Edge 在全新配置下约 50 秒后会往内容区塞进它自己的界面（内容区矮 34px），此后截图全部变矮，
+    「从合成面抓模拟视口」还会在左上角带出 5×44px 的残迹（重载不消失）——2026-11-24 实录。
+    两道措施：启动开关关掉首跑类后台任务后，该界面不再出现（对照 3 次皆无、基线 5 次皆有）；
+    视口固定则即使出现也不波及截图尺寸。两样都只是工具侧措施，不改站点行为。
+
+    注意：进入上下文只完成导航，**不等于页面就绪**——须自行调用 wait_ready()（或轮询条件表达式）。"""
+    VIEWPORT = (1416, 808, False, 1)   # (宽, 高, 手机, 像素比)
+
+    def __init__(self, page, wait_expr=None, timeout=45, viewport=None):
         self.page, self.wait_expr, self.timeout = page, wait_expr, timeout
         self.port = CDP_PORT
         self.proc = None
         self.tab = None
+        self.ws = None
+        self._sid = 0
+        self.viewport = viewport or self.VIEWPORT   # 进入时即施加视口模拟
 
     def __enter__(self):
         if not EDGE:
             fail("未找到浏览器", "装 Edge 或设 FY_BROWSER")
         prof = tempfile.mkdtemp(prefix="fyctl_")
         self.proc = subprocess.Popen(
-            [EDGE, "--headless=new", "--disable-gpu", "--window-size=1440,900",
-             "--no-first-run", f"--remote-debugging-port={self.port}",
-             f"--user-data-dir={prof}", "about:blank"],
+            [EDGE, "--headless=new", "--disable-gpu", "--window-size=1440,900", "--no-first-run",
+             "--no-default-browser-check", "--disable-background-networking", "--disable-component-update",
+             "--disable-sync", "--disable-default-apps", "--metrics-recording-only",
+             f"--remote-debugging-port={self.port}", f"--user-data-dir={prof}", "about:blank"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         base = f"http://127.0.0.1:{self.port}"
         for _ in range(75):
@@ -153,31 +170,49 @@ class CDP:
             self.__exit__(None, None, None)
             fail("CDP 15s 未就绪", f"重跑一次；仍失败查是否有残留无头进程占用 {self.port}（control_fy.py cleanup，或换 FY_CDP_PORT）")
         import urllib.parse
-        req = ur.Request(base + "/json/new?" + urllib.parse.quote(BASE + self.page, safe=""),
-                         method="PUT")
+        req = ur.Request(base + "/json/new?about:blank", method="PUT")   # 先开空白页：视口模拟须先于站点脚本生效，页面从首帧起就按目标尺寸排版
         self.tab = json.loads(ur.urlopen(req, timeout=5).read())
+        import websocket
+        self.ws = websocket.create_connection(self.tab["webSocketDebuggerUrl"], timeout=30)
+        self.ws.settimeout(30)
+        self.cmd("Page.enable")
+        # 窗口内容区比目标视口高出一截：模拟视口始终完整落在可见区内，不与窗口内容区等高较劲
+        win = self.cmd("Browser.getWindowForTarget")
+        self.cmd("Browser.setWindowBounds", {"windowId": win["windowId"],
+                                             "bounds": {"width": self.viewport[0] + 24, "height": self.viewport[1] + 160}})
+        self.emulate(*self.viewport)
+        self.cmd("Page.navigate", {"url": BASE + self.page})
         return self
 
+    def cmd(self, method, params=None):
+        """发一条 CDP 指令并等到同 id 的响应（其间的事件消息跳过）。"""
+        self._sid += 1
+        self.ws.send(json.dumps({"id": self._sid, "method": method, "params": params or {}}))
+        while True:
+            r = json.loads(self.ws.recv())
+            if r.get("id") == self._sid:
+                return r.get("result", r)
+
     def eval(self, expr):
-        import websocket
-        ws = websocket.create_connection(self.tab["webSocketDebuggerUrl"], timeout=10)
-        try:
-            ws.send(json.dumps({"id": 1, "method": "Runtime.evaluate",
-                               "params": {"expression": expr, "returnByValue": True}}))
-            return json.loads(ws.recv()).get("result", {}).get("result", {}).get("value")
-        finally:
-            ws.close()
+        return self.cmd("Runtime.evaluate",
+                        {"expression": expr, "returnByValue": True}).get("result", {}).get("value")
+
+    def emulate(self, w, h, mobile=True, scale=2):
+        """视口模拟（须在持久会话内调用；断连即失效）。"""
+        self.cmd("Emulation.setDeviceMetricsOverride",
+                 {"width": w, "height": h, "deviceScaleFactor": scale, "mobile": mobile})
+        time.sleep(0.8)            # 等 resize 事件与地图 invalidateSize 落定
 
     def screenshot(self, path):
         import websocket
-        ws = websocket.create_connection(self.tab["webSocketDebuggerUrl"], timeout=15)
-        try:
-            ws.send(json.dumps({"id": 2, "method": "Page.captureScreenshot",
-                                "params": {"format": "png"}}))
-            b64 = json.loads(ws.recv())["result"]["data"]
-            open(path, "wb").write(base64.b64decode(b64))
-        finally:
-            ws.close()
+        for attempt in (1, 2):
+            try:
+                b64 = self.cmd("Page.captureScreenshot", {"format": "png"})["data"]
+                open(path, "wb").write(base64.b64decode(b64))
+                return
+            except websocket.WebSocketTimeoutException:
+                if attempt == 2:
+                    fail("截图两次超时", "机器负载高时偶发；重跑一次（tools/control_fy.py cleanup 清残留进程）")
 
     def wait_ready(self):
         t0 = time.time()
@@ -192,6 +227,12 @@ class CDP:
         return None
 
     def __exit__(self, *a):
+        if self.ws:
+            try:
+                self.ws.close()
+            except Exception:
+                pass
+            self.ws = None
         if self.proc:
             self.proc.terminate()
 
