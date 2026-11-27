@@ -8,3 +8,4 @@
 2026-11-22T05:40+08:00	xrev-bridge	经纬互查站际反向桥补双向（霞客/寰宇双页签）	tools/build_xrev.py 复用姊妹站匹配法重算对账(300/175/125 复得全等·不等即红)→烘焙 data/xrev.js(91KB·SHA256SUMS 188行)；js/xrev.js 懒加载挂 ?v 防缓存钉死(仿 sjz 案 db27d06)；核心层零侵入(app.js typeof 守卫)；寰宇宋侧361/明侧193 双口径并列防误读；深链相对兄弟路径双场景(父目录同根服务·GitHub Pages 项目页)README 注明	docs/img/xrev-xk.png·xrev-hy.png 像素统计0%白+视觉双验 · lint全过·verify 0警·16页回归全绿 · XXK/TPHY git clean 双验 · bump v124	done
 2026-11-22T05:55+08:00	ci-lf-fix	修复既存 CI 红：sjz_xref 指纹按 CRLF 入账致 Linux checkout 必红（教训C1复发）	gh run list 实证 9d595e6 CI failure(15s)；根因 db27d06 Python 更行按本机 CRLF 字节记 SHA256SUMS 而 .gitattributes data/** eol=lf 库内为 LF；修法=工作区转LF(零diff)+账本 sjz/xrev 两行按 LF 重算 188/188+两构建脚本 newline 显式 LF 防复发	verify 第8节 188/188 全符(LF口径) · git diff sjz_xref.js 零diff	done
 2026-11-22T09:00+08:00	audit	维持 clean	锚点全在活体绿	audit_features --live state:clean	done
+2026-11-27T12:32+0800	audit	维持 clean	锚点全在活体绿	audit_features.py --live state:clean（九域全绿·含 14 页活体扫掠）	done
