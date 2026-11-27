@@ -27,7 +27,10 @@ import urllib.request as ur
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PID_FILE = os.path.join(ROOT, ".fyserve.pid")
 BASE = os.environ.get("FY_BASE", "http://127.0.0.1:9200/")
-PORT = int(BASE.rstrip("/").rsplit(":", 1)[1])
+try:
+    PORT = int(BASE.rstrip("/").rsplit(":", 1)[1].split("/")[0])   # 本地形态 http://host:9200/
+except ValueError:                                                  # 远程形态 https://…/ → 端口与本 BASE 无关
+    PORT = int(os.environ.get("FY_CDP_PORT", "9333"))
 CDP_PORT = int(os.environ.get("FY_CDP_PORT", "9333"))
 EVIDENCE_DIR = os.path.join(ROOT, "docs", "evidence")
 
