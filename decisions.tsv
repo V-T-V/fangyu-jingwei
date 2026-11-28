@@ -9,3 +9,4 @@
 2026-11-22T05:55+08:00	ci-lf-fix	修复既存 CI 红：sjz_xref 指纹按 CRLF 入账致 Linux checkout 必红（教训C1复发）	gh run list 实证 9d595e6 CI failure(15s)；根因 db27d06 Python 更行按本机 CRLF 字节记 SHA256SUMS 而 .gitattributes data/** eol=lf 库内为 LF；修法=工作区转LF(零diff)+账本 sjz/xrev 两行按 LF 重算 188/188+两构建脚本 newline 显式 LF 防复发	verify 第8节 188/188 全符(LF口径) · git diff sjz_xref.js 零diff	done
 2026-11-22T09:00+08:00	audit	维持 clean	锚点全在活体绿	audit_features --live state:clean	done
 2026-11-27T12:32+0800	audit	维持 clean	锚点全在活体绿	audit_features.py --live state:clean（九域全绿·含 14 页活体扫掠）	done
+2026-11-28T09:03+0800	audit	维持 clean	锚点全在活体绿	audit_features.py --live state:clean（九域全绿·含 14 页活体扫掠）	done
