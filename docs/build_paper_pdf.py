@@ -73,7 +73,9 @@ def tbl(headers, rows, widths, caption=None, left_cols=()):
     t.setStyle(TableStyle(st))
     out = [t]
     if caption: out.append(Paragraph(caption, S["cap"]))
-    return KeepTogether(out)
+    # 小表不拆（KeepTogether）；大表（>8 数据行）允许跨页拆分——repeatRows=1 会在续页重表头。
+    # 此前一律 KT：大表放不下就整表跳页，标题孤悬页尾、前页留大片空白（2026-11-28 三版教训）
+    return KeepTogether(out) if len(rows) <= 8 else out
 
 def fig(fname, h_mm, caption):
     img = Image(os.path.join(FIGS_DIR, fname), width=AW, height=h_mm * mm, hAlign="CENTER")
@@ -290,5 +292,27 @@ E += [P("参考文献", "h1"),
       HRFlowable(width="100%", thickness=.5, color=BG_SURFACE),
       Paragraph("本文一切数字可由仓库脚本复现；交互验证：站点「透视」（空间）与「文心」（文本）。", S["cap"])]
 
-doc.build(E)
+def bind_heading_blocks(story):
+  """标题孤悬页尾的治理（2026-11-28，六版实测后定版）：
+  ①全局 keepWithNext 链式成组一次搬大片（9→11 页）；②只绑文字后件——表后件绑不上；
+  ③CondPageBreak 固定闸不知后件多高；④紧邻配对（含表/图）孤悬清零但两页半空；
+  ⑤allowWidows/Orphans=0 整段搬家、全文重排反多生孤悬；⑥每标题前再加门槛——28 道闸累计
+  过早换页，11 页且末页近空。
+  定版两件：文字后件（正文段 / 下一级标题）绑 keepWithNext；大表（>8 数据行）解除 KeepTogether、
+  允许跨页（repeatRows=1 续页重表头），标题+首几行自然留本页。
+  实测：9 页不变、页底留白 2–13%（与改前同级）、孤悬 3→2——残留两处均为期刊常态：
+  「标题+整幅图」（图置次页）与「标题+单行正文」。"""
+  # 先摊平：tbl() 大表现在返回列表（小表仍返回 KeepTogether），E += [列表] 会把列表整个塞进 story
+  story = [f for it in story for f in (it if isinstance(it, list) else [it])]
+  for i in range(len(story) - 1):
+    p = story[i]
+    if not isinstance(p, Paragraph) or getattr(p.style, "name", "") not in ("h1", "h2"):
+      continue
+    q = story[i + 1]
+    qn = getattr(q, "style", None) and getattr(q.style, "name", "")
+    if qn in ("body", "body0", "abs", "h1", "h2"):
+      p.style = p.style.clone(p.style.name + "-kw", keepWithNext=1)
+  return story
+
+doc.build(bind_heading_blocks(E))
 print("OK →", OUT, os.path.getsize(OUT) // 1024, "KB")
